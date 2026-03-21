@@ -1,9 +1,11 @@
-const axios = require('axios');
+import axios from 'axios';
 
 export default async function handler(req, res) {
     // Detectar si es una petición de API o de Imagen (uploads)
-    const isUpload = req.url.includes('/uploads/');
-    const path = req.url.split(isUpload ? '/uploads/' : '/api/')[1] || '';
+    const url = req.url || '';
+    const isUpload = url.includes('/uploads/');
+    const separator = isUpload ? '/uploads/' : '/api/';
+    const path = url.split(separator)[1] || '';
     const targetUrl = `http://hbalconplaza-001-site1.site4future.com/${isUpload ? 'uploads' : 'api'}/${path}`;
     
     // Credenciales de SmarterASP (11300916:60-dayfreetrial)
@@ -18,12 +20,11 @@ export default async function handler(req, res) {
                 'Content-Type': req.headers['content-type'] || 'application/json',
             },
             data: req.method !== 'GET' ? req.body : undefined,
-            responseType: isUpload ? 'arraybuffer' : 'json', // Muy importante para imágenes
+            responseType: isUpload ? 'arraybuffer' : 'json', 
             timeout: 10000,
             validateStatus: () => true
         });
 
-        // Si es una imagen, devolver los datos binarios correctamente
         if (isUpload) {
             res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
             return res.status(response.status).send(response.data);
