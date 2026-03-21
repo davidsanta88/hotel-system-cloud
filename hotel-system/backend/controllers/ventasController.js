@@ -14,6 +14,24 @@ exports.getVentas = async (req, res) => {
     }
 };
 
+exports.getVentaDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('venta_id', sql.Int, id)
+            .query(`
+                SELECT dv.cantidad, dv.precio_unitario as precio, dv.subtotal, p.nombre as producto_nombre
+                FROM detalle_ventas dv
+                JOIN productos p ON dv.producto_id = p.id
+                WHERE dv.venta_id = @venta_id
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 exports.createVenta = async (req, res) => {
     try {
         const { productos, total, medio_pago_id, registro_id } = req.body; // productos: [{id, cantidad, precio, subtotal}]

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
-import { ShoppingCart, Check } from 'lucide-react';
+import { ShoppingCart, Check, History, Eye, X, Receipt } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 
 const Store = () => {
@@ -16,6 +16,13 @@ const Store = () => {
     const [registrosActivos, setRegistrosActivos] = useState([]);
     const [registroId, setRegistroId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Historial States
+    const [showHistorial, setShowHistorial] = useState(false);
+    const [ventasHistorial, setVentasHistorial] = useState([]);
+    const [selectedVenta, setSelectedVenta] = useState(null);
+    const [ventaDetalles, setVentaDetalles] = useState([]);
+    const [loadingHistorial, setLoadingHistorial] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -93,6 +100,29 @@ const Store = () => {
         }
     };
 
+    const fetchHistorial = async () => {
+        setLoadingHistorial(true);
+        try {
+            const response = await api.get('/ventas');
+            setVentasHistorial(response.data);
+            setShowHistorial(true);
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo cargar el historial de ventas', 'error');
+        } finally {
+            setLoadingHistorial(false);
+        }
+    };
+
+    const verDetalleVenta = async (venta) => {
+        try {
+            const response = await api.get(`/ventas/${venta.id}`);
+            setVentaDetalles(response.data);
+            setSelectedVenta(venta);
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo cargar el detalle de la venta', 'error');
+        }
+    };
+
     const productosFiltrados = productos.filter(p => 
         p.tipo_inventario === 'venta' && 
         (p.activo === true || p.activo === 1) &&
@@ -106,8 +136,16 @@ const Store = () => {
         <div className="h-full flex flex-col lg:flex-row gap-6">
             <div className="flex-1 flex flex-col space-y-4">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-2xl font-bold text-gray-900">Tienda / POS</h1>
+                    <div className="flex flex-col gap-1 w-full md:w-auto">
+                        <div className="flex justify-between items-center w-full">
+                            <h1 className="text-2xl font-bold text-gray-900">Tienda / POS</h1>
+                            <button 
+                                onClick={fetchHistorial}
+                                className="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold transition hover:bg-blue-100"
+                            >
+                                <History size={16} /> Historial
+                            </button>
+                        </div>
                         <div className="flex bg-gray-100 p-1 rounded-lg overflow-x-auto max-w-full">
                             {categorias.map(cat => (
                                 <button 
@@ -120,14 +158,20 @@ const Store = () => {
                             ))}
                         </div>
                     </div>
-                    <div className="w-full md:w-64">
+                    <div className="w-full md:w-auto flex gap-3 items-center">
                         <input 
                             type="text" 
                             placeholder="Buscar producto..." 
-                            className="input-field m-0"
+                            className="input-field m-0 md:w-64"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                        <button 
+                            onClick={fetchHistorial}
+                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold shadow-sm transition-all hover:bg-blue-100 hover:-translate-y-0.5"
+                        >
+                            <History size={18} /> Historial de Ventas
+                        </button>
                     </div>
                 </div>
 
@@ -315,6 +359,132 @@ const Store = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modals para Historial de Ventas */}
+            {showHistorial && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    {/* Modal Principal: Lista de Ventas */}
+                    <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in border border-gray-100 flex flex-col ${selectedVenta ? 'hidden md:flex' : 'flex'} max-h-[90vh]`}>
+                        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-blue-100 text-blue-600 p-2.5 rounded-xl shadow-sm">
+                                    <History size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl md:text-2xl font-black text-gray-800">Historial de Ventas</h2>
+                                    <p className="text-xs md:text-sm text-gray-500 mt-0.5 font-medium">Registro de todas las transacciones realizadas en la tienda</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowHistorial(false)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition">
+                                <X size={24} />
+                            </button>
+                        </div>
+                        
+                        <div className="overflow-auto flex-1 p-4 md:p-6">
+                            {loadingHistorial ? (
+                                <div className="text-center py-12 text-gray-400 font-medium">Cargando transacciones...</div>
+                            ) : ventasHistorial.length === 0 ? (
+                                <div className="text-center py-12 flex flex-col items-center justify-center gap-3">
+                                    <Receipt size={48} className="text-gray-200" />
+                                    <p className="text-gray-500 font-medium">No hay ventas registradas en el sistema aún</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50/80 text-gray-500 border-b border-gray-100 text-[11px] uppercase tracking-wider">
+                                                <th className="p-4 font-bold">Resumen Transacción</th>
+                                                <th className="p-4 font-bold hidden sm:table-cell">Cajero / Vendedor</th>
+                                                <th className="p-4 font-bold text-right">Monto Total</th>
+                                                <th className="p-4 font-bold text-center">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {ventasHistorial.map(venta => (
+                                                <tr key={venta.id} className={`hover:bg-blue-50/30 transition-colors ${selectedVenta?.id === venta.id ? 'bg-blue-50/50' : ''}`}>
+                                                    <td className="p-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-gray-900">Venta #{venta.id}</span>
+                                                            <span className="text-xs text-gray-500 mt-0.5 font-medium">{new Date(venta.fecha).toLocaleString()}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 hidden sm:table-cell">
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 text-xs font-semibold">
+                                                            {venta.empleado}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <span className="font-black text-gray-900 text-base">${formatCurrency(venta.total)}</span>
+                                                    </td>
+                                                    <td className="p-4 text-center">
+                                                        <button 
+                                                            onClick={() => verDetalleVenta(venta)}
+                                                            className="inline-flex items-center justify-center p-2 text-primary-600 hover:text-white hover:bg-primary-500 rounded-lg transition-all"
+                                                            title="Ver Recibo"
+                                                        >
+                                                            <Eye size={20} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Modal Secundario: Detalle de la Venta (Recibo) */}
+                    {selectedVenta && (
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border border-gray-100 flex flex-col max-h-[90vh] absolute md:relative z-[70]">
+                            <div className="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-start">
+                                <div>
+                                    <div className="flex items-center gap-2 text-primary-600 mb-1">
+                                        <Receipt size={18} />
+                                        <span className="text-xs font-black uppercase tracking-widest">Recibo de Venta</span>
+                                    </div>
+                                    <h3 className="text-xl font-black text-gray-900 mb-1">Transacción #{selectedVenta.id}</h3>
+                                    <p className="text-xs text-gray-500 font-medium">{new Date(selectedVenta.fecha).toLocaleString()}</p>
+                                </div>
+                                <button onClick={() => setSelectedVenta(null)} className="text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 border border-gray-100 p-2 rounded-xl transition shadow-sm">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-5 bg-white">
+                                <div className="space-y-3 mb-6">
+                                    {ventaDetalles.map((detalle, i) => (
+                                        <div key={i} className="flex justify-between items-center text-sm border-b border-dashed border-gray-200 pb-3">
+                                            <div className="flex-1">
+                                                <p className="font-bold text-gray-800">{detalle.producto_nombre}</p>
+                                                <p className="text-xs text-gray-500 mt-0.5">{detalle.cantidad}x ${formatCurrency(detalle.precio)} c/u</p>
+                                            </div>
+                                            <div className="font-black text-gray-900">
+                                                ${formatCurrency(detalle.subtotal)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {ventaDetalles.length === 0 && (
+                                        <div className="text-center py-6 text-gray-400 text-sm">Cargando recibo...</div>
+                                    )}
+                                </div>
+                                
+                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs font-bold text-gray-500 uppercase">Atendido por</span>
+                                        <span className="text-sm font-bold text-gray-800">{selectedVenta.empleado}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-5 bg-gray-900 text-white flex justify-between items-center">
+                                <span className="text-sm font-bold text-gray-300 uppercase tracking-wider">Total Cobrado</span>
+                                <span className="text-2xl font-black">${formatCurrency(selectedVenta.total)}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
