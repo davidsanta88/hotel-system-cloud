@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import api from '../services/api';
+import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
 import { Package, History, AlertTriangle, Plus, Trash2, Edit, PackagePlus } from 'lucide-react';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
@@ -230,7 +230,7 @@ const Inventory = () => {
                                         <div className="h-16 w-16 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center relative group">
                                             {prod.imagen_url ? (
                                                 <img 
-                                                    src={prod.imagen_url} 
+                                                    src={`${API_BASE_URL}${prod.imagen_url}`} 
                                                     alt={prod.nombre} 
                                                     className="w-full h-full object-cover rounded-xl"
                                                 />

@@ -4,6 +4,17 @@ async function migrateRoles() {
     try {
         const pool = await poolPromise;
         
+        // Asegurar que la columna descripcion exista en roles si la tabla ya existe
+        await pool.request().query(`
+            IF EXISTS (SELECT * FROM sysobjects WHERE name='roles' and xtype='U')
+            BEGIN
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'descripcion' AND Object_ID = Object_ID(N'roles'))
+                BEGIN
+                    ALTER TABLE roles ADD descripcion VARCHAR(255);
+                END
+            END
+        `);
+
         // Crear tabla roles si no existe
         await pool.request().query(`
             IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='roles' and xtype='U')

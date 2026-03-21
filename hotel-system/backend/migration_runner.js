@@ -10,20 +10,30 @@ async function runMasterMigration() {
         const pool = await poolPromise;
         console.log("Conexión confirmada con SmarterASP.net.");
 
-        // 1. Ejecutar Schema Base (Limpiado)
+        // 1. Ejecutar Schema Base (Limpiado y robusto)
         let schemaSql = fs.readFileSync(path.join(__dirname, '../database/schema.sql'), 'utf8');
-        // Quitar comandos de base de datos que no funcionan en hosting compartido
         schemaSql = schemaSql.replace(/IF NOT EXISTS \(SELECT \* FROM sys\.databases[\s\S]*?GO/g, '');
         schemaSql = schemaSql.replace(/USE PruebaIA;[\s\S]*?GO/g, '');
-        schemaSql = schemaSql.replace(/GO/g, ''); // mssql node adapter no soporta GO
+        schemaSql = schemaSql.replace(/GO/g, ''); 
 
-        const batches = schemaSql.split('\n\n'); // Dividir por bloques simples
+        // Dividir por bloques de forma más inteligente (evitando romper DECLARE/SET)
+        // Eliminamos líneas en blanco innecesarias para que el split no rompa bloques
+        const cleanSql = schemaSql.split('\n').filter(line => line.trim() !== '').join('\n');
+        
+        // Separamos por bloques de creación de tablas o inserciones
+        const batches = cleanSql.split(/CREATE TABLE|INSERT INTO|IF NOT EXISTS/).filter(b => b.trim());
+        
         for (let batch of batches) {
-            if (batch.trim()) {
+            let sql = batch.trim();
+            // Restaurar la palabra clave que el split quitó para que sea SQL válido
+            if (cleanSql.includes('CREATE TABLE ' + sql)) sql = 'CREATE TABLE ' + sql;
+            else if (cleanSql.includes('INSERT INTO ' + sql)) sql = 'INSERT INTO ' + sql;
+            else if (cleanSql.includes('IF NOT EXISTS ' + sql)) sql = 'IF NOT EXISTS ' + sql;
+
+            if (sql) {
                 try {
-                    await pool.request().query(batch);
+                    await pool.request().query(sql);
                 } catch (err) {
-                    // Ignorar errores de "ya existe" para ser re-ejecutable
                     if (!err.message.includes("already exists") && !err.message.includes("There is already")) {
                         console.warn("Aviso en bloque SQL:", err.message);
                     }
