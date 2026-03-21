@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
-    // Soporte para ambos headers: 'authorization' usado localmente, y 'x-auth-token' inyectado por el proxy de Vercel
-    let token = req.headers['authorization'] || req.headers['x-auth-token'];
+    // Soporte para ambos headers: 'x-auth-token' inyectado por el proxy de Vercel TIENE PRIORIDAD
+    // sobre 'authorization', el cual en la nube contiene la contraseña de SmarterASP.
+    let token = req.headers['x-auth-token'] || req.headers['authorization'];
     if (!token) {
         return res.status(403).json({ message: 'No token provided' });
     }

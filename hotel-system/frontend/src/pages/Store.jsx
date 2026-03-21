@@ -180,15 +180,15 @@ const Store = () => {
                         const cant = getItemQuantity(prod.id);
                         return (
                             <div key={prod.id}
-                                 className={`card p-4 transition-all flex flex-col justify-between min-h-[160px] relative border-2 ${cant > 0 ? 'border-primary-400 shadow-md' : 'border-transparent hover:border-primary-100 hover:shadow-xl'}`}>
+                                 className={`card p-3 transition-all flex flex-col justify-between h-[220px] relative border-2 ${cant > 0 ? 'border-primary-400 shadow-md bg-primary-50/10' : 'border-transparent hover:border-primary-200 hover:shadow-lg'}`}>
 
                                 {/* Imagen */}
-                                <div className="h-40 -mx-4 -mt-4 mb-3 bg-gray-100 flex items-center justify-center relative border-b border-gray-100">
+                                <div className="h-24 -mx-3 -mt-3 mb-2 bg-gray-50 flex items-center justify-center relative border-b border-gray-100 overflow-hidden rounded-t-xl group">
                                     {prod.imagen_url ? (
                                         <img
                                             src={`${API_BASE_URL}${prod.imagen_url}`}
                                             alt={prod.nombre}
-                                            className="w-full h-full object-contain p-2 rounded-t-xl"
+                                            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
                                         />
                                     ) : (
                                         <ShoppingCart size={40} className="text-gray-300" />
@@ -196,20 +196,20 @@ const Store = () => {
                                 </div>
 
                                 {/* Info */}
-                                <div>
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="text-[10px] font-bold text-primary-600 uppercase bg-primary-50 px-2 py-0.5 rounded">
+                                <div className="flex-1 flex flex-col justify-start">
+                                    <div className="flex justify-between items-start mb-1 gap-1">
+                                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[60%]">
                                             {prod.categoria}
                                         </span>
-                                        <span className={`text-[10px] font-bold ${prod.stock > 5 ? 'text-green-600' : 'text-red-500'}`}>
+                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${prod.stock > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                             Stock: {prod.stock}
                                         </span>
                                     </div>
-                                    <h3 className="font-bold text-gray-800 line-clamp-1 text-base leading-tight">{prod.nombre}</h3>
+                                    <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2" title={prod.nombre}>{prod.nombre}</h3>
                                 </div>
 
                                 {/* Precio + botón carrito */}
-                                <div className="mt-3 flex items-center justify-between">
+                                <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
                                     <span className="text-xl font-black text-gray-900">${formatCurrency(prod.precio)}</span>
 
                                     {/* Botón + / control cantidad */}
