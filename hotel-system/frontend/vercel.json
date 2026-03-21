@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://hbalconplaza-001-site1.site4future.com/api/:path*"
+      "destination": "/api/proxy"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "http://hbalconplaza-001-site1.site4future.com/uploads/:path*"
+      "destination": "/api/proxy"
     }
   ]
 }
