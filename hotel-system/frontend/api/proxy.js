@@ -22,6 +22,11 @@ export default async function handler(req, res) {
             }
         };
 
+        // Enviar el JWT que viene del cliente en un header separado para no colisionar con la autenticación Basic de SmarterASP
+        if (req.headers.authorization) {
+            fetchOptions.headers['x-auth-token'] = req.headers.authorization;
+        }
+
         // Si es una petición con cuerpo (POST, PUT, etc)
         if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
             fetchOptions.body = JSON.stringify(req.body);

@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
-    let token = req.headers['authorization'];
+    // Soporte para ambos headers: 'authorization' usado localmente, y 'x-auth-token' inyectado por el proxy de Vercel
+    let token = req.headers['authorization'] || req.headers['x-auth-token'];
     if (!token) {
         return res.status(403).json({ message: 'No token provided' });
     }
