@@ -142,7 +142,7 @@ const Store = () => {
                                 <div className="h-40 -mx-4 -mt-4 mb-3 bg-gray-100 flex items-center justify-center relative border-b border-gray-100">
                                     {prod.imagen_url ? (
                                         <img
-                                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${prod.imagen_url}`}
+                                            src={prod.imagen_url}
                                             alt={prod.nombre}
                                             className="w-full h-full object-contain p-2 rounded-t-xl"
                                         />

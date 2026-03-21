@@ -230,7 +230,7 @@ const Inventory = () => {
                                         <div className="h-16 w-16 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center relative group">
                                             {prod.imagen_url ? (
                                                 <img 
-                                                    src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${prod.imagen_url}`} 
+                                                    src={prod.imagen_url} 
                                                     alt={prod.nombre} 
                                                     className="w-full h-full object-cover rounded-xl"
                                                 />

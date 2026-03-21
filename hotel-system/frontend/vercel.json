@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://hbalconplaza-001-site1.site4future.com/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "http://hbalconplaza-001-site1.site4future.com/uploads/:path*"
+    }
+  ]
+}
