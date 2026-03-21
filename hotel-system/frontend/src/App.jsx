@@ -19,6 +19,8 @@ import CategoriasGastos from './pages/CategoriasGastos';
 import Reservas from './pages/Reservas';
 import Usuarios from './pages/Usuarios';
 import Roles from './pages/Roles';
+import TiposRegistro from './pages/TiposRegistro';
+import Notas from './pages/Notas';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -65,7 +67,9 @@ const AppRoutes = () => {
                 <Route path="tienda" element={<PrivateRoute code="tienda"><Store /></PrivateRoute>} />
                 <Route path="inventario" element={<PrivateRoute code="inventario"><Inventory /></PrivateRoute>} />
                 <Route path="usuarios" element={<PrivateRoute code="usuarios"><Usuarios /></PrivateRoute>} />
+                <Route path="tipos-registro" element={<PrivateRoute code="tipos_registro"><TiposRegistro /></PrivateRoute>} />
                 <Route path="roles" element={<PrivateRoute code="roles_permisos"><Roles /></PrivateRoute>} />
+                <Route path="notas" element={<PrivateRoute code="notas"><Notas /></PrivateRoute>} />
             </Route>
         </Routes>
     );

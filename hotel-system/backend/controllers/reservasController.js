@@ -6,7 +6,7 @@ exports.getAllReservas = async (req, res) => {
         const pool = await poolPromise;
         const query = `
             SELECT 
-                r.id, r.cliente_id, c.nombre AS cliente_nombre, c.documento as identificacion,
+                r.id, r.cliente_id, c.nombre AS cliente_nombre, c.documento as identificacion, c.telefono,
                 r.numero_personas, r.valor_total, r.valor_abonado, 
                 r.fecha_entrada, r.fecha_salida, r.estado, r.FechaCreacion,
                 (

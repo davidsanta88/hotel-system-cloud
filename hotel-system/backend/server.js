@@ -8,6 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+app.use('/api/uploads', express.static('uploads'));
 
 // Main Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -25,6 +26,8 @@ app.use('/api/categorias-gastos', require('./routes/categorias_gastos'));
 app.use('/api/gastos', require('./routes/gastos'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/roles', require('./routes/roles'));
+app.use('/api/tipos-registro', require('./routes/tiposRegistro'));
+app.use('/api/notas', require('./routes/notas'));
 const ventasRoutes = require('./routes/ventas');
 const clientesRoutes = require('./routes/clientes');
 const municipiosRoutes = require('./routes/municipios');

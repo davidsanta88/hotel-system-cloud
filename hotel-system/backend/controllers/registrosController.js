@@ -4,10 +4,12 @@ exports.getRegistros = async (req, res) => {
     try {
         const pool = await poolPromise;
         const result = await pool.request().query(`
-            SELECT r.*, h.numero as numero_habitacion, c.nombre as nombre_cliente 
+            SELECT r.*, h.numero as numero_habitacion, c.nombre as nombre_cliente, tr.nombre as tipo_registro_nombre
             FROM registros r
             JOIN habitaciones h ON r.habitacion_id = h.id
             JOIN clientes c ON r.cliente_id = c.id
+            LEFT JOIN tipos_registro tr ON r.tipo_registro_id = tr.id
+            ORDER BY r.fecha_creacion DESC
         `);
         res.json(result.recordset);
     } catch (err) {
@@ -19,12 +21,13 @@ exports.getActiveRegistros = async (req, res) => {
     try {
         const pool = await poolPromise;
         const result = await pool.request().query(`
-            SELECT r.id, h.numero as numero_habitacion, c.nombre as nombre_cliente 
+            SELECT r.*, c.nombre as cliente_nombre, h.numero as habitacion_numero, tr.nombre as tipo_registro_nombre
             FROM registros r
-            JOIN habitaciones h ON r.habitacion_id = h.id
             JOIN clientes c ON r.cliente_id = c.id
+            JOIN habitaciones h ON r.habitacion_id = h.id
+            LEFT JOIN tipos_registro tr ON r.tipo_registro_id = tr.id
             WHERE r.estado = 'activa'
-            ORDER BY h.numero ASC
+            ORDER BY r.fecha_creacion DESC
         `);
         res.json(result.recordset);
     } catch (err) {
@@ -79,7 +82,7 @@ exports.getRegistroById = async (req, res) => {
 
 exports.createRegistro = async (req, res) => {
     try {
-        const { habitacion_id, huespedes, fecha_ingreso, fecha_salida, total, medio_pago_id, valor_cobrado, notas } = req.body;
+        const { habitacion_id, cliente_id, fecha_ingreso, fecha_salida, huespedes, total, medio_pago_id, valor_cobrado, notas, tipo_registro_id } = req.body;
         const pool = await poolPromise;
         const transaction = new sql.Transaction(pool);
         await transaction.begin();
@@ -109,7 +112,6 @@ exports.createRegistro = async (req, res) => {
                             .input('tipo_documento', sql.VarChar, huesped.tipo_documento || 'CC')
                             .input('telefono', sql.VarChar, huesped.telefono || null)
                             .input('email', sql.VarChar, huesped.email || null)
-                            .input('email', sql.VarChar, huesped.email || null)
                             .input('municipio_origen_id', sql.Int, huesped.municipio_origen_id || null)
                             .input('usuario', sql.VarChar, req.userName)
                             .query('INSERT INTO clientes (nombre, documento, tipo_documento, telefono, email, municipio_origen_id, UsuarioCreacion) OUTPUT inserted.id VALUES (@nombre, @documento, @tipo_documento, @telefono, @email, @municipio_origen_id, @usuario)');
@@ -128,10 +130,15 @@ exports.createRegistro = async (req, res) => {
                 .input('fecha_salida', sql.Date, fecha_salida)
                 .input('total', sql.Decimal(10,2), total)
                 .input('medio_pago_id', sql.Int, medio_pago_id || null)
-                .input('valor_cobrado', sql.Decimal(10,2), valor_cobrado || total)
+                .input('valor_cobrado', sql.Decimal(10,2), valor_cobrado || 0)
                 .input('notas', sql.NVarChar(sql.MAX), notas || null)
+                .input('tipo_registro_id', sql.Int, tipo_registro_id || 1) // 1 = Formal por defecto
                 .input('usuario', sql.VarChar, req.userName)
-                .query('INSERT INTO registros (habitacion_id, cliente_id, fecha_ingreso, fecha_salida, total, medio_pago_id, valor_cobrado, notas, UsuarioCreacion) OUTPUT inserted.id VALUES (@habitacion_id, @cliente_id, @fecha_ingreso, @fecha_salida, @total, @medio_pago_id, @valor_cobrado, @notas, @usuario)');
+                .query(`
+                    INSERT INTO registros (habitacion_id, cliente_id, fecha_ingreso, fecha_salida, estado, total, medio_pago_id, valor_cobrado, notas, tipo_registro_id, UsuarioCreacion)
+                    OUTPUT inserted.id
+                    VALUES (@habitacion_id, @cliente_id, @fecha_ingreso, @fecha_salida, 'activa', @total, @medio_pago_id, @valor_cobrado, @notas, @tipo_registro_id, @usuario)
+                `);
 
             const registro_id = resInsert.recordset[0].id;
 

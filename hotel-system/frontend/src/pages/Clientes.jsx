@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, MessageSquare } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -164,7 +164,20 @@ const Clientes = () => {
                                         <td className="p-4 font-medium text-gray-800">{cliente.documento}</td>
                                         <td className="p-4 text-gray-600">{cliente.nombre}</td>
                                         <td className="p-4 text-gray-600 text-sm">
-                                            <div>{cliente.telefono || '-'}</div>
+                                            <div className="flex items-center gap-2">
+                                                <span>{cliente.telefono || '-'}</span>
+                                                {cliente.telefono && (
+                                                    <a 
+                                                        href={`https://wa.me/${cliente.telefono.replace(/\s+/g, '')}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-green-600 hover:text-green-800 transition-colors"
+                                                        title="Escribir al WhatsApp"
+                                                    >
+                                                        <MessageSquare size={16} />
+                                                    </a>
+                                                )}
+                                            </div>
                                             <div className="text-gray-400 text-[10px]">{cliente.email || ''}</div>
                                         </td>
                                         <td className="p-4 text-gray-600 text-sm whitespace-nowrap">

@@ -19,7 +19,7 @@ const config = {
     port: serverPort,
     database: process.env.DB_DATABASE,
     options: {
-        encrypt: false, // para desarrollo local y conexiones IP directas, dependiendo de la configuración del server se puede cambiar
+        encrypt: process.env.DB_ENCRYPT === 'true', // true para Azure
         trustServerCertificate: true
     }
 };

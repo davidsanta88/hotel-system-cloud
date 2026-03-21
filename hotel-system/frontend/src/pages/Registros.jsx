@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
-import { Plus, CheckCircle, XCircle, Search, Eye } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Search, Eye, Edit } from 'lucide-react';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
 import useTableData from '../hooks/useTableData';
 import Pagination from '../components/common/Pagination';
@@ -13,6 +13,7 @@ const Registros = () => {
     const [clientes, setClientes] = useState([]);
     const [municipios, setMunicipios] = useState([]);
     const [mediosPago, setMediosPago] = useState([]);
+    const [tiposRegistro, setTiposRegistro] = useState([]);
     const [clienteSearch, setClienteSearch] = useState('');
     const [selectedCliente, setSelectedCliente] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -43,7 +44,8 @@ const Registros = () => {
         total: '',
         medio_pago_id: '',
         valor_cobrado: '',
-        notas: ''
+        notas: '',
+        tipo_registro_id: ''
     });
 
 
@@ -63,13 +65,14 @@ const Registros = () => {
 
     const fetchData = async () => {
         try {
-            const [resRegistros, resHab, resClientes, resMuni, resMedios, resProd] = await Promise.all([
+            const [resRegistros, resHab, resClientes, resMuni, resMedios, resProd, resTipos] = await Promise.all([
                 api.get('/registros'),
                 api.get('/habitaciones'),
                 api.get('/clientes'),
                 api.get('/municipios'),
                 api.get('/medios-pago'),
-                api.get('/productos')
+                api.get('/productos'),
+                api.get('/tipos-registro')
             ]);
             setRegistros(resRegistros.data);
             setHabitaciones(resHab.data);
@@ -77,6 +80,7 @@ const Registros = () => {
             setMunicipios(resMuni.data);
             setMediosPago(resMedios.data);
             setProductos(resProd.data);
+            setTiposRegistro(resTipos.data);
         } catch (error) {
             Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
         } finally {
@@ -158,6 +162,7 @@ const Registros = () => {
             valor_cobrado: selectedRegistroDetails.valor_cobrado,
             notas: selectedRegistroDetails.notas || '',
             estado: selectedRegistroDetails.estado,
+            tipo_registro_id: selectedRegistroDetails.tipo_registro_id || '',
             huespedes: [...selectedRegistroDetails.huespedes]
         });
         setIsEditing(true);
@@ -352,7 +357,7 @@ const Registros = () => {
                     <p className="text-sm text-gray-500">Gestione los ingresos y el alojamiento diario</p>
                 </div>
                 <button onClick={() => {
-                    setFormData({ habitacion_id: '', fecha_ingreso: '', fecha_salida: '', total: '', medio_pago_id: '', valor_cobrado: '', valor_pagado: '' });
+                    setFormData({ habitacion_id: '', fecha_ingreso: '', fecha_salida: '', total: '', medio_pago_id: '', valor_cobrado: '', valor_pagado: '', tipo_registro_id: '' });
                     setHuespedesList([]);
                     setGuestForm({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '' });
                     setSelectedCliente(null);
@@ -391,7 +396,10 @@ const Registros = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {format(new Date(res.fecha_ingreso), 'dd/MM/yyyy')} - {format(new Date(res.fecha_salida), 'dd/MM/yyyy')}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatCurrency(res.total)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div className="font-medium text-gray-900">${formatCurrency(res.total)}</div>
+                                            <div className="text-[10px] text-gray-400 font-bold uppercase">{res.tipo_registro_nombre || 'Formal'}</div>
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                 ${res.estado === 'activa' ? 'bg-green-100 text-green-800' : 
@@ -576,7 +584,15 @@ const Registros = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="md:col-span-1"></div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Tipo de Registro *</label>
+                                <select name="tipo_registro_id" required className="input-field" value={formData.tipo_registro_id} onChange={handleFormChange}>
+                                    <option value="">Seleccione tipo...</option>
+                                    {tiposRegistro.filter(t => t.visualizar).map(t => (
+                                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
                             
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Fecha Check-in</label>
@@ -628,10 +644,9 @@ const Registros = () => {
                             <h2 className="text-2xl font-bold text-gray-800">Detalles del Registro #{selectedRegistroDetails.id}</h2>
                             <div className="flex items-center gap-2">
                                 {!isEditing && (
-                                    <button onClick={startEditing} className="p-2 text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Editar Registro">
-                                        <Plus size={20} className="rotate-45" /> {/* Use plus rotated as pen substitute if no edit icon, but I have plus, check, x, search, eye */}
-                                        {/* Lucide usually has Edit, let's check imports. It has Eye, Plus, CheckCircle, XCircle, Search */}
-                                        <Search size={18} /> {/* Using Search as a placeholder for edit if I don't import more, but wait, I can just add edit to imports */}
+                                    <button onClick={startEditing} className="flex items-center gap-1 bg-primary-50 text-primary-600 px-3 py-1.5 rounded-lg hover:bg-primary-100 transition-colors border border-primary-200" title="Editar Registro">
+                                        <Edit size={16} />
+                                        <span className="text-xs font-bold uppercase">Editar</span>
                                     </button>
                                 )}
                                 <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase
@@ -678,6 +693,20 @@ const Registros = () => {
                                     <div className="col-span-2">
                                         <span className="text-gray-500 block">Titular (Responsable)</span>
                                         <span className="font-medium text-gray-900">{selectedRegistroDetails.nombre_cliente} - {selectedRegistroDetails.documento_cliente}</span>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <span className="text-gray-500 block">Tipo de Registro</span>
+                                        {isEditing ? (
+                                            <select name="tipo_registro_id" className="input-field py-1" value={editData.tipo_registro_id} onChange={handleEditFormChange}>
+                                                {tiposRegistro.map(t => (
+                                                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100 uppercase">
+                                                {selectedRegistroDetails.tipo_registro_nombre || 'Formal'}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -843,12 +872,53 @@ const Registros = () => {
                                 </h3>
                                 
                                 {isEditing && (
-                                    <div className="bg-gray-50 p-3 rounded-lg border mb-3">
+                                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                                        <div className="relative mb-3">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Buscar cliente existente..." 
+                                                className="input-field pl-10 text-xs py-1.5"
+                                                value={clienteSearch}
+                                                onChange={(e) => setClienteSearch(e.target.value)}
+                                            />
+                                            <Search className="absolute left-3 top-1.5 text-gray-400" size={16} />
+                                            {clienteSearch.length > 0 && (
+                                                <div className="absolute z-[70] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                                                    {filteredClientes.length > 0 ? (
+                                                        filteredClientes.map(cliente => (
+                                                            <div 
+                                                                key={cliente.id} 
+                                                                className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-0 text-xs"
+                                                                onClick={() => {
+                                                                    setGuestEditForm({
+                                                                        id: cliente.id,
+                                                                        nombre: cliente.nombre,
+                                                                        documento: cliente.documento,
+                                                                        tipo_documento: cliente.tipo_documento || 'CC',
+                                                                        telefono: cliente.telefono || '',
+                                                                        email: cliente.email || '',
+                                                                        municipio_origen_id: cliente.municipio_origen_id || ''
+                                                                    });
+                                                                    setClienteSearch('');
+                                                                }}
+                                                            >
+                                                                <div className="font-medium">{cliente.nombre}</div>
+                                                                <div className="text-gray-500">Doc: {cliente.documento}</div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="p-2 text-xs text-gray-500 text-center">No encontrado. Ingresa datos manuales.</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="grid grid-cols-2 gap-2 mb-2">
                                             <input type="text" placeholder="Nombre" className="input-field py-1 text-xs" value={guestEditForm.nombre} onChange={e => setGuestEditForm({...guestEditForm, nombre: e.target.value})} />
                                             <input type="text" placeholder="Documento" className="input-field py-1 text-xs" value={guestEditForm.documento} onChange={e => setGuestEditForm({...guestEditForm, documento: e.target.value})} />
                                         </div>
-                                        <button onClick={handleAddGuestEdit} className="btn-primary py-1 text-xs w-full">Añadir Huésped</button>
+                                        <button onClick={handleAddGuestEdit} className="btn-primary py-1.5 text-xs w-full flex items-center justify-center gap-2">
+                                            <Plus size={14} /> Añadir Huésped
+                                        </button>
                                     </div>
                                 )}
 

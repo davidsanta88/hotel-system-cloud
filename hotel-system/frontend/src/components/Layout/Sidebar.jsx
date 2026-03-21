@@ -1,14 +1,31 @@
 import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { LayoutDashboard, Bed, CalendarCheck, Store as ShoppingStore, LogOut, Hotel, Users, MapPin, CreditCard, PieChart, Package, TrendingDown, UserCog, ShieldCheck } from 'lucide-react';
+import { 
+    LayoutDashboard, 
+    Bed, 
+    CalendarCheck, 
+    Store as ShoppingStore, 
+    LogOut, 
+    Hotel, 
+    Users, 
+    MapPin, 
+    CreditCard, 
+    PieChart, 
+    Package, 
+    TrendingDown, 
+    UserCog, 
+    ShieldCheck, 
+    ClipboardList,
+    StickyNote
+} from 'lucide-react';
 
 const Sidebar = () => {
     const { user, logout } = useContext(AuthContext);
+
     const hasPermission = (code) => {
         if (!code) return true;
         if (user?.rol_id === 1) return true;
-        // Ahora buscamos el objeto {p, v, e, d} y validamos que v sea true
         return user?.permisos?.some(p => p.p === code && p.v);
     };
 
@@ -28,6 +45,7 @@ const Sidebar = () => {
         {
             title: 'Administración y Tesorería',
             items: [
+                { name: 'Notas y Alertas', path: '/notas', icon: <StickyNote size={20} />, code: 'notas' },
                 { name: 'Reportes', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
                 { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' }
             ]
@@ -41,6 +59,7 @@ const Sidebar = () => {
                 { name: 'O. Lugares', path: '/municipios', icon: <MapPin size={20} />, code: 'municipios' },
                 { name: 'Cat. Productos', path: '/categorias-productos', icon: <Package size={20} />, code: 'categorias_productos' },
                 { name: 'Cat. Gastos/Ingresos', path: '/categorias-gastos', icon: <Package size={20} />, code: 'categorias_gastos' },
+                { name: 'Tipos de Registro', path: '/tipos-registro', icon: <ClipboardList size={20} />, code: 'tipos_registro' },
                 { name: 'Personal (Usuarios)', path: '/usuarios', icon: <UserCog size={20} />, code: 'usuarios' },
                 { name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' }
             ]

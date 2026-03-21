@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "nombre": "DISPONIBLE",
+    "UsuarioCreacion": null,
+    "FechaCreacion": null,
+    "UsuarioModificacion": null,
+    "FechaModificacion": null
+  },
+  {
+    "id": 2,
+    "nombre": "OCUPADA",
+    "UsuarioCreacion": null,
+    "FechaCreacion": null,
+    "UsuarioModificacion": null,
+    "FechaModificacion": null
+  },
+  {
+    "id": 3,
+    "nombre": "MANTENIMIENTO",
+    "UsuarioCreacion": null,
+    "FechaCreacion": null,
+    "UsuarioModificacion": null,
+    "FechaModificacion": null
+  },
+  {
+    "id": 4,
+    "nombre": "NO DISPONIBLE",
+    "UsuarioCreacion": null,
+    "FechaCreacion": null,
+    "UsuarioModificacion": null,
+    "FechaModificacion": null
+  }
+]

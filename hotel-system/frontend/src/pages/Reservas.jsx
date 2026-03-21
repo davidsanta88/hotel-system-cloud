@@ -6,7 +6,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Select from 'react-select';
-import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2 } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
@@ -349,7 +349,23 @@ const Reservas = () => {
                                     <td className="p-4 font-bold text-blue-600">#{r.id}</td>
                                     <td className="p-4">
                                         <div className="font-bold text-gray-800">{r.cliente_nombre}</div>
-                                        <div className="text-xs text-gray-500">{r.identificacion || r.documento}</div>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs text-gray-500 font-medium">{r.identificacion || r.documento}</span>
+                                            {r.telefono && (
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded leading-none">{r.telefono}</span>
+                                                    <a 
+                                                        href={`https://wa.me/${r.telefono.replace(/\s+/g, '')}`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-green-600 hover:text-green-800 transition-colors"
+                                                        title="Escribir al WhatsApp"
+                                                    >
+                                                        <MessageSquare size={12} />
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="p-4">
                                         <div className="flex flex-wrap gap-1">

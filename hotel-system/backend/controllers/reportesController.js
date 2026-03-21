@@ -52,13 +52,39 @@ exports.getResumenGeneral = async (req, res) => {
         const pool = await poolPromise;
         const result = await pool.request().query(`
             SELECT 
-                (SELECT COUNT(*) FROM habitaciones WHERE estado_nombre = 'Disponible') as hab_disponibles,
-                (SELECT COUNT(*) FROM registros WHERE estado = 'activa') as hab_ocupadas,
+                (SELECT COUNT(*) FROM habitaciones h JOIN estados_habitacion e ON h.estado_id = e.id WHERE LTRIM(RTRIM(UPPER(e.nombre))) = 'DISPONIBLE') as hab_disponibles,
+                (SELECT COUNT(*) FROM habitaciones h JOIN estados_habitacion e ON h.estado_id = e.id WHERE LTRIM(RTRIM(UPPER(e.nombre))) = 'OCUPADA') as hab_ocupadas,
                 (SELECT COUNT(*) FROM productos WHERE stock <= stock_minimo) as alertas_stock,
-                (SELECT SUM(total) FROM ventas WHERE CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)) as ventas_hoy
+                (SELECT COUNT(*) FROM registros WHERE CAST(fecha_ingreso AS DATE) = CAST(GETDATE() AS DATE)) as registros_hoy,
+                (ISNULL((SELECT SUM(total) FROM ventas WHERE CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)), 0)) as ventas_hoy,
+                (ISNULL((SELECT SUM(total) FROM ventas WHERE CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)), 0) + 
+                 ISNULL((SELECT SUM(valor_cobrado) FROM registros WHERE CAST(FechaCreacion AS DATE) = CAST(GETDATE() AS DATE)), 0)) as ingresos_hoy,
+                (ISNULL((SELECT SUM(monto) FROM gastos WHERE CAST(fecha_gasto AS DATE) = CAST(GETDATE() AS DATE)), 0)) as egresos_hoy
         `);
-        res.json(result.recordset[0]);
+
+        // Obtener actividad reciente
+        const actividad = await pool.request().query(`
+            SELECT TOP 5 r.id, c.nombre as cliente, h.numero as habitacion, r.fecha_ingreso as fecha, r.estado, 'registro' as tipo
+            FROM registros r
+            JOIN clientes c ON r.cliente_id = c.id
+            JOIN habitaciones h ON r.habitacion_id = h.id
+            ORDER BY r.FechaCreacion DESC;
+
+            SELECT TOP 5 v.id, u.nombre as empleado, v.total, v.fecha, 'venta' as tipo
+            FROM ventas v
+            JOIN usuarios u ON v.empleado_id = u.id
+            ORDER BY v.fecha DESC;
+        `);
+
+        res.json({
+            ...result.recordset[0],
+            recientes: {
+                registros: actividad.recordsets[0],
+                ventas: actividad.recordsets[1]
+            }
+        });
     } catch (err) {
+        console.error('Error en getResumenGeneral:', err);
         res.status(500).json({ message: err.message });
     }
 };
