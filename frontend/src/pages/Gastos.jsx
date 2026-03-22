@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Plus, Trash2, Filter, Search, Paperclip, ImageIcon, Edit2 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, cleanNumericValue } from '../utils/format';
 import { usePermissions } from '../hooks/usePermissions';
 
 const Gastos = () => {
@@ -394,11 +394,16 @@ const Gastos = () => {
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">$</span>
                                     <input
                                         type="text"
+                                        inputMode="numeric"
                                         required
                                         className={`input-field pl-8 font-black text-xl ${current.tipo === 'Ingreso' ? 'text-emerald-700' : 'text-red-700'}`}
-                                        placeholder="0.00"
-                                        value={formatCurrency(current.monto)}
-                                        onChange={e => setCurrent({...current, monto: cleanNumericValue(e.target.value)})}
+                                        placeholder="0"
+                                        value={current.monto === 0 || current.monto === '0' ? '' : current.monto}
+                                        onChange={e => {
+                                            // Permite solo números y punto decimal
+                                            const raw = e.target.value.replace(/[^0-9.]/g, '');
+                                            setCurrent({...current, monto: raw});
+                                        }}
                                     />
                                 </div>
                             </div>

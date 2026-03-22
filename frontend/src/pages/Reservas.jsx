@@ -6,7 +6,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Select from 'react-select';
-import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
@@ -24,6 +24,13 @@ const Reservas = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [isNewClient, setIsNewClient] = useState(false);
+    // Detail / abonos modal
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [selectedReserva, setSelectedReserva] = useState(null);
+    const [abonos, setAbonos] = useState([]);
+    const [abonoForm, setAbonoForm] = useState({ monto: '', medio_pago: '', notas: '' });
+    const [showAbonoForm, setShowAbonoForm] = useState(false);
+    const [abonoLoading, setAbonoLoading] = useState(false);
     
     // Form state
     const [formData, setFormData] = useState({
@@ -41,7 +48,8 @@ const Reservas = () => {
         fecha_salida: '',
         numero_personas: 1,
         valor_total: 0,
-        valor_abonado: 0
+        valor_abonado: 0,
+        observaciones: ''
     });
 
     useEffect(() => {
@@ -83,50 +91,30 @@ const Reservas = () => {
     };
 
     const calendarEvents = useMemo(() => {
-        return reservas.map(r => ({
-            id: r.id,
-            title: `${r.cliente_nombre} - Hab: ${r.habitaciones.map(h => h.numero).join(', ')}`,
-            start: new Date(r.fecha_entrada + 'T00:00:00'),
-            end: new Date(r.fecha_salida + 'T23:59:59'),
-            resource: r,
-            allDay: true
-        }));
+        return reservas.map(r => {
+            // Strip time portion just in case backend returns ISO datetime string
+            const fechaEntrada = r.fecha_entrada ? r.fecha_entrada.split('T')[0] : '';
+            const fechaSalida = r.fecha_salida ? r.fecha_salida.split('T')[0] : '';
+            const habs = r.habitaciones?.map(h => `Hab ${h.numero}`).join(', ') || '';
+            return {
+                id: r.id,
+                title: `${r.cliente_nombre} — ${habs}`,
+                start: new Date(fechaEntrada + 'T12:00:00'),
+                end: new Date(fechaSalida + 'T12:00:00'),
+                resource: r,
+                allDay: true
+            };
+        });
     }, [reservas]);
 
     const handleSelectEvent = (event) => {
         const r = event.resource;
-        Swal.fire({
-            title: `Reserva #${r.id}`,
-            html: `
-                <div class="text-left font-sans">
-                    <p class="py-1"><strong>Cliente:</strong> ${r.cliente_nombre}</p>
-                    <p class="py-1"><strong>Identificación:</strong> ${r.identificacion || r.documento}</p>
-                    <p class="py-1"><strong>Habitaciones:</strong> ${r.habitaciones.map(h => h.numero).join(', ')}</p>
-                    <p class="py-1"><strong>Personas:</strong> ${r.numero_personas}</p>
-                    <p class="py-1"><strong>Entrada:</strong> ${moment(r.fecha_entrada).format('DD/MM/YYYY')}</p>
-                    <p class="py-1"><strong>Salida:</strong> ${moment(r.fecha_salida).format('DD/MM/YYYY')}</p>
-                    <p class="py-1"><strong>Total:</strong> <span class="text-emerald-700 font-black">$${formatCurrency(r.valor_total)}</span></p>
-                    <p class="py-1"><strong>Abonado:</strong> <span class="text-blue-700 font-black">$${formatCurrency(r.valor_abonado)}</span></p>
-                    <p class="py-1"><strong>Estado:</strong> <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${r.estado === 'Cancelada' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">${r.estado}</span></p>
-                </div>
-            `,
-            showCancelButton: true,
-            showDenyButton: canEdit && r.estado !== 'Cancelada' && r.estado !== 'Concluida',
-            confirmButtonText: canDelete && r.estado !== 'Cancelada' ? 'Anular Reserva' : null,
-            denyButtonText: 'Editar Reserva',
-            cancelButtonText: 'Cerrar',
-            confirmButtonColor: '#ef4444',
-            denyButtonColor: '#3b82f6',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                updateStatus(r.id, 'Cancelada');
-            } else if (result.isDenied) {
-                handleEdit(r);
-            }
-        });
+        handleViewDetail(r);
     };
 
+
     const handleEdit = (r) => {
+        setShowDetailModal(false);
         setIsNewClient(false);
         setFormData({
             id: r.id,
@@ -141,9 +129,74 @@ const Reservas = () => {
             fecha_salida: r.fecha_salida.split('T')[0],
             numero_personas: r.numero_personas,
             valor_total: r.valor_total,
-            valor_abonado: r.valor_abonado
+            valor_abonado: r.valor_abonado,
+            observaciones: r.observaciones || ''
         });
         setShowModal(true);
+    };
+
+    const handleViewDetail = async (r) => {
+        setSelectedReserva(r);
+        setAbonos([]);
+        setAbonoForm({ monto: '', medio_pago: '', notas: '' });
+        setShowAbonoForm(false);
+        setShowDetailModal(true);
+        try {
+            const res = await api.get(`/reservas/${r.id}/abonos`);
+            setAbonos(res.data);
+        } catch (err) {
+            console.error('Error cargando abonos', err);
+        }
+    };
+
+    const handleAddAbono = async (e) => {
+        e.preventDefault();
+        setAbonoLoading(true);
+        try {
+            await api.post(`/reservas/${selectedReserva.id}/abonos`, abonoForm);
+            const [resAbonos, resReservas] = await Promise.all([
+                api.get(`/reservas/${selectedReserva.id}/abonos`),
+                api.get('/reservas')
+            ]);
+            setAbonos(resAbonos.data);
+            // Update the selected reserva totals from fresh list
+            const updated = resReservas.data.find(r => r.id === selectedReserva.id);
+            if (updated) setSelectedReserva(updated);
+            setReservas(resReservas.data);
+            setAbonoForm({ monto: '', medio_pago: '', notas: '' });
+            setShowAbonoForm(false);
+            Swal.fire({ icon: 'success', title: 'Abono registrado', timer: 1500, showConfirmButton: false });
+        } catch (err) {
+            Swal.fire('Error', err.response?.data?.message || 'No se pudo registrar el abono', 'error');
+        } finally {
+            setAbonoLoading(false);
+        }
+    };
+
+    const handleDeleteAbono = async (abonoId) => {
+        const confirm = await Swal.fire({
+            title: '¿Eliminar abono?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!confirm.isConfirmed) return;
+        try {
+            await api.delete(`/reservas/${selectedReserva.id}/abonos/${abonoId}`);
+            const [resAbonos, resReservas] = await Promise.all([
+                api.get(`/reservas/${selectedReserva.id}/abonos`),
+                api.get('/reservas')
+            ]);
+            setAbonos(resAbonos.data);
+            const updated = resReservas.data.find(r => r.id === selectedReserva.id);
+            if (updated) setSelectedReserva(updated);
+            setReservas(resReservas.data);
+        } catch (err) {
+            Swal.fire('Error', 'No se pudo eliminar el abono', 'error');
+        }
     };
 
     const updateStatus = async (id, newStatus) => {
@@ -219,7 +272,8 @@ const Reservas = () => {
             fecha_salida: '',
             numero_personas: 1,
             valor_total: 0,
-            valor_abonado: 0
+            valor_abonado: 0,
+            observaciones: ''
         });
         setIsNewClient(false);
     };
@@ -403,6 +457,13 @@ const Reservas = () => {
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2">
+                                            <button 
+                                                onClick={() => handleViewDetail(r)}
+                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                title="Ver Detalle y Abonos"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
                                             {canEdit && r.estado !== 'Cancelada' && r.estado !== 'Concluida' && (
                                                 <button 
                                                     onClick={() => handleEdit(r)}
@@ -612,6 +673,17 @@ const Reservas = () => {
                                 </div>
                             </div>
 
+                            <div className="md:col-span-2">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Observaciones / Notas</label>
+                                    <textarea
+                                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm"
+                                        rows="3"
+                                        placeholder="Requerimientos especiales, notas de la reserva..."
+                                        value={formData.observaciones}
+                                        onChange={(e) => setFormData({...formData, observaciones: e.target.value})}
+                                    />
+                                </div>
+
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
@@ -629,6 +701,174 @@ const Reservas = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+
+            {/* Modal Detalle / Historial de Abonos */}
+            {showDetailModal && selectedReserva && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+                        
+                        {/* Header */}
+                        <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center sticky top-0 z-10 rounded-t-3xl">
+                            <div>
+                                <h2 className="text-xl font-black text-gray-800">Reserva #{selectedReserva.id}</h2>
+                                <p className="text-sm text-gray-500 font-medium">{selectedReserva.cliente_nombre}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {canEdit && selectedReserva.estado !== 'Cancelada' && selectedReserva.estado !== 'Concluida' && (
+                                    <button
+                                        onClick={() => handleEdit(selectedReserva)}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors font-bold text-xs"
+                                    >
+                                        <Edit2 size={14} /> Editar
+                                    </button>
+                                )}
+                                <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-200 rounded-full text-gray-400 transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+
+                            {/* Resumen financiero */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 text-center">
+                                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Reserva</span>
+                                    <span className="text-xl font-black text-gray-800">$ {formatCurrency(selectedReserva.valor_total)}</span>
+                                </div>
+                                <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 text-center">
+                                    <span className="block text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1">Total Abonado</span>
+                                    <span className="text-xl font-black text-emerald-700">$ {formatCurrency(selectedReserva.valor_abonado)}</span>
+                                </div>
+                                <div className={`rounded-2xl p-4 border text-center ${(selectedReserva.valor_total - selectedReserva.valor_abonado) > 0 ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
+                                    <span className={`block text-[10px] font-bold uppercase tracking-widest mb-1 ${(selectedReserva.valor_total - selectedReserva.valor_abonado) > 0 ? 'text-red-400' : 'text-blue-400'}`}>Saldo Pendiente</span>
+                                    <span className={`text-xl font-black ${(selectedReserva.valor_total - selectedReserva.valor_abonado) > 0 ? 'text-red-700' : 'text-blue-700'}`}>
+                                        $ {formatCurrency(Math.max(selectedReserva.valor_total - selectedReserva.valor_abonado, 0))}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Info reserva */}
+                            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 text-sm grid grid-cols-2 gap-2">
+                                <div><span className="text-gray-400 font-medium">Habitaciones: </span><span className="font-bold text-gray-700">{selectedReserva.habitaciones?.map(h => `Hab ${h.numero}`).join(', ')}</span></div>
+                                <div><span className="text-gray-400 font-medium">Personas: </span><span className="font-bold text-gray-700">{selectedReserva.numero_personas}</span></div>
+                                <div><span className="text-gray-400 font-medium">Entrada: </span><span className="font-bold text-gray-700">{moment(selectedReserva.fecha_entrada).format('DD/MM/YYYY')}</span></div>
+                                <div><span className="text-gray-400 font-medium">Salida: </span><span className="font-bold text-gray-700">{moment(selectedReserva.fecha_salida).format('DD/MM/YYYY')}</span></div>
+                                {selectedReserva.observaciones && (
+                                    <div className="col-span-2"><span className="text-gray-400 font-medium">Observaciones: </span><span className="font-bold text-gray-700">{selectedReserva.observaciones}</span></div>
+                                )}
+                            </div>
+
+                            {/* Historial de Abonos */}
+                            <div>
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-black text-gray-800 flex items-center gap-2">
+                                        <DollarSign size={18} className="text-emerald-600" />
+                                        Historial de Abonos ({abonos.length})
+                                    </h3>
+                                    {selectedReserva.estado !== 'Cancelada' && (selectedReserva.valor_total - selectedReserva.valor_abonado) > 0 && (
+                                        <button
+                                            onClick={() => setShowAbonoForm(!showAbonoForm)}
+                                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-bold text-xs shadow-md shadow-emerald-500/20"
+                                        >
+                                            <Plus size={14} /> {showAbonoForm ? 'Cancelar' : 'Registrar Abono'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Formulario de nuevo abono */}
+                                {showAbonoForm && (
+                                    <form onSubmit={handleAddAbono} className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-4 space-y-3 animate-fade-in">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-1">Monto del Abono *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-sm font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                                                    placeholder="0"
+                                                    value={formatCurrency(abonoForm.monto)}
+                                                    onChange={(e) => setAbonoForm({...abonoForm, monto: cleanNumericValue(e.target.value)})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-1">Medio de Pago</label>
+                                                <select
+                                                    className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                                                    value={abonoForm.medio_pago}
+                                                    onChange={(e) => setAbonoForm({...abonoForm, medio_pago: e.target.value})}
+                                                >
+                                                    <option value="">- Sin especificar -</option>
+                                                    <option value="Efectivo">Efectivo</option>
+                                                    <option value="Nequi">Nequi</option>
+                                                    <option value="Daviplata">Daviplata</option>
+                                                    <option value="Transferencia">Transferencia</option>
+                                                    <option value="Tarjeta">Tarjeta</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-1">Notas (opcional)</label>
+                                            <input
+                                                type="text"
+                                                className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                                                placeholder="Ej: Pago inicial, cuota 2..."
+                                                value={abonoForm.notas}
+                                                onChange={(e) => setAbonoForm({...abonoForm, notas: e.target.value})}
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={abonoLoading}
+                                            className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                                        >
+                                            {abonoLoading ? 'Guardando...' : <><Save size={16} /> Confirmar Abono</>}
+                                        </button>
+                                    </form>
+                                )}
+
+                                {/* Lista de abonos */}
+                                {abonos.length === 0 ? (
+                                    <div className="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <DollarSign className="mx-auto text-gray-300 mb-2" size={32} />
+                                        <p className="text-sm text-gray-400 font-medium">No hay abonos registrados aún.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {abonos.map((abono, idx) => (
+                                            <div key={abono.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xs">
+                                                        {idx + 1}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-black text-emerald-700 text-sm">+ $ {formatCurrency(abono.monto)}</div>
+                                                        <div className="text-[10px] text-gray-400 flex items-center gap-2">
+                                                            <span>{moment(abono.fecha).format('DD/MM/YYYY HH:mm')}</span>
+                                                            {abono.medio_pago && <span className="bg-gray-100 px-1.5 py-0.5 rounded font-bold">{abono.medio_pago}</span>}
+                                                            {abono.notas && <span className="italic">{abono.notas}</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {canDelete && (
+                                                    <button
+                                                        onClick={() => handleDeleteAbono(abono.id)}
+                                                        className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Eliminar abono"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

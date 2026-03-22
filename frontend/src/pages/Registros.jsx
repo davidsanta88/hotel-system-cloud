@@ -726,7 +726,17 @@ const Registros = () => {
                                     <div>
                                         <span className="text-gray-500 block text-xs">A Cobrar ($)</span>
                                         {isEditing ? (
-                                            <input type="text" name="valor_cobrado" className="input-field py-1 bg-white" value={formatCurrency(editData.valor_cobrado)} onChange={e => setEditData({...editData, valor_cobrado: cleanNumericValue(e.target.value)})} />
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                name="valor_cobrado"
+                                                className="input-field py-1 bg-white"
+                                                value={editData.valor_cobrado === 0 ? '' : editData.valor_cobrado}
+                                                onChange={e => {
+                                                    const raw = e.target.value.replace(/[^0-9.]/g, '');
+                                                    setEditData({...editData, valor_cobrado: raw});
+                                                }}
+                                            />
                                         ) : (
                                             <span className="font-medium text-gray-900">${formatCurrency(selectedRegistroDetails.valor_cobrado)}</span>
                                         )}

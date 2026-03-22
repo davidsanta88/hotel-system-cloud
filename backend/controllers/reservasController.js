@@ -7,7 +7,7 @@ exports.getAllReservas = async (req, res) => {
         const query = `
             SELECT 
                 r.id, r.cliente_id, c.nombre AS cliente_nombre, c.documento as identificacion, c.telefono,
-                r.numero_personas, r.valor_total, r.valor_abonado, 
+                r.numero_personas, r.valor_total, r.valor_abonado, r.observaciones,
                 r.fecha_entrada, r.fecha_salida, r.estado, r.FechaCreacion,
                 (
                     SELECT h.numero, h.tipo_id, rh.habitacion_id, rh.precio_acordado
@@ -35,7 +35,7 @@ exports.getAllReservas = async (req, res) => {
 
 exports.createReserva = async (req, res) => {
     try {
-        const { cliente_id, habitaciones, fecha_entrada, fecha_salida, numero_personas, valor_total, valor_abonado } = req.body;
+        const { cliente_id, habitaciones, fecha_entrada, fecha_salida, numero_personas, valor_total, valor_abonado, observaciones } = req.body;
         const usuario_id = req.userId; // Provided by Auth middleware
 
         if (!cliente_id || !habitaciones || !habitaciones.length || !fecha_entrada || !fecha_salida) {
@@ -83,11 +83,12 @@ exports.createReserva = async (req, res) => {
             reqReserva.input('fecha_entrada', sql.Date, fecha_entrada);
             reqReserva.input('fecha_salida', sql.Date, fecha_salida);
             reqReserva.input('usuario_id', sql.Int, usuario_id);
+            reqReserva.input('observaciones', sql.NVarChar(sql.MAX), observaciones || null);
 
             const insertReservaQuery = `
-                INSERT INTO reservas (cliente_id, numero_personas, valor_total, valor_abonado, fecha_entrada, fecha_salida, usuario_id)
+                INSERT INTO reservas (cliente_id, numero_personas, valor_total, valor_abonado, fecha_entrada, fecha_salida, usuario_id, observaciones)
                 OUTPUT inserted.id
-                VALUES (@cliente_id, @numero_personas, @valor_total, @valor_abonado, @fecha_entrada, @fecha_salida, @usuario_id)
+                VALUES (@cliente_id, @numero_personas, @valor_total, @valor_abonado, @fecha_entrada, @fecha_salida, @usuario_id, @observaciones)
             `;
             
             const reservaResult = await reqReserva.query(insertReservaQuery);
@@ -142,7 +143,7 @@ exports.updateReservaStatus = async (req, res) => {
 exports.updateReserva = async (req, res) => {
     try {
         const { id } = req.params;
-        const { cliente_id, habitaciones, fecha_entrada, fecha_salida, numero_personas, valor_total, valor_abonado } = req.body;
+        const { cliente_id, habitaciones, fecha_entrada, fecha_salida, numero_personas, valor_total, valor_abonado, observaciones } = req.body;
         const usuario_id = req.userId;
 
         if (!cliente_id || !habitaciones || !habitaciones.length || !fecha_entrada || !fecha_salida) {
@@ -190,6 +191,7 @@ exports.updateReserva = async (req, res) => {
             reqReserva.input('valor_abonado', sql.Decimal(10,2), valor_abonado || 0);
             reqReserva.input('fecha_entrada', sql.Date, fecha_entrada);
             reqReserva.input('fecha_salida', sql.Date, fecha_salida);
+            reqReserva.input('observaciones', sql.NVarChar(sql.MAX), observaciones || null);
 
             await reqReserva.query(`
                 UPDATE reservas 
@@ -198,7 +200,8 @@ exports.updateReserva = async (req, res) => {
                     valor_total = @valor_total, 
                     valor_abonado = @valor_abonado, 
                     fecha_entrada = @fecha_entrada, 
-                    fecha_salida = @fecha_salida
+                    fecha_salida = @fecha_salida,
+                    observaciones = @observaciones
                 WHERE id = @id
             `);
 
