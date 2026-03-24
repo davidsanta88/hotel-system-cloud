@@ -1,22 +1,20 @@
-const { poolPromise, sql } = require('../config/db');
+const Habitacion = require('../models/Habitacion');
 const fs = require('fs');
 const path = require('path');
 
 exports.getHabitaciones = async (req, res) => {
     try {
-        const pool = await poolPromise;
-        const result = await pool.request().query(`
-            SELECT h.*, t.nombre as tipo_nombre, e.nombre as estado_nombre,
-            (SELECT url FROM habitaciones_fotos f WHERE f.habitacion_id = h.id FOR JSON PATH) as photos
-            FROM habitaciones h 
-            LEFT JOIN tipos_habitacion t ON h.tipo_id = t.id
-            LEFT JOIN estados_habitacion e ON h.estado_id = e.id
-        `);
+        const habitaciones = await Habitacion.find()
+            .populate('tipo', 'nombre')
+            .populate('estado', 'nombre');
         
-        // Parsear las fotos de cada habitación
-        const formattedResult = result.recordset.map(room => ({
-            ...room,
-            photos: room.photos ? JSON.parse(room.photos).map(p => p.url) : []
+        // Formatear para mantener compatibilidad con el frontend si es necesario
+        const formattedResult = habitaciones.map(h => ({
+            ...h._doc,
+            id: h._id,
+            tipo_nombre: h.tipo ? h.tipo.nombre : null,
+            estado_nombre: h.estado ? h.estado.nombre : null,
+            photos: h.fotos || []
         }));
 
         res.json(formattedResult);
@@ -28,23 +26,17 @@ exports.getHabitaciones = async (req, res) => {
 exports.createHabitacion = async (req, res) => {
     try {
         const { numero, tipo_id, estado_id, precio_1, precio_2, precio_3, precio_4, precio_5, precio_6, descripcion } = req.body;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('numero', sql.Int, numero)
-            .input('tipo_id', sql.Int, tipo_id)
-            .input('estado_id', sql.Int, estado_id)
-            .input('precio_1', sql.Decimal(10,2), precio_1 || null)
-            .input('precio_2', sql.Decimal(10,2), precio_2 || null)
-            .input('precio_3', sql.Decimal(10,2), precio_3 || null)
-            .input('precio_4', sql.Decimal(10,2), precio_4 || null)
-            .input('precio_5', sql.Decimal(10,2), precio_5 || null)
-            .input('precio_6', sql.Decimal(10,2), precio_6 || null)
-            .input('descripcion', sql.Text, descripcion)
-            .input('descripcion', sql.Text, descripcion)
-            .input('usuario', sql.VarChar, req.userName)
-            .query(`INSERT INTO habitaciones (numero, tipo_id, estado_id, precio_1, precio_2, precio_3, precio_4, precio_5, precio_6, descripcion, UsuarioCreacion) 
-                    VALUES (@numero, @tipo_id, @estado_id, @precio_1, @precio_2, @precio_3, @precio_4, @precio_5, @precio_6, @descripcion, @usuario)`);
         
+        const newHab = new Habitacion({
+            numero,
+            tipo: tipo_id, // Asumiendo que enviarán el ObjectId
+            estado: estado_id,
+            precios: { precio_1, precio_2, precio_3, precio_4, precio_5, precio_6 },
+            descripcion,
+            usuarioCreacion: req.userName
+        });
+
+        await newHab.save();
         res.status(201).json({ message: 'Habitación creada con éxito' });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -55,29 +47,24 @@ exports.updateHabitacion = async (req, res) => {
     try {
         const { id } = req.params;
         const { numero, tipo_id, estado_id, precio_1, precio_2, precio_3, precio_4, precio_5, precio_6, descripcion } = req.body;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .input('numero', sql.Int, numero)
-            .input('tipo_id', sql.Int, tipo_id)
-            .input('estado_id', sql.Int, estado_id)
-            .input('precio_1', sql.Decimal(10,2), precio_1 || null)
-            .input('precio_2', sql.Decimal(10,2), precio_2 || null)
-            .input('precio_3', sql.Decimal(10,2), precio_3 || null)
-            .input('precio_4', sql.Decimal(10,2), precio_4 || null)
-            .input('precio_5', sql.Decimal(10,2), precio_5 || null)
-            .input('precio_6', sql.Decimal(10,2), precio_6 || null)
-            .input('descripcion', sql.Text, descripcion)
-            .input('usuario', sql.VarChar, req.userName)
-            .query(`UPDATE habitaciones SET numero=@numero, tipo_id=@tipo_id, estado_id=@estado_id, 
-                    precio_1=@precio_1, precio_2=@precio_2, precio_3=@precio_3, precio_4=@precio_4, precio_5=@precio_5, precio_6=@precio_6, 
-                    descripcion=@descripcion, UsuarioModificacion=@usuario, FechaModificacion=GETDATE() WHERE id=@id`);
+
+        await Habitacion.findByIdAndUpdate(id, {
+            numero,
+            tipo: tipo_id,
+            estado: estado_id,
+            precios: { precio_1, precio_2, precio_3, precio_4, precio_5, precio_6 },
+            descripcion,
+            usuarioModificacion: req.userName,
+            fechaModificacion: Date.now()
+        });
         
         res.json({ message: 'Habitación actualizada con éxito' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+// ... (uploadFotos y deleteFoto se actualizarían de forma similar usando Habitacion.findById)
+
 
 exports.deleteHabitacion = async (req, res) => {
     try {

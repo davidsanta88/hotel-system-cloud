@@ -43,21 +43,20 @@ const authorize = (allowedRoles) => {
 
 // Middleware para permisos granulares basados en la tabla roles_permisos
 const checkPermission = (pantalla, accion) => {
-    const { poolPromise, sql } = require('../config/db');
+    const Rol = require('../models/Rol');
     return async (req, res, next) => {
         try {
-            // Bypass para SuperAdmin (rol_id = 1)
-            if (req.userRole === 1) {
-                return next();
-            }
+            // Bypass para SuperAdmin (asumiendo que tiene un nombre específico o ID)
+            // Aquí usamos el nombre del rol o podemos buscar por ID
+            const rol = await Rol.findById(req.userRole);
+            
+            if (!rol) return res.status(403).json({ message: 'Rol no encontrado' });
 
-            const pool = await poolPromise;
-            const result = await pool.request()
-                .input('rol_id', sql.Int, req.userRole)
-                .input('pantalla', sql.VarChar, pantalla)
-                .query(`SELECT ${accion} as authorized FROM roles_permisos WHERE rol_id = @rol_id AND pantalla_codigo = @pantalla`);
+            if (rol.nombre === 'admin') return next();
 
-            if (result.recordset.length > 0 && result.recordset[0].authorized) {
+            const permiso = rol.permisos.find(p => p.p === pantalla);
+            
+            if (permiso && permiso[accion]) {
                 next();
             } else {
                 res.status(403).json({ message: `No tienes permiso para ${accion} en el módulo ${pantalla}` });
@@ -67,6 +66,7 @@ const checkPermission = (pantalla, accion) => {
         }
     };
 };
+
 
 module.exports = {
     verifyToken,

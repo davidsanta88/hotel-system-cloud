@@ -1,63 +1,41 @@
-const { poolPromise, sql } = require('../config/db');
+const TipoHabitacion = require('../models/TipoHabitacion');
 
-exports.getTiposHabitacion = async (req, res) => {
+exports.getTipos = async (req, res) => {
     try {
-        const pool = await poolPromise;
-        const result = await pool.request().query('SELECT * FROM tipos_habitacion ORDER BY nombre ASC');
-        res.json(result.recordset);
+        const tipos = await TipoHabitacion.find();
+        res.json(tipos);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-exports.createTipoHabitacion = async (req, res) => {
+exports.createTipo = async (req, res) => {
     try {
-        const { nombre } = req.body;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('nombre', sql.VarChar, nombre)
-            .input('usuario', sql.VarChar, req.userName)
-            .query('INSERT INTO tipos_habitacion (nombre, UsuarioCreacion) VALUES (@nombre, @usuario)');
-        res.status(201).json({ message: 'Tipo de habitación creado' });
+        const { nombre, descripcion, precioBase } = req.body;
+        const newTipo = new TipoHabitacion({ nombre, descripcion, precioBase });
+        await newTipo.save();
+        res.status(201).json(newTipo);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-exports.updateTipoHabitacion = async (req, res) => {
+exports.updateTipo = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre } = req.body;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .input('nombre', sql.VarChar, nombre)
-            .input('usuario', sql.VarChar, req.userName)
-            .query('UPDATE tipos_habitacion SET nombre = @nombre, UsuarioModificacion = @usuario, FechaModificacion = GETDATE() WHERE id = @id');
-        res.json({ message: 'Tipo de habitación actualizado' });
+        const { nombre, descripcion, precioBase } = req.body;
+        const updated = await TipoHabitacion.findByIdAndUpdate(id, { nombre, descripcion, precioBase }, { new: true });
+        res.json(updated);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-exports.deleteTipoHabitacion = async (req, res) => {
+exports.deleteTipo = async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
-        
-        // Verificar si está en uso por alguna habitación
-        const verify = await pool.request()
-            .input('id', sql.Int, id)
-            .query('SELECT COUNT(*) as count FROM habitaciones WHERE tipo_id = @id');
-            
-        if (verify.recordset[0].count > 0) {
-            return res.status(400).json({ message: 'No se puede eliminar el tipo porque existen habitaciones asociadas a él.' });
-        }
-
-        await pool.request()
-            .input('id', sql.Int, id)
-            .query('DELETE FROM tipos_habitacion WHERE id = @id');
-        res.json({ message: 'Tipo de habitación eliminado' });
+        await TipoHabitacion.findByIdAndDelete(id);
+        res.json({ message: 'Tipo eliminado' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

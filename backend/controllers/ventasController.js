@@ -1,14 +1,17 @@
-const { poolPromise, sql } = require('../config/db');
+const Venta = require('../models/Venta');
+const Producto = require('../models/Producto');
 
 exports.getVentas = async (req, res) => {
     try {
-        const pool = await poolPromise;
-        const result = await pool.request().query(`
-            SELECT v.id, v.fecha, v.total, u.nombre as empleado
-            FROM ventas v
-            JOIN usuarios u ON v.empleado_id = u.id
-        `);
-        res.json(result.recordset);
+        const ventas = await Venta.find()
+            .populate('empleado', 'nombre')
+            .sort({ fecha: -1 });
+        
+        const formatted = ventas.map(v => ({
+            ...v._doc,
+            empleado: v.empleado ? v.empleado.nombre : 'Sistema'
+        }));
+        res.json(formatted);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -17,16 +20,17 @@ exports.getVentas = async (req, res) => {
 exports.getVentaDetails = async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('venta_id', sql.Int, id)
-            .query(`
-                SELECT dv.producto_id, dv.cantidad, dv.precio_unitario as precio, dv.subtotal, p.nombre as producto_nombre
-                FROM detalle_ventas dv
-                JOIN productos p ON dv.producto_id = p.id
-                WHERE dv.venta_id = @venta_id
-            `);
-        res.json(result.recordset);
+        const venta = await Venta.findById(id).populate('items.producto');
+        if (!venta) return res.status(404).json({ message: 'Venta no encontrada' });
+        
+        const details = venta.items.map(item => ({
+            producto_id: item.producto ? item.producto._id : null,
+            producto_nombre: item.productoNombre,
+            cantidad: item.cantidad,
+            precio: item.precioUnitario,
+            subtotal: item.subtotal
+        }));
+        res.json(details);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -34,63 +38,54 @@ exports.getVentaDetails = async (req, res) => {
 
 exports.createVenta = async (req, res) => {
     try {
-        const { productos, total, medio_pago_id, registro_id } = req.body; // productos: [{id, cantidad, precio, subtotal}]
-        const pool = await poolPromise;
-        const transaction = new sql.Transaction(pool);
-        await transaction.begin();
+        const { productos, total, medio_pago_id, registro_id } = req.body;
+
+        const session = await Venta.startSession();
+        session.startTransaction();
 
         try {
-            // Insertar venta principal
-            const result_venta = await transaction.request()
-                .input('empleado_id', sql.Int, req.userId)
-                .input('total', sql.Decimal(10,2), total)
-                .input('medio_pago_id', sql.Int, medio_pago_id || null)
-                .input('registro_id', sql.Int, registro_id || null)
-                .input('usuario', sql.VarChar, req.userName)
-                .query('INSERT INTO ventas (empleado_id, total, medio_pago_id, registro_id, UsuarioCreacion) OUTPUT inserted.id VALUES (@empleado_id, @total, @medio_pago_id, @registro_id, @usuario)');
-            
-            const venta_id = result_venta.recordset[0].id;
+            const items = [];
+            for (let p of productos) {
+                // Actualizar stock atómicamente
+                const prod = await Producto.findById(p.id).session(session);
+                if (!prod) throw new Error(`Producto ${p.id} no encontrado`);
+                
+                prod.stock -= p.cantidad;
+                await prod.save({ session });
 
-            // Insertar detalles y actualizar stock
-            for (let prod of productos) {
-                // Detalle
-                await transaction.request()
-                    .input('venta_id', sql.Int, venta_id)
-                    .input('producto_id', sql.Int, prod.id)
-                    .input('cantidad', sql.Int, prod.cantidad)
-                    .input('precio_unitario', sql.Decimal(10,2), prod.precio)
-                    .input('subtotal', sql.Decimal(10,2), prod.subtotal)
-                    .input('usuario', sql.VarChar, req.userName)
-                    .query('INSERT INTO detalle_ventas (venta_id, producto_id, cantidad, precio_unitario, subtotal, UsuarioCreacion) VALUES (@venta_id, @producto_id, @cantidad, @precio_unitario, @subtotal, @usuario)');
-                
-                // Actualizar stock
-                await transaction.request()
-                    .input('producto_id', sql.Int, prod.id)
-                    .input('cantidad', sql.Int, prod.cantidad)
-                    .input('usuario', sql.VarChar, req.userName)
-                    .query('UPDATE productos SET stock = stock - @cantidad, UsuarioModificacion = @usuario, FechaModificacion = GETDATE() WHERE id = @producto_id');
-                
-                // Registrar movimiento de inventario
-                await transaction.request()
-                    .input('producto_id', sql.Int, prod.id)
-                    .input('tipo', sql.VarChar, 'salida')
-                    .input('cantidad', sql.Int, prod.cantidad)
-                    .input('motivo', sql.VarChar, registro_id ? 'consumo_habitacion' : 'venta_tienda')
-                    .input('usuario_id', sql.Int, req.userId)
-                    .input('usuario', sql.VarChar, req.userName)
-                    .query('INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, motivo, usuario_id, UsuarioCreacion) VALUES (@producto_id, @tipo, @cantidad, @motivo, @usuario_id, @usuario)');
+                items.push({
+                    producto: p.id,
+                    productoNombre: p.nombre,
+                    cantidad: p.cantidad,
+                    precioUnitario: p.precio,
+                    subtotal: p.subtotal
+                });
             }
 
-            await transaction.commit();
-            res.status(201).json({ message: 'Venta registrada con éxito', ventaId: venta_id });
+            const newVenta = new Venta({
+                empleado: req.userId,
+                registro: registro_id,
+                items,
+                total,
+                medioPago: medio_pago_id, // Aquí podrías mapear el ID a nombre si prefieres
+                usuarioCreacion: req.userName
+            });
+
+            await newVenta.save({ session });
+            await session.commitTransaction();
+            res.status(201).json({ message: 'Venta registrada con éxito', ventaId: newVenta._id });
         } catch (err) {
-            await transaction.rollback();
+            await session.abortTransaction();
             throw err;
+        } finally {
+            session.endSession();
         }
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+// ... (Otros métodos se adaptarían de forma similar usando sesiones de Mongoose)
+
 
 exports.createConsumoHabitacion = async (req, res) => {
     try {

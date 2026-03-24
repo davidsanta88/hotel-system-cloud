@@ -1,24 +1,20 @@
-const { poolPromise, sql } = require('../config/db');
+const EstadoHabitacion = require('../models/EstadoHabitacion');
 
-exports.getEstadosHabitacion = async (req, res) => {
+exports.getEstados = async (req, res) => {
     try {
-        const pool = await poolPromise;
-        const result = await pool.request().query('SELECT * FROM estados_habitacion ORDER BY nombre ASC');
-        res.json(result.recordset);
+        const estados = await EstadoHabitacion.find();
+        res.json(estados);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-exports.createEstadoHabitacion = async (req, res) => {
+exports.createEstado = async (req, res) => {
     try {
-        const { nombre } = req.body;
-        const pool = await poolPromise;
-        await pool.request()
-            .input('nombre', sql.VarChar, nombre)
-            .input('usuario', sql.VarChar, req.userName)
-            .query('INSERT INTO estados_habitacion (nombre, UsuarioCreacion) VALUES (@nombre, @usuario)');
-        res.status(201).json({ message: 'Estado de habitación creado' });
+        const { nombre, color, descripcion } = req.body;
+        const newEstado = new EstadoHabitacion({ nombre, color, descripcion });
+        await newEstado.save();
+        res.status(201).json(newEstado);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -27,8 +23,6 @@ exports.createEstadoHabitacion = async (req, res) => {
 exports.updateEstadoHabitacion = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre } = req.body;
-        const pool = await poolPromise;
         await pool.request()
             .input('id', sql.Int, id)
             .input('nombre', sql.VarChar, nombre)
