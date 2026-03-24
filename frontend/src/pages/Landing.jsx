@@ -20,11 +20,6 @@ const SLIDES = [
         sub: 'El monumento más icónico de la región, visible desde nuestro hotel',
     },
     {
-        img: '/mapa_region.png',
-        title: 'Ubicación Estratégica',
-        sub: 'Tu conexión ideal con el Eje Cafetero: 40 min de Pereira y 1.5 h de Manizales',
-    },
-    {
         img: '/hotel_hab1.jpg',
         title: 'Hermosas Habitaciones',
         sub: 'Confort y descanso con el mejor estilo cafetero',
@@ -33,6 +28,11 @@ const SLIDES = [
         img: '/hotel_hab5.jpg',
         title: 'Espacios Románticos',
         sub: 'Detalles que enamoran en cada rincón',
+    },
+    {
+        img: '/mapa_region.png',
+        title: 'Ubicación Estratégica',
+        sub: 'Tu conexión ideal con el Eje Cafetero: 321 805 1869 | Belalcázar, Caldas',
     },
     {
         img: '/hotel_studio.jpg',
