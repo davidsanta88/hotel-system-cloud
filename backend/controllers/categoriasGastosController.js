@@ -39,7 +39,21 @@ const categoriasGastosController = {
         } catch (error) {
             res.status(500).json({ message: 'Error al eliminar categoría', error: error.message });
         }
+    },
+
+    toggleCategoriaActivo: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const categoria = await CategoriaGasto.findById(id);
+            if (!categoria) return res.status(404).json({ message: 'Categoría no encontrada' });
+            categoria.activo = !categoria.activo;
+            await categoria.save();
+            res.json(categoria);
+        } catch (error) {
+            res.status(500).json({ message: 'Error al cambiar estado de la categoría', error: error.message });
+        }
     }
 };
+
 
 module.exports = categoriasGastosController;
