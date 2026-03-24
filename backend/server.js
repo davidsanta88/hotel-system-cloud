@@ -16,6 +16,19 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 app.use('/api/uploads', express.static('uploads'));
 
+// Middleware de Debug para rastrear redirecciones y errores 401/403
+app.use((req, res, next) => {
+    const originalJson = res.json;
+    res.json = function(data) {
+        if (res.statusCode >= 400) {
+            console.log(`[DEBUG] ${req.method} ${req.url} -> STATUS ${res.statusCode} | MESSAGE: ${data.message || 'Sin mensaje'}`);
+        }
+        return originalJson.call(this, data);
+    };
+    next();
+});
+
+
 
 const auditMiddleware = require('./middleware/auditMiddleware');
 const { verifyToken } = require('./middleware/auth');

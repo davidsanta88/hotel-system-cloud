@@ -69,9 +69,11 @@ exports.getMe = async (req, res) => {
             id: user._id,
             nombre: user.nombre,
             email: user.email,
-            rol: user.rol ? user.rol.nombre : null,
+            rol_id: user.rol ? user.rol._id : null,
+            rol_nombre: user.rol ? user.rol.nombre : null,
             permisos: user.rol ? user.rol.permisos : []
         });
+
     } catch(err) {
         console.error(err);
         res.status(500).json({ message: err.message });
