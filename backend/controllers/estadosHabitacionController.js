@@ -1,4 +1,5 @@
 const EstadoHabitacion = require('../models/EstadoHabitacion');
+const Habitacion = require('../models/Habitacion');
 
 exports.getEstados = async (req, res) => {
     try {
@@ -23,12 +24,8 @@ exports.createEstado = async (req, res) => {
 exports.updateEstadoHabitacion = async (req, res) => {
     try {
         const { id } = req.params;
-        await pool.request()
-            .input('id', sql.Int, id)
-            .input('nombre', sql.VarChar, nombre)
-            .input('usuario', sql.VarChar, req.userName)
-            .query('UPDATE estados_habitacion SET nombre = @nombre, UsuarioModificacion = @usuario, FechaModificacion = GETDATE() WHERE id = @id');
-        res.json({ message: 'Estado de habitación actualizado' });
+        const updated = await EstadoHabitacion.findByIdAndUpdate(id, req.body, { new: true });
+        res.json({ message: 'Estado de habitación actualizado', estado: updated });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -37,20 +34,12 @@ exports.updateEstadoHabitacion = async (req, res) => {
 exports.deleteEstadoHabitacion = async (req, res) => {
     try {
         const { id } = req.params;
-        const pool = await poolPromise;
-        
         // Verificar si está en uso por alguna habitación
-        const verify = await pool.request()
-            .input('id', sql.Int, id)
-            .query('SELECT COUNT(*) as count FROM habitaciones WHERE estado_id = @id');
-            
-        if (verify.recordset[0].count > 0) {
+        const count = await Habitacion.countDocuments({ estado: id });
+        if (count > 0) {
             return res.status(400).json({ message: 'No se puede eliminar el estado porque existen habitaciones asociadas a él.' });
         }
-
-        await pool.request()
-            .input('id', sql.Int, id)
-            .query('DELETE FROM estados_habitacion WHERE id = @id');
+        await EstadoHabitacion.findByIdAndDelete(id);
         res.json({ message: 'Estado de habitación eliminado' });
     } catch (err) {
         res.status(500).json({ message: err.message });

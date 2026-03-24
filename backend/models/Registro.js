@@ -12,9 +12,12 @@ const registroSchema = new mongoose.Schema({
         medio: String,
         fecha: { type: Date, default: Date.now }
     }],
+    huespedes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cliente' }],
+    vendedores: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
     observaciones: String,
     usuarioCreacion: String,
     fechaCreacion: { type: Date, default: Date.now }
 });
+
 
 module.exports = mongoose.model('Registro', registroSchema);

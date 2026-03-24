@@ -1,77 +1,42 @@
-const { poolPromise, sql } = require('../config/db');
+const Mantenimiento = require('../models/Mantenimiento');
 
 const mantenimientoController = {
     getMantenimientos: async (req, res) => {
         try {
-            const pool = await poolPromise;
-            const result = await pool.request().query(`
-                SELECT m.*, h.numero as habitacion_numero, u.nombre as usuario_nombre
-                FROM mantenimiento m
-                JOIN habitaciones h ON m.habitacion_id = h.id
-                LEFT JOIN usuarios u ON m.usuario_reporta = u.id
-                ORDER BY m.fecha_reporte DESC
-            `);
-            res.json(result.recordset);
+            const list = await Mantenimiento.find().populate('habitacion').populate('usuarioReporta').sort({ fechaReporte: -1 });
+            res.json(list);
         } catch (err) {
-            console.error('Error fetching maintenance:', err);
-            res.status(500).json({ error: 'Error al obtener mantenimientos' });
+            res.status(500).json({ error: err.message });
         }
     },
 
     createMantenimiento: async (req, res) => {
-        const { habitacion_id, descripcion, prioridad } = req.body;
         try {
-            const pool = await poolPromise;
-            await pool.request()
-                .input('habitacion_id', sql.Int, habitacion_id)
-                .input('descripcion', sql.NVarChar, descripcion)
-                .input('prioridad', sql.NVarChar, prioridad || 'MEDIA')
-                .input('usuario_reporta', sql.Int, req.user ? req.user.id : null)
-                .query(`
-                    INSERT INTO mantenimiento (habitacion_id, descripcion, prioridad, usuario_reporta)
-                    VALUES (@habitacion_id, @descripcion, @prioridad, @usuario_reporta)
-                `);
-            res.status(201).json({ message: 'Mantenimiento reportado con éxito' });
+            const newM = new Mantenimiento({ ...req.body, usuarioReporta: req.userId });
+            await newM.save();
+            res.status(201).json(newM);
         } catch (err) {
-            console.error('Error creating maintenance:', err);
-            res.status(500).json({ error: 'Error al reportar mantenimiento' });
+            res.status(500).json({ error: err.message });
         }
     },
 
     updateMantenimiento: async (req, res) => {
-        const { id } = req.params;
-        const { estado, costo, fecha_solucion, solucion_notas } = req.body;
         try {
-            const pool = await poolPromise;
-            await pool.request()
-                .input('id', sql.Int, id)
-                .input('estado', sql.NVarChar, estado)
-                .input('costo', sql.Decimal(10,2), costo || 0)
-                .input('solucion_notas', sql.NVarChar, solucion_notas || null)
-                .input('fecha_solucion', sql.DateTime, estado === 'SOLUCIONADO' ? (fecha_solucion || new Date()) : null)
-                .query(`
-                    UPDATE mantenimiento
-                    SET estado = @estado, costo = @costo, fecha_solucion = @fecha_solucion, solucion_notas = @solucion_notas
-                    WHERE id = @id
-                `);
-            res.json({ message: 'Mantenimiento actualizado con éxito' });
+            const { id } = req.params;
+            const updated = await Mantenimiento.findByIdAndUpdate(id, req.body, { new: true });
+            res.json(updated);
         } catch (err) {
-            console.error('Error updating maintenance:', err);
-            res.status(500).json({ error: 'Error al actualizar mantenimiento' });
+            res.status(500).json({ error: err.message });
         }
     },
 
     deleteMantenimiento: async (req, res) => {
-        const { id } = req.params;
         try {
-            const pool = await poolPromise;
-            await pool.request()
-                .input('id', sql.Int, id)
-                .query('DELETE FROM mantenimiento WHERE id = @id');
-            res.json({ message: 'Mantenimiento eliminado con éxito' });
+            const { id } = req.params;
+            await Mantenimiento.findByIdAndDelete(id);
+            res.json({ message: 'Mantenimiento eliminado' });
         } catch (err) {
-            console.error('Error deleting maintenance:', err);
-            res.status(500).json({ error: 'Error al eliminar mantenimiento' });
+            res.status(500).json({ error: err.message });
         }
     }
 };
