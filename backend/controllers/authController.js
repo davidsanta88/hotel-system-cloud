@@ -67,3 +67,40 @@ exports.getMe = async (req, res) => {
     }
 };
 
+exports.setupInitialAdmin = async (req, res) => {
+    try {
+        const userCount = await Usuario.countDocuments();
+        if (userCount > 0) {
+            return res.status(403).json({ message: 'El administrador inicial ya ha sido configurado' });
+        }
+
+        const { nombre, email, password } = req.body;
+        
+        // Crear el rol Admin por defecto si no existe
+        let adminRole = await Rol.findOne({ nombre: 'Admin' });
+        if (!adminRole) {
+            adminRole = new Rol({
+                nombre: 'Admin',
+                permisos: ['all']
+            });
+            await adminRole.save();
+        }
+
+        const hashedPassword = bcrypt.hashSync(password, 10);
+        const newAdmin = new Usuario({
+            nombre,
+            email,
+            password: hashedPassword,
+            rol: adminRole._id,
+            activo: true,
+            usuarioCreacion: 'SYSTEM_SETUP'
+        });
+
+        await newAdmin.save();
+        res.status(201).json({ message: 'Administrador inicial creado con éxito. Ya puedes iniciar sesión.' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+
