@@ -88,11 +88,11 @@ exports.setupInitialAdmin = async (req, res) => {
         if (!adminRole) {
             adminRole = new Rol({
                 nombre: 'Admin',
-                descripcion: 'Administrador total del sistema',
-                permisos: [] // Los administradores suelen tener bypass en middleware
+                descripcion: 'Administrador total del sistema'
             });
             await adminRole.save();
         }
+
 
 
         const hashedPassword = bcrypt.hashSync(password, 10);
