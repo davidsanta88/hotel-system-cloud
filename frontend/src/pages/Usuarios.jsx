@@ -94,7 +94,7 @@ const Usuarios = () => {
         }
     };
 
-    if (!canView) {
+    if (!canView && user?.rol_nombre !== 'Admin' && user?.nombre !== 'Administrador') {
         return <div className="p-8 text-center text-red-500 font-bold">Acceso Denegado. Área exclusiva para Administradores autorizados.</div>;
     }
 
