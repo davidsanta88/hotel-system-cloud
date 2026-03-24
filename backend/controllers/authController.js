@@ -49,15 +49,11 @@ exports.login = async (req, res) => {
             accessToken: token
         });
     } catch (err) {
-        console.error('ERROR EN LOGIN:', err);
-        res.status(500).json({ 
-            message: 'Error interno en el servidor durante el inicio de sesión',
-            error: err.message,
-            stack: err.stack,
-            jwt_secret_exists: !!process.env.JWT_SECRET
-        });
+        console.error(err);
+        res.status(500).json({ message: err.message });
     }
 };
+
 
 
 exports.getMe = async (req, res) => {
