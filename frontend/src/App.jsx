@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Rooms from './pages/Rooms';
 import Registros from './pages/Registros';
@@ -21,6 +22,14 @@ import Usuarios from './pages/Usuarios';
 import Roles from './pages/Roles';
 import TiposRegistro from './pages/TiposRegistro';
 import Notas from './pages/Notas';
+import Solicitudes from './pages/Solicitudes';
+import ConfigNotificaciones from './pages/ConfigNotificaciones';
+import Housekeeping from './pages/Housekeeping';
+import AuditLogs from './pages/AuditLogs';
+import Mantenimiento from './pages/Mantenimiento';
+import CheckinPublico from './pages/CheckinPublico';
+import CheckinAdmin from './pages/CheckinAdmin';
+import Estadisticas from './pages/Estadisticas';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -48,10 +57,11 @@ const PrivateRoute = ({ children, roles, code }) => {
 const AppRoutes = () => {
     return (
         <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             
-            <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-                <Route index element={<Dashboard />} />
+            <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+                <Route path="dashboard" element={<Dashboard />} />
                 <Route path="habitaciones" element={<PrivateRoute code="habitaciones"><Rooms /></PrivateRoute>} />
                 <Route path="registros" element={<PrivateRoute code="registros"><Registros /></PrivateRoute>} />
                 <Route path="clientes" element={<PrivateRoute code="clientes"><Clientes /></PrivateRoute>} />
@@ -70,7 +80,16 @@ const AppRoutes = () => {
                 <Route path="tipos-registro" element={<PrivateRoute code="tipos_registro"><TiposRegistro /></PrivateRoute>} />
                 <Route path="roles" element={<PrivateRoute code="roles_permisos"><Roles /></PrivateRoute>} />
                 <Route path="notas" element={<PrivateRoute code="notas"><Notas /></PrivateRoute>} />
+                <Route path="solicitudes" element={<Solicitudes />} />
+                <Route path="notificaciones" element={<PrivateRoute><ConfigNotificaciones /></PrivateRoute>} />
+                <Route path="aseo" element={<PrivateRoute><Housekeeping /></PrivateRoute>} />
+                <Route path="auditoria" element={<PrivateRoute><AuditLogs /></PrivateRoute>} />
+                <Route path="mantenimiento" element={<PrivateRoute><Mantenimiento /></PrivateRoute>} />
+                <Route path="checkin-digital" element={<PrivateRoute><CheckinAdmin /></PrivateRoute>} />
+                <Route path="estadisticas" element={<PrivateRoute><Estadisticas /></PrivateRoute>} />
+                <Route path="solicitud-reserva" element={<PrivateRoute code="reservas"><Reservas /></PrivateRoute>} />
             </Route>
+            <Route path="/checkin" element={<CheckinPublico />} />
         </Routes>
     );
 };

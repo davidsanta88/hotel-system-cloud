@@ -18,7 +18,14 @@ import {
     ShieldCheck, 
     ClipboardList,
     StickyNote,
-    X
+    X,
+    Bell,
+    Brush,
+    ShieldAlert,
+    Wrench,
+    QrCode,
+    Plus,
+    TrendingUp
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -34,13 +41,23 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {
             title: 'Recepción y Operaciones',
             items: [
-                { name: 'Dashboard Inicio', path: '/', icon: <LayoutDashboard size={20} />, code: 'dashboard' },
+                { name: 'Dashboard Inicio', path: '/dashboard', icon: <LayoutDashboard size={20} />, code: 'dashboard' },
                 { name: 'Registro Huéspedes', path: '/registros', icon: <CalendarCheck size={20} />, code: 'registros' },
                 { name: 'Tienda / POS', path: '/tienda', icon: <ShoppingStore size={20} />, code: 'tienda' },
                 { name: 'Productos Tienda', path: '/inventario', icon: <Package size={20} />, code: 'inventario' },
                 { name: 'Reservas a Futuro', path: '/reservas', icon: <CalendarCheck size={20} />, code: 'reservas' },
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
-                { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' }
+                { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' },
+                { name: 'Solicitudes Reserva', path: '/solicitudes', icon: <Bell size={20} />, code: 'solicitudes' },
+                { name: 'Gestión de Aseo', path: '/aseo', icon: <Brush size={20} />, code: 'aseo' },
+                { name: 'Mantenimiento', path: '/mantenimiento', icon: <Wrench size={20} />, code: 'mantenimiento' }
+            ]
+        },
+        {
+            title: 'Recepción y Reservas',
+            items: [
+                { name: 'Nueva Reserva', path: '/solicitud-reserva', icon: <Plus size={20} />, code: 'reservas' },
+                { name: 'Check-in Digital QR', path: '/checkin-digital', icon: <QrCode size={20} />, code: 'checkin_digital' }
             ]
         },
         {
@@ -48,7 +65,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             items: [
                 { name: 'Notas y Alertas', path: '/notas', icon: <StickyNote size={20} />, code: 'notas' },
                 { name: 'Reportes', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
-                { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' }
+                { name: 'Estadísticas Avanzadas', path: '/estadisticas', icon: <TrendingUp size={20} />, code: 'estadisticas' },
+                { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },
+                { name: 'Auditoría Logs', path: '/auditoria', icon: <ShieldAlert size={20} />, code: 'auditoria' }
             ]
         },
         {
@@ -62,7 +81,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Cat. Gastos/Ingresos', path: '/categorias-gastos', icon: <Package size={20} />, code: 'categorias_gastos' },
                 { name: 'Tipos de Registro', path: '/tipos-registro', icon: <ClipboardList size={20} />, code: 'tipos_registro' },
                 { name: 'Personal (Usuarios)', path: '/usuarios', icon: <UserCog size={20} />, code: 'usuarios' },
-                { name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' }
+                { name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
+                { name: 'Notificaciones', path: '/notificaciones', icon: <Bell size={20} />, code: 'notificaciones' }
             ]
         }
     ];
@@ -70,7 +90,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     return (
         <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white flex flex-col shadow-xl transition-transform duration-300 transform lg:translate-x-0 lg:static lg:inset-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
             <div className="p-5 border-b border-slate-800 flex items-center justify-between lg:justify-center bg-slate-950">
-                <h2 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Hotel Admin</h2>
+                <h2 className="text-2xl font-black bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">Hotel Admin</h2>
                 <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-white transition-colors">
                     <X size={24} />
                 </button>
@@ -96,12 +116,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                                 className={({ isActive }) =>
                                                     `flex items-center px-4 py-2.5 mx-2 rounded-xl transition-all duration-200 group relative ${
                                                         isActive
-                                                            ? 'bg-blue-600/10 text-blue-400 shadow-sm border border-blue-500/20'
+                                                            ? 'bg-primary-600/20 text-primary-400 shadow-sm border border-primary-500/20'
                                                             : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                                                     }`
                                                 }
                                             >
-                                                <span className="transition-transform group-hover:scale-110 mr-3">{item.icon}</span>
+                                                <span className="transition-transform group-hover:scale-110 mr-3 text-primary-500/80 group-hover:text-primary-400">{item.icon}</span>
                                                 <span className="font-medium text-sm">{item.name}</span>
                                             </NavLink>
                                         </li>

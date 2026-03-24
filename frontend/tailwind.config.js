@@ -8,21 +8,26 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
+          50: '#ecf8ff',
+          100: '#d9f1ff',
+          500: '#00a3ff', // Azul brillante del balcón
+          600: '#0070bb', // Azul base corporativo
+          700: '#005a96',
         },
         accent: {
-          50: '#fefce8',
-          100: '#fef9c3',
-          500: '#facc15',
-          600: '#eab308',
-          700: '#ca8a04',
+          50: '#fffbeb',
+          100: '#fef3c7',
+          500: '#fdb913', // Amarillo/Ámbar de los balcones
+          600: '#e5a500', 
+          700: '#b28000',
+        },
+        hotel: {
+          green: '#00a651',
+          red: '#ed1c24',
+          purple: '#662d91',
         },
         secondary: '#f1f5f9',
-        dark: '#1e293b'
+        dark: '#1c0f05'
       }
     },
   },

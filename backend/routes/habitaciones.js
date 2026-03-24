@@ -22,6 +22,7 @@ router.get('/', verifyToken, habitacionesController.getHabitaciones);
 router.post('/', [verifyToken, isAdmin], habitacionesController.createHabitacion);
 router.put('/:id', [verifyToken, isAdmin], habitacionesController.updateHabitacion);
 router.delete('/:id', [verifyToken, isAdmin], habitacionesController.deleteHabitacion);
+router.patch('/:id/limpieza', verifyToken, habitacionesController.updateCleaningStatus);
 
 // Rutas para fotos
 router.post('/:id/fotos', [verifyToken, isAdmin, upload.array('fotos', 10)], habitacionesController.uploadFotos);

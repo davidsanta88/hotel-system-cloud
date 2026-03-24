@@ -21,7 +21,7 @@ const Header = ({ setSidebarOpen }) => {
                     <p className="text-sm font-semibold text-gray-800">{user?.nombre}</p>
                     <p className="text-xs text-gray-500">{user?.rol_id === 1 ? 'Administrador' : 'Empleado'}</p>
                 </div>
-                <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 shrink-0">
+                <div className="h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-700 shrink-0">
                     <User size={20} />
                 </div>
             </div>

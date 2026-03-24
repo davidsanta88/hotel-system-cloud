@@ -156,3 +156,26 @@ exports.deleteFoto = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.updateCleaningStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado_limpieza, comentario_limpieza } = req.body;
+        const pool = await poolPromise;
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('estado_limpieza', sql.NVarChar, estado_limpieza)
+            .input('comentario_limpieza', sql.NVarChar, comentario_limpieza || null)
+            .input('usuario', sql.VarChar, req.userName)
+            .query(`UPDATE habitaciones 
+                    SET estado_limpieza = @estado_limpieza, 
+                        comentario_limpieza = @comentario_limpieza,
+                        UsuarioModificacion = @usuario, 
+                        FechaModificacion = GETDATE() 
+                    WHERE id = @id`);
+        
+        res.json({ message: 'Estado de limpieza actualizado con éxito' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

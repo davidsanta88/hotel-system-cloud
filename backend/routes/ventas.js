@@ -6,6 +6,7 @@ const { verifyToken } = require('../middleware/auth');
 router.get('/', verifyToken, ventasController.getVentas);
 router.get('/:id', verifyToken, ventasController.getVentaDetails);
 router.post('/', verifyToken, ventasController.createVenta);
+router.put('/:id', verifyToken, ventasController.updateVenta);
 
 // Consumos por habitación
 router.post('/consumo', verifyToken, ventasController.createConsumoHabitacion);

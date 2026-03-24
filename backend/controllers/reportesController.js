@@ -88,3 +88,93 @@ exports.getResumenGeneral = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.getGastosPorPeriodo = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('inicio', sql.VarChar, inicio || '2000-01-01')
+            .input('fin', sql.VarChar, fin || '2099-12-31')
+            .query(`
+                SELECT 
+                    CAST(fecha_gasto AS DATE) as fecha,
+                    SUM(monto) as total_gastos,
+                    COUNT(id) as num_gastos
+                FROM gastos
+                WHERE fecha_gasto >= @inicio AND fecha_gasto <= @fin + ' 23:59:59'
+                GROUP BY CAST(fecha_gasto AS DATE)
+                ORDER BY fecha ASC
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getGastosPorCategoria = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('inicio', sql.VarChar, inicio || '2000-01-01')
+            .input('fin', sql.VarChar, fin || '2099-12-31')
+            .query(`
+                SELECT 
+                    ISNULL(c.nombre, 'Sin categoría') as categoria,
+                    SUM(g.monto) as total,
+                    COUNT(g.id) as cantidad
+                FROM gastos g
+                LEFT JOIN categorias_gastos c ON g.categoria_id = c.id
+                WHERE g.fecha_gasto >= @inicio AND g.fecha_gasto <= @fin + ' 23:59:59'
+                GROUP BY c.nombre
+                ORDER BY total DESC
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getVentasMensuales = async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request().query(`
+            SELECT
+                FORMAT(fecha, 'yyyy-MM') as mes,
+                FORMAT(fecha, 'MMM yy', 'es-CO') as mes_nombre,
+                SUM(total) as total_ventas,
+                COUNT(id) as num_ventas
+            FROM ventas
+            WHERE fecha >= DATEADD(month, -5, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))
+            GROUP BY FORMAT(fecha, 'yyyy-MM'), FORMAT(fecha, 'MMM yy', 'es-CO')
+            ORDER BY mes ASC
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getIngresosHospedaje = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('inicio', sql.VarChar, inicio || '2000-01-01')
+            .input('fin', sql.VarChar, fin || '2099-12-31')
+            .query(`
+                SELECT 
+                    CAST(FechaCreacion AS DATE) as fecha,
+                    SUM(ISNULL(valor_cobrado, 0)) as total_hospedaje,
+                    COUNT(id) as num_registros
+                FROM registros
+                WHERE FechaCreacion >= @inicio AND FechaCreacion <= @fin + ' 23:59:59'
+                GROUP BY CAST(FechaCreacion AS DATE)
+                ORDER BY fecha ASC
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

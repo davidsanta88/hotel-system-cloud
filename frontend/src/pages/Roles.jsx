@@ -21,6 +21,11 @@ const TODOS_LOS_PERMISOS = [
     { id: 'medios_pago', nombre: 'Medios de Pago' },
     { id: 'municipios', nombre: 'Orígenes y Municipios' },
     { id: 'usuarios', nombre: 'Personal y Accesos' },
+    { id: 'aseo', nombre: 'Gestión de Aseo (Housekeeping)' },
+    { id: 'mantenimiento', nombre: 'Mantenimiento y Reparaciones' },
+    { id: 'checkin_digital', nombre: 'Check-in Digital QR' },
+    { id: 'estadisticas', nombre: 'Estadísticas Avanzadas' },
+    { id: 'auditoria', nombre: 'Auditoría de Usuarios (Logs)' },
     { id: 'roles_permisos', nombre: 'Configuración de Roles' }
 ];
 

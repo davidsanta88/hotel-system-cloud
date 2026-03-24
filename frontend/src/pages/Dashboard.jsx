@@ -48,12 +48,12 @@ const Dashboard = () => {
     );
 
     const cards = [
-        { title: 'Hab. Disponibles', value: stats.habitacionesDisponibles, icon: <Bed size={32} />, color: 'text-green-600', bg: 'bg-green-100' },
-        { title: 'Hab. Ocupadas', value: stats.habitacionesOcupadas, icon: <UserCheck size={32} />, color: 'text-red-600', bg: 'bg-red-100' },
-        { title: 'Registros (Día)', value: stats.registrosHoy, icon: <CalendarDays size={32} />, color: 'text-blue-600', bg: 'bg-blue-100' },
-        { title: 'Ingresos (Hoy)', value: `$${formatCurrency(stats.ingresosHoy)}`, icon: <DollarSign size={32} />, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-        { title: 'Egresos (Hoy)', value: `$${formatCurrency(stats.egresosHoy)}`, icon: <XCircle size={32} />, color: 'text-orange-600', bg: 'bg-orange-100' },
-        { title: 'Ventas Tienda', value: `$${formatCurrency(stats.ventasHoy)}`, icon: <DollarSign size={32} />, color: 'text-purple-600', bg: 'bg-purple-100' },
+        { title: 'Hab. Disponibles', value: stats.habitacionesDisponibles, icon: <Bed size={32} />, color: 'text-hotel-green', bg: 'bg-hotel-green/10' },
+        { title: 'Hab. Ocupadas', value: stats.habitacionesOcupadas, icon: <UserCheck size={32} />, color: 'text-hotel-red', bg: 'bg-hotel-red/10' },
+        { title: 'Registros (Día)', value: stats.registrosHoy, icon: <CalendarDays size={32} />, color: 'text-primary-600', bg: 'bg-primary-50' },
+        { title: 'Ingresos (Hoy)', value: `$${formatCurrency(stats.ingresosHoy)}`, icon: <DollarSign size={32} />, color: 'text-accent-700', bg: 'bg-accent-50' },
+        { title: 'Egresos (Hoy)', value: `$${formatCurrency(stats.egresosHoy)}`, icon: <XCircle size={32} />, color: 'text-hotel-purple', bg: 'bg-hotel-purple/10' },
+        { title: 'Ventas Tienda', value: `$${formatCurrency(stats.ventasHoy)}`, icon: <DollarSign size={32} />, color: 'text-primary-500', bg: 'bg-primary-50' },
     ];
 
     return (

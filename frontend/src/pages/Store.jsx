@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
-import { ShoppingCart, Check, History, Eye, X, Receipt } from 'lucide-react';
+import { ShoppingCart, Check, History, Eye, X, Receipt, Pencil, Trash2, Plus, Minus } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 
 const Store = () => {
@@ -23,6 +23,13 @@ const Store = () => {
     const [selectedVenta, setSelectedVenta] = useState(null);
     const [ventaDetalles, setVentaDetalles] = useState([]);
     const [loadingHistorial, setLoadingHistorial] = useState(false);
+
+    // Edición de venta
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editVenta, setEditVenta] = useState(null);
+    const [editItems, setEditItems] = useState([]);
+    const [editMedioPago, setEditMedioPago] = useState('');
+    const [savingEdit, setSavingEdit] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -120,6 +127,63 @@ const Store = () => {
             setSelectedVenta(venta);
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar el detalle de la venta', 'error');
+        }
+    };
+
+    const abrirEdicion = async (venta) => {
+        try {
+            const response = await api.get(`/ventas/${venta.id}`);
+            const items = response.data.map(d => ({
+                id: d.producto_id,
+                nombre: d.producto_nombre,
+                precio: parseFloat(d.precio),
+                cantidad: d.cantidad,
+                subtotal: parseFloat(d.subtotal)
+            }));
+            setEditVenta(venta);
+            setEditItems(items);
+            setEditMedioPago(venta.medio_pago_id || '');
+            setShowEditModal(true);
+        } catch (error) {
+            Swal.fire('Error', 'No se pudo cargar la venta para editar', 'error');
+        }
+    };
+
+    const cambiarCantidadEdit = (idx, delta) => {
+        setEditItems(prev => prev.map((item, i) => {
+            if (i !== idx) return item;
+            const nuevaCant = Math.max(1, item.cantidad + delta);
+            return { ...item, cantidad: nuevaCant, subtotal: parseFloat((nuevaCant * item.precio).toFixed(2)) };
+        }));
+    };
+
+    const quitarItemEdit = (idx) => {
+        setEditItems(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    const totalEdit = editItems.reduce((acc, i) => acc + i.subtotal, 0);
+
+    const guardarEdicion = async () => {
+        if (editItems.length === 0) return Swal.fire('Aviso', 'La venta debe tener al menos un producto', 'warning');
+        setSavingEdit(true);
+        try {
+            await api.put(`/ventas/${editVenta.id}`, {
+                productos: editItems,
+                total: totalEdit,
+                medio_pago_id: editMedioPago || null
+            });
+            Swal.fire('Éxito', 'Venta actualizada correctamente', 'success');
+            setShowEditModal(false);
+            setEditVenta(null);
+            // Refrescar historial
+            const response = await api.get('/ventas');
+            setVentasHistorial(response.data);
+            // Si el recibo de esta venta estaba abierto, actualizarlo
+            if (selectedVenta?.id === editVenta.id) setSelectedVenta(null);
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'No se pudo actualizar la venta', 'error');
+        } finally {
+            setSavingEdit(false);
         }
     };
 
@@ -417,13 +481,22 @@ const Store = () => {
                                                         <span className="font-black text-gray-900 text-base">${formatCurrency(venta.total)}</span>
                                                     </td>
                                                     <td className="p-4 text-center">
-                                                        <button 
-                                                            onClick={() => verDetalleVenta(venta)}
-                                                            className="inline-flex items-center justify-center p-2 text-primary-600 hover:text-white hover:bg-primary-500 rounded-lg transition-all"
-                                                            title="Ver Recibo"
-                                                        >
-                                                            <Eye size={20} />
-                                                        </button>
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button 
+                                                                onClick={() => verDetalleVenta(venta)}
+                                                                className="inline-flex items-center justify-center p-2 text-primary-600 hover:text-white hover:bg-primary-500 rounded-lg transition-all"
+                                                                title="Ver Recibo"
+                                                            >
+                                                                <Eye size={18} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => abrirEdicion(venta)}
+                                                                className="inline-flex items-center justify-center p-2 text-amber-600 hover:text-white hover:bg-amber-500 rounded-lg transition-all"
+                                                                title="Editar Venta"
+                                                            >
+                                                                <Pencil size={18} />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -483,6 +556,83 @@ const Store = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Modal Edición de Venta */}
+            {showEditModal && editVenta && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] animate-fade-in border border-gray-100">
+                        {/* Header */}
+                        <div className="p-5 border-b border-gray-100 bg-amber-50 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-amber-100 text-amber-600 p-2 rounded-xl">
+                                    <Pencil size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-gray-900">Editar Venta #{editVenta.id}</h3>
+                                    <p className="text-xs text-gray-500">{new Date(editVenta.fecha).toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 border border-gray-100 p-2 rounded-xl transition shadow-sm">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Lista de productos */}
+                        <div className="flex-1 overflow-y-auto p-5 space-y-2">
+                            {editItems.map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100 gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-gray-800 text-sm truncate">{item.nombre}</p>
+                                        <p className="text-xs text-gray-500">${formatCurrency(item.precio)} c/u</p>
+                                    </div>
+                                    <div className="flex items-center bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                                        <button onClick={() => cambiarCantidadEdit(idx, -1)} className="px-2.5 py-1.5 hover:bg-red-100 text-red-600 font-bold transition-colors text-sm">
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="px-2 font-bold text-sm min-w-[2rem] text-center">{item.cantidad}</span>
+                                        <button onClick={() => cambiarCantidadEdit(idx, 1)} className="px-2.5 py-1.5 hover:bg-green-100 text-green-600 font-bold transition-colors text-sm">
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                    <span className="font-black text-gray-900 text-sm w-20 text-right flex-shrink-0">${formatCurrency(item.subtotal)}</span>
+                                    <button onClick={() => quitarItemEdit(idx)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition flex-shrink-0" title="Quitar producto">
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                            {editItems.length === 0 && (
+                                <div className="text-center py-8 text-gray-400 text-sm">No hay productos. La venta debe tener al menos uno.</div>
+                            )}
+                        </div>
+
+                        {/* Medio de pago (solo si la venta lo tenía) */}
+                        <div className="px-5 pb-3">
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Medio de Pago</label>
+                            <select className="input-field text-sm" value={editMedioPago} onChange={e => setEditMedioPago(e.target.value)}>
+                                <option value="">Sin especificar</option>
+                                {mediosPago.map(mp => (
+                                    <option key={mp.id} value={mp.id}>{mp.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-5 bg-gray-900 text-white flex items-center justify-between rounded-b-2xl gap-4">
+                            <div>
+                                <p className="text-xs text-gray-400 uppercase font-bold">Nuevo Total</p>
+                                <p className="text-2xl font-black">${formatCurrency(totalEdit)}</p>
+                            </div>
+                            <button
+                                onClick={guardarEdicion}
+                                disabled={savingEdit || editItems.length === 0}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:bg-gray-600 text-white font-bold rounded-xl transition-all shadow-md active:scale-95"
+                            >
+                                {savingEdit ? 'Guardando...' : 'Guardar Cambios'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
