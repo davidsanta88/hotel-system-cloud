@@ -1,6 +1,6 @@
 const Nota = require('../models/Nota');
 
-exports.getNotas = async (req, res) => {
+exports.getAll = async (req, res) => {
     try {
         const notas = await Nota.find({ usuario: req.userId }).sort({ fecha: -1 });
         res.json(notas);
@@ -9,7 +9,16 @@ exports.getNotas = async (req, res) => {
     }
 };
 
-exports.createNota = async (req, res) => {
+exports.getMyAlerts = async (req, res) => {
+    try {
+        const notas = await Nota.find({ usuario: req.userId, leida: false }).sort({ fecha: -1 });
+        res.json(notas);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.create = async (req, res) => {
     try {
         const newNota = new Nota({ ...req.body, usuario: req.userId });
         await newNota.save();
@@ -19,7 +28,7 @@ exports.createNota = async (req, res) => {
     }
 };
 
-exports.updateNota = async (req, res) => {
+exports.update = async (req, res) => {
     try {
         const { id } = req.params;
         const updated = await Nota.findByIdAndUpdate(id, req.body, { new: true });
@@ -29,7 +38,17 @@ exports.updateNota = async (req, res) => {
     }
 };
 
-exports.deleteNota = async (req, res) => {
+exports.markAsRead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updated = await Nota.findByIdAndUpdate(id, { leida: true }, { new: true });
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
         await Nota.findByIdAndDelete(id);
@@ -38,3 +57,4 @@ exports.deleteNota = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+

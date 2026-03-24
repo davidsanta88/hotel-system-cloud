@@ -88,7 +88,7 @@ exports.getResumenGeneral = async (req, res) => {
             alertas_stock,
             registros_hoy,
             ventas_hoy,
-            ingresos_hoy: ventas_hoy, // Simplificado
+            ingresos_hoy: ventas_hoy,
             egresos_hoy,
             recientes: {
                 registros: recientes_registros,
@@ -99,3 +99,82 @@ exports.getResumenGeneral = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.getGastosPorPeriodo = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const filter = {};
+        if (inicio || fin) {
+            filter.fecha = {};
+            if (inicio) filter.fecha.$gte = new Date(inicio);
+            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+        }
+
+        const report = await Gasto.aggregate([
+            { $match: filter },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
+                    total: { $sum: "$monto" },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getGastosPorCategoria = async (req, res) => {
+    try {
+        const report = await Gasto.aggregate([
+            {
+                $group: {
+                    _id: "$categoria",
+                    total: { $sum: "$monto" }
+                }
+            },
+            { $sort: { total: -1 } }
+        ]);
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getVentasMensuales = async (req, res) => {
+    try {
+        const report = await Venta.aggregate([
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m", date: "$fecha" } },
+                    total: { $sum: "$total" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getIngresosHospedaje = async (req, res) => {
+    try {
+        const report = await Registro.aggregate([
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m", date: "$fechaCreacion" } },
+                    total: { $sum: "$total" }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+

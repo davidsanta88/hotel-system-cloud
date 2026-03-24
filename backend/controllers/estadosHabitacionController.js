@@ -1,7 +1,7 @@
 const EstadoHabitacion = require('../models/EstadoHabitacion');
 const Habitacion = require('../models/Habitacion');
 
-exports.getEstados = async (req, res) => {
+exports.getEstadosHabitacion = async (req, res) => {
     try {
         const estados = await EstadoHabitacion.find();
         res.json(estados);
@@ -10,7 +10,7 @@ exports.getEstados = async (req, res) => {
     }
 };
 
-exports.createEstado = async (req, res) => {
+exports.createEstadoHabitacion = async (req, res) => {
     try {
         const { nombre, color, descripcion } = req.body;
         const newEstado = new EstadoHabitacion({ nombre, color, descripcion });
@@ -20,6 +20,7 @@ exports.createEstado = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 exports.updateEstadoHabitacion = async (req, res) => {
     try {

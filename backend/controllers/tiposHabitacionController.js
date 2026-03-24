@@ -1,6 +1,6 @@
 const TipoHabitacion = require('../models/TipoHabitacion');
 
-exports.getTipos = async (req, res) => {
+exports.getTiposHabitacion = async (req, res) => {
     try {
         const tipos = await TipoHabitacion.find();
         res.json(tipos);
@@ -9,7 +9,7 @@ exports.getTipos = async (req, res) => {
     }
 };
 
-exports.createTipo = async (req, res) => {
+exports.createTipoHabitacion = async (req, res) => {
     try {
         const { nombre, descripcion, precioBase } = req.body;
         const newTipo = new TipoHabitacion({ nombre, descripcion, precioBase });
@@ -20,7 +20,7 @@ exports.createTipo = async (req, res) => {
     }
 };
 
-exports.updateTipo = async (req, res) => {
+exports.updateTipoHabitacion = async (req, res) => {
     try {
         const { id } = req.params;
         const { nombre, descripcion, precioBase } = req.body;
@@ -31,7 +31,7 @@ exports.updateTipo = async (req, res) => {
     }
 };
 
-exports.deleteTipo = async (req, res) => {
+exports.deleteTipoHabitacion = async (req, res) => {
     try {
         const { id } = req.params;
         await TipoHabitacion.findByIdAndDelete(id);
@@ -40,3 +40,4 @@ exports.deleteTipo = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
