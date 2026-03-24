@@ -1,3 +1,6 @@
+import axios from 'axios';
+import https from 'https';
+
 export default async function handler(req, res) {
     const { path, isUpload } = req.query;
     
@@ -5,7 +8,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Ruta no especificada' });
     }
 
-    // Si la ruta ya empieza con 'uploads/', no le agregamos '/api/'
+    // Usamos HTTPS directamente para evitar el redirect de SmarterASP
     const baseUrl = 'https://hbalconplaza-001-site1.site4future.com';
     const finalPath = path.startsWith('uploads') ? path : `api/${path}`;
     const targetUrl = `${baseUrl}/${finalPath}`;
@@ -13,52 +16,49 @@ export default async function handler(req, res) {
     // Credenciales de SmarterASP (11300916:60-dayfreetrial)
     const authHeader = 'Basic MTEzMDA5MTY6NjAtZGF5ZnJlZXRyaWFs';
 
+    // Agente para ignorar errores de certificado SSL (común en SmarterASP free trial)
+    const agent = new https.Agent({
+        rejectUnauthorized: false
+    });
+
     try {
-        const fetchOptions = {
+        const axiosConfig = {
             method: req.method,
+            url: targetUrl,
             headers: {
                 'Authorization': authHeader,
                 'Content-Type': req.headers['content-type'] || 'application/json',
-            }
+            },
+            httpsAgent: agent,
+            responseType: isUpload ? 'arraybuffer' : 'json',
+            validateStatus: () => true // No lanzar error en 404/500 para manejarlos nosotros
         };
 
-        // Enviar el JWT que viene del cliente en un header separado para no colisionar con la autenticación Basic de SmarterASP
+        // Enviar el JWT que viene del cliente
         if (req.headers.authorization) {
-            fetchOptions.headers['x-auth-token'] = req.headers.authorization;
+            axiosConfig.headers['x-auth-token'] = req.headers.authorization;
         }
 
-        // Si es una petición con cuerpo (POST, PUT, etc)
+        // Si es una petición con cuerpo
         if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-            fetchOptions.body = JSON.stringify(req.body);
+            axiosConfig.data = req.body;
         }
 
-        const response = await fetch(targetUrl, fetchOptions);
+        const response = await axios(axiosConfig);
         
         // Manejo de imágenes (uploads)
         if (isUpload) {
-            const arrayBuffer = await response.arrayBuffer();
-            res.setHeader('Content-Type', response.headers.get('content-type') || 'image/jpeg');
-            return res.status(response.status).send(Buffer.from(arrayBuffer));
+            res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
+            return res.status(response.status).send(Buffer.from(response.data));
         }
 
-        // Verificar si la respuesta es JSON antes de parsear
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            const data = await response.json();
-            return res.status(response.status).json(data);
-        } else {
-            const text = await response.text();
-            console.error('Non-JSON response from backend:', text.substring(0, 200));
-            return res.status(response.status).json({ 
-                error: 'El servidor backend no devolvió JSON',
-                status: response.status,
-                details: text.substring(0, 100)
-            });
-        }
+        // Devolver la respuesta del backend
+        return res.status(response.status).json(response.data);
+
     } catch (error) {
-        console.error('Proxy Fetch Error:', error);
+        console.error('Proxy Axios Error:', error.message);
         return res.status(500).json({ 
-            error: 'Error de conexión en el túnel', 
+            error: 'Error de conexión en el túnel (Axios)', 
             details: error.message 
         });
     }
