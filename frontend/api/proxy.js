@@ -9,7 +9,9 @@ export default async function handler(req, res) {
 
     // URL de DigitalOcean (Se debe configurar en las variables de entorno de Vercel)
     // En desarrollo puedes usar http://localhost:5000
-    const baseUrl = process.env.BACKEND_URL || 'https://tu-app-en-digitalocean.ondigitalocean.app';
+    // Priorizamos VITE_API_URL que es la que el usuario ya configuró en Vercel
+    const baseUrl = process.env.VITE_API_URL || process.env.BACKEND_URL || 'https://whale-app-c75fy.ondigitalocean.app';
+
     
     const finalPath = path.startsWith('uploads') ? path : `api/${path}`;
     const targetUrl = `${baseUrl}/${finalPath}`;
