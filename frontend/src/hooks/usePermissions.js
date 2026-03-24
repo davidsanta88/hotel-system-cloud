@@ -9,8 +9,8 @@ import { AuthContext } from '../context/AuthContext';
 export const usePermissions = (screenCode) => {
     const { user } = useContext(AuthContext);
 
-    // Bypass total para Administradores de Sistema (Rol 1)
-    if (user?.rol_id === 1) {
+    // Bypass total para Administradores: por Rol 1, Nombre de Rol 'Admin' o Nombre de Usuario 'Administrador'
+    if (user?.rol_id === 1 || user?.rol_nombre === 'Admin' || user?.nombre === 'Administrador') {
         return { canView: true, canEdit: true, canDelete: true };
     }
 
