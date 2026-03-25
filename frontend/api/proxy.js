@@ -50,6 +50,9 @@ export default async function handler(req, res) {
 
         const response = await axios(axiosConfig);
         
+        // Header de depuración para ver a dónde fue el proxy
+        res.setHeader('X-Proxy-Target', targetUrl);
+
         // Propagar el status y el content-type
         if (response.headers['content-type']) {
             res.setHeader('Content-Type', response.headers['content-type']);

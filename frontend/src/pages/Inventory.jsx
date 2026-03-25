@@ -167,9 +167,11 @@ const Inventory = () => {
             fetchData();
         } catch (error) {
             console.error('Save Product Error:', error);
-            const detailedMsg = error.response?.data?.message || error.stack || error.message || 'No se pudo guardar el producto';
+            const target = error.response?.headers?.['x-proxy-target'];
+            const detailedMsg = (target ? `[Target: ${target}] ` : '') + (error.response?.data?.message || error.message || 'No se pudo guardar el producto');
             Swal.fire('Error', detailedMsg, 'error');
         }
+
     };
 
 
