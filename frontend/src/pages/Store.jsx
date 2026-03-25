@@ -551,7 +551,7 @@ const Store = () => {
                                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-xs font-bold text-gray-500 uppercase">Atendido por</span>
-                                        <span className="text-sm font-bold text-gray-800">{selectedVenta.empleado}</span>
+                                        <span className="text-sm font-bold text-gray-800">{selectedVenta.empleado?.nombre || (typeof selectedVenta.empleado === 'string' ? selectedVenta.empleado : 'Sistema')}</span>
                                     </div>
                                 </div>
                             </div>
