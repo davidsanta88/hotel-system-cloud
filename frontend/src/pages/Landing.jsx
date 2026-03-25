@@ -147,10 +147,7 @@ const Landing = () => {
                     </div>
                 </div>
 
-                {/* Botón Admin (Top Right) - Más pequeño por solicitud */}
-                <Link to="/login" className="absolute top-6 right-6 lg:top-8 lg:right-8 z-[60] px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-black text-[8px] lg:text-[9px] uppercase tracking-widest border border-white/20 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95">
-                    Admin
-                </Link>
+
 
                 {/* Texto Principal */}
                 <div className="max-w-4xl space-y-6">
