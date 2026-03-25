@@ -4,37 +4,44 @@ exports.getClientes = async (req, res) => {
     try {
         const clientes = await Cliente.find().populate('municipio_origen_id', 'nombre');
         const mappedClientes = [];
-        for (const c of clientes) {
-            let munObj = c.municipio_origen_id;
+        for (const cRaw of clientes) {
+            const c = cRaw.toObject ? cRaw.toObject() : cRaw;
+            let munObj = c.municipio_origen_id || c.ciudad || c.municipio_id;
             let municipio_nombre = '-';
 
-            if (munObj && munObj.nombre) {
+            if (munObj && typeof munObj === 'object' && munObj.nombre) {
                 municipio_nombre = munObj.nombre;
             } else if (munObj) {
-                // Not populated or reference missing, try to find manually for this diagnostic run
                 const Municipio = require('../models/Municipio');
                 const m = await Municipio.findById(munObj);
                 if (m) {
                     municipio_nombre = m.nombre;
-                } else {
-                    console.log(`[CLIENTE ${c.nombre}] Municipio ID ${munObj} no encontrado en db.`);
                 }
             }
 
-            mappedClientes.push({
+            const docNum = c.documento || c.documentoNumero || c.documento_numero || '';
+            const docTip = c.tipo_documento || c.documentoTipo || c.tipo_doc || '';
+
+            const obj = {
                 id: c._id,
-                nombre: c.nombre,
-                documento: c.documento || c.documentoNumero || '',
-                tipo_documento: c.tipo_documento || c.documentoTipo || '',
-                telefono: c.telefono,
-                email: c.email,
+                _id: c._id,
+                nombre: c.nombre || '',
+                documento: docNum,
+                documentoNumero: docNum,
+                tipo_documento: docTip,
+                documentoTipo: docTip,
+                telefono: c.telefono || '',
+                email: c.email || '',
                 municipio_origen_id: munObj?._id || munObj || null,
                 municipio_nombre: municipio_nombre,
-                UsuarioCreacion: c.usuarioCreacion || '-',
-                FechaCreacion: c.fechaCreacion,
-                UsuarioModificacion: c.usuarioModificacion || '-',
-                FechaModificacion: c.fechaModificacion
-            });
+                ciudad_nombre: municipio_nombre,
+                UsuarioCreacion: c.usuarioCreacion || c.UsuarioCreacion || 'Sistema',
+                usuarioCreacion: c.usuarioCreacion || c.UsuarioCreacion || 'Sistema',
+                FechaCreacion: c.fechaCreacion || c.FechaCreacion,
+                UsuarioModificacion: c.usuarioModificacion || c.UsuarioModificacion || '-',
+                FechaModificacion: c.fechaModificacion || c.FechaModificacion
+            };
+            mappedClientes.push(obj);
         }
         res.json(mappedClientes);
     } catch (err) {
