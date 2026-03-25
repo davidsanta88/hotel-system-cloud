@@ -5,7 +5,7 @@ exports.getMunicipios = async (req, res) => {
         const municipios = await Municipio.find().sort({ nombre: 1 });
         res.json(municipios);
     } catch (err) {
-        res.status(500).json({ message: err.message, stack: err.stack });
+        res.status(500).json({ message: err.message });
     }
 };
 
