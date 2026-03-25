@@ -148,13 +148,15 @@ const Inventory = () => {
                     await api.put(`/productos/${productId}/imagen`, fileData);
                 } catch (imgError) {
                     console.error('Image Upload Error:', imgError);
+                    const target = imgError.response?.headers?.['x-proxy-target'] || 'N/A';
                     // No bloqueamos el éxito del producto si falla la imagen, pero avisamos
                     Swal.fire({
                         title: 'Atención',
-                        text: 'El producto se guardó, pero hubo un error al subir la imagen: ' + (imgError.response?.data?.message || imgError.message),
+                        text: `El producto se guardó, pero hubo un error al subir la imagen. [Target: ${target}] Error: ` + (imgError.response?.data?.message || imgError.message),
                         icon: 'warning'
                     });
                 }
+
             }
 
             if (!selectedFile || (selectedFile && !editingProduct)) {
