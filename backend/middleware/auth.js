@@ -55,11 +55,20 @@ const checkPermission = (pantalla, accion) => {
             
             if (!rol) return res.status(403).json({ message: 'Rol no encontrado' });
 
-            if (rol.nombre === 'admin') return next();
+            // Case-insensitive check for admin
+            if (rol.nombre.toLowerCase() === 'admin') return next();
 
             const permiso = rol.permisos.find(p => p.p === pantalla);
             
-            if (permiso && permiso[accion]) {
+            // Map actions to short names used in model
+            const actionMap = {
+                'can_view': 'v',
+                'can_edit': 'e',
+                'can_delete': 'd'
+            };
+            const mappedAccion = actionMap[accion] || accion;
+
+            if (permiso && permiso[mappedAccion]) {
                 next();
             } else {
                 res.status(403).json({ message: `No tienes permiso para ${accion} en el módulo ${pantalla}` });

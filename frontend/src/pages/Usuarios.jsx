@@ -138,8 +138,7 @@ const Usuarios = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 text-gray-600 border-b border-gray-100 uppercase text-xs tracking-wider">
-                                <th className="p-4 font-semibold w-16">ID</th>
-                                <th className="p-4 font-semibold">Usuario Principal</th>
+                                <th className="p-4 font-semibold uppercase text-xs tracking-wider">Usuario / Nombre</th>
                                 <th className="p-4 font-semibold">Contacto</th>
                                 <th className="p-4 font-semibold text-center">Nivel de Acceso</th>
                                 {(canEdit || canDelete) && <th className="p-4 font-semibold text-right">Manejo de Cuenta</th>}
@@ -148,14 +147,13 @@ const Usuarios = () => {
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="p-12 text-center text-gray-500 font-medium">
+                                    <td colSpan="4" className="p-12 text-center text-gray-500 font-medium">
                                         No se encontraron usuarios.
                                     </td>
                                 </tr>
                             ) : (
                                 filtered.map(item => (
                                     <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                        <td className="p-4 text-gray-500 font-mono text-sm">{item.id}</td>
                                         <td className="p-4 font-bold text-gray-800 flex items-center gap-3">
                                             <div className="bg-blue-100 text-blue-600 p-2 rounded-full hidden sm:block">
                                                 <UserCircle size={20} />

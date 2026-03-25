@@ -103,7 +103,8 @@ const Municipios = () => {
             });
             fetchData();
         } catch (error) {
-            Swal.fire('Error', 'No se pudo cambiar la visibilidad', 'error');
+            const errorMsg = error.response?.data?.message || 'No se pudo cambiar la visibilidad';
+            Swal.fire('Error', errorMsg, 'error');
         }
     };
 
@@ -143,23 +144,21 @@ const Municipios = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 text-gray-600 border-b border-gray-100">
-                                <th className="p-4 font-semibold">ID</th>
-                                <th className="p-4 font-semibold">Nombre del Lugar (Municipio)</th>
-                                <th className="p-4 font-semibold text-center">Visible</th>
-                                <th className="p-4 font-semibold text-right">Acciones</th>
+                                <th className="p-4 font-semibold uppercase text-xs tracking-wider">Nombre del Lugar (Municipio)</th>
+                                <th className="p-4 font-semibold text-center uppercase text-xs tracking-wider">Visible</th>
+                                <th className="p-4 font-semibold text-right uppercase text-xs tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="p-4 text-center text-gray-500">
+                                    <td colSpan="3" className="p-4 text-center text-gray-500">
                                         No se encontraron lugares.
                                     </td>
                                 </tr>
                             ) : (
                                 filtered.map(item => (
                                     <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                        <td className="p-4 text-gray-500">{item.id}</td>
                                         <td className="p-4 font-medium text-gray-800">{item.nombre}</td>
                                         <td className="p-4 text-center">
                                             <div className="flex flex-col items-center gap-1">

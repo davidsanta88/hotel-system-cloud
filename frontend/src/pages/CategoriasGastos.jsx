@@ -147,8 +147,7 @@ const CategoriasGastos = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 text-gray-600 border-b border-gray-100">
-                                <th className="p-4 font-semibold w-16">ID</th>
-                                <th className="p-4 font-semibold">Nombre</th>
+                                <th className="p-4 font-semibold uppercase text-xs tracking-wider">Nombre</th>
                                 <th className="p-4 font-semibold">Tipo</th>
                                 <th className="p-4 font-semibold">Descripción</th>
                                 <th className="p-4 font-semibold text-center">Estado</th>
@@ -165,7 +164,6 @@ const CategoriasGastos = () => {
                             ) : (
                                 filtered.map(item => (
                                     <tr key={item.id} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${!item.activo ? 'opacity-60' : ''}`}>
-                                        <td className="p-4 text-gray-500 font-mono text-sm">{item.id}</td>
                                         <td className="p-4 font-bold text-gray-800">{item.nombre}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.tipo === 'Ingreso' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>

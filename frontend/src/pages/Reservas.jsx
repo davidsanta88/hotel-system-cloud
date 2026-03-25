@@ -387,7 +387,6 @@ const Reservas = () => {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-50 text-gray-500 text-xs font-black uppercase tracking-wider border-b border-gray-100">
-                                <th className="p-4">ID</th>
                                 <th className="p-4">Cliente</th>
                                 <th className="p-4">Habitaciones</th>
                                 <th className="p-4">Fechas</th>
@@ -400,7 +399,6 @@ const Reservas = () => {
                         <tbody className="divide-y divide-gray-50">
                             {reservas.map(r => (
                                 <tr key={r.id} className="hover:bg-blue-50/30 transition-colors">
-                                    <td className="p-4 font-bold text-blue-600">#{r.id}</td>
                                     <td className="p-4">
                                         <div className="font-bold text-gray-800">{r.cliente_nombre}</div>
                                         <div className="flex flex-col">

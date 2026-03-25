@@ -137,8 +137,7 @@ const TiposRegistro = () => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 text-gray-600 border-b border-gray-100">
-                                <th className="p-4 font-semibold w-16">ID</th>
-                                <th className="p-4 font-semibold">Nombre</th>
+                                <th className="p-4 font-semibold uppercase text-xs tracking-wider">Nombre</th>
                                 <th className="p-4 font-semibold">Descripción</th>
                                 <th className="p-4 font-semibold text-center">Visible</th>
                                 {(canEdit || canDelete) && <th className="p-4 font-semibold text-right">Acciones</th>}
@@ -154,7 +153,6 @@ const TiposRegistro = () => {
                             ) : (
                                 filtered.map(item => (
                                     <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                        <td className="p-4 text-gray-500 font-mono text-sm">{item.id}</td>
                                         <td className="p-4 font-bold text-gray-800">{item.nombre}</td>
                                         <td className="p-4 text-gray-600 text-sm">{item.descripcion || '-'}</td>
                                         <td className="p-4 text-center">
