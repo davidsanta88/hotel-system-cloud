@@ -13,11 +13,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Ruta no especificada' });
     }
 
-    // URL del backend (SmarterASP.net)
-    const baseUrl = (process.env.VITE_API_URL || process.env.BACKEND_URL || 'http://hbalconplaza-001-site1.site4future.com').replace(/\/+$/, '');
+    // FORZAR URL de SmarterASP.net (ignorando variables de entorno obsoletas de DigitalOcean)
+    const baseUrl = 'http://hbalconplaza-001-site1.site4future.com';
     
     // Normalizar el path para evitar duplicados /api/api
     const cleanPath = path.replace(/^\/?api\//, '');
+
     
     // Construir la URL final
     const targetUrl = cleanPath.startsWith('uploads') 
