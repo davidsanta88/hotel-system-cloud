@@ -155,9 +155,6 @@ const Landing = () => {
                         <div key={i} className={`transition-all duration-1000 ${i === slide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 absolute inset-x-0'}`}>
                             {i === slide && (
                                 <>
-                                    <span className="inline-block px-4 py-1.5 rounded-full bg-accent-500/20 backdrop-blur-md border border-accent-500/30 text-accent-300 text-[10px] lg:text-xs font-bold tracking-widest uppercase mb-4 animate-fade-in text-center mx-auto">
-                                        ✨ Calidad y confort
-                                    </span>
                                     <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                                         {s.title}
                                     </h1>
