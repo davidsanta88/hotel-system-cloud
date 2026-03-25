@@ -18,11 +18,11 @@ exports.createProducto = async (req, res) => {
         const newProd = new Producto({
             nombre: nombre.trim(),
             categoria,
-            precio: parseFloat(precio),
-            stock: parseInt(stock),
-            stockMinimo: parseInt(stock_minimo),
+            precio: parseFloat(precio) || 0,
+            stock: parseInt(stock) || 0,
+            stockMinimo: parseInt(stock_minimo) || 0,
             descripcion,
-            tipoInventario: tipo_inventario,
+            tipoInventario: tipo_inventario || 'venta',
             imagenUrl: imagen_url,
             usuarioCreacion: req.userName
         });
@@ -43,11 +43,11 @@ exports.updateProducto = async (req, res) => {
         const updateData = {
             nombre: nombre.trim(),
             categoria,
-            precio: parseFloat(precio),
-            stock: parseInt(stock),
-            stockMinimo: parseInt(stock_minimo),
+            precio: parseFloat(precio) || 0,
+            stock: parseInt(stock) || 0,
+            stockMinimo: parseInt(stock_minimo) || 0,
             descripcion,
-            tipoInventario: tipo_inventario,
+            tipoInventario: tipo_inventario || 'venta',
             usuarioModificacion: req.userName,
             fechaModificacion: Date.now()
         };

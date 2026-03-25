@@ -115,7 +115,8 @@ const Inventory = () => {
             fetchData();
         } catch (error) {
             console.error('Save Product Error:', error);
-            Swal.fire('Error', error.response?.data?.message || 'No se pudo guardar el producto', 'error');
+            const detailedMsg = error.response?.data?.message || error.message || 'No se pudo guardar el producto';
+            Swal.fire('Error', detailedMsg, 'error');
         }
     };
 

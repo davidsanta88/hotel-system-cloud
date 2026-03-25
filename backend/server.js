@@ -92,6 +92,15 @@ app.use('/api/notificaciones', require('./routes/notificaciones'));
 app.use('/api/mantenimiento', require('./routes/mantenimiento'));
 app.use('/api/estadisticas', require('./routes/estadisticas'));
 
+// Global Error Handler for JSON responses
+app.use((err, req, res, next) => {
+    console.error('[GLOBAL ERROR]', err.stack);
+    res.status(err.status || 500).json({
+        message: err.message || 'Error interno del servidor',
+        error: process.env.NODE_ENV === 'development' ? err : undefined
+    });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -26,7 +26,8 @@ const verifyToken = (req, res, next) => {
 
 const isAdmin = (req, res, next) => {
     // En NoSQL usamos el nombre del rol guardado en el token para mayor velocidad
-    if (req.userRoleName === 'Admin' || req.userRoleName === 'admin') {
+    const role = req.userRoleName ? req.userRoleName.toLowerCase() : '';
+    if (role === 'admin') {
         next();
         return;
     }
