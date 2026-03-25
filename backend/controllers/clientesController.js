@@ -1,32 +1,16 @@
 const Cliente = require('../models/Cliente');
-const Municipio = require('../models/Municipio'); // Asegurar registro del modelo
 
 exports.getClientes = async (req, res) => {
     try {
-        const clientes = await Cliente.find().populate('municipio_origen_id', 'nombre departamento');
+        const clientes = await Cliente.find().populate('municipio_origen_id', 'nombre');
         const formatted = clientes.map(c => {
             const doc = c._doc || c;
-            
-            // Lógica mejorada para el nombre del municipio (evitar duplicados de departamento)
-            let municipio_nombre = '-';
-            if (c.municipio_origen_id && typeof c.municipio_origen_id === 'object' && c.municipio_origen_id.nombre) {
-                const nombreMun = c.municipio_origen_id.nombre;
-                const deptoMun = c.municipio_origen_id.departamento;
-                
-                if (deptoMun && !nombreMun.startsWith(deptoMun)) {
-                    municipio_nombre = `${deptoMun}-${nombreMun}`;
-                } else {
-                    municipio_nombre = nombreMun;
-                }
-            } else if (c.municipio_nombre) {
-                municipio_nombre = c.municipio_nombre;
-            }
-
-
             return {
                 ...doc,
                 id: c._id.toString(),
-                municipio_nombre: municipio_nombre,
+                municipio_nombre: c.municipio_origen_id && typeof c.municipio_origen_id === 'object'
+                    ? `${c.municipio_origen_id.departamento || ''}-${c.municipio_origen_id.nombre}`.replace(/^-/, '') 
+                    : (c.municipio_nombre || '-'),
                 // Asegurar compatibilidad con ambos formatos (el frontend usa Capitalizado)
                 UsuarioCreacion: c.usuarioCreacion || c.UsuarioCreacion || '-',
                 FechaCreacion: c.fechaCreacion || c.FechaCreacion,
@@ -39,6 +23,7 @@ exports.getClientes = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 exports.createCliente = async (req, res) => {
