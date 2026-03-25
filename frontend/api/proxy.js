@@ -1,50 +1,55 @@
 import axios from 'axios';
 
-// Proxy normal para JSON (Vercel procesa el body automáticamente)
 export default async function handler(req, res) {
-    const { path } = req.query;
+    const { path, isUpload } = req.query;
+    
     if (!path) {
         return res.status(400).json({ error: 'Ruta no especificada' });
     }
 
-    // URL Forzada del backend
+    // URL de SmarterASP.net corregida
     const baseUrl = 'http://hbalconplaza-001-site1.site4future.com';
+    
+    // Normalizar el path para asegurar que siempre use /api/ a menos que sea /uploads/
     const cleanPath = path.replace(/^\/?api\//, '');
-    const targetUrl = `${baseUrl}/api/${cleanPath}`;
+    const finalPath = cleanPath.startsWith('uploads') ? cleanPath : `api/${cleanPath}`;
+    const targetUrl = `${baseUrl}/${finalPath}`;
 
     try {
         const axiosConfig = {
             method: req.method,
             url: targetUrl,
             headers: {
-                'content-type': req.headers['content-type'] || 'application/json',
-                'accept': req.headers['accept'] || '*/*',
+                'Content-Type': req.headers['content-type'] || 'application/json',
             },
-            data: req.body,
+            responseType: isUpload ? 'arraybuffer' : 'json',
             validateStatus: () => true 
         };
 
-        // Pasar el token de autorización si existe
+        // Enviar el JWT que viene del cliente en el header 'x-auth-token' que espera el backend
         if (req.headers.authorization) {
             axiosConfig.headers['x-auth-token'] = req.headers.authorization;
         }
 
+        if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+            axiosConfig.data = req.body;
+        }
+
         const response = await axios(axiosConfig);
         
-        if (response.headers['content-type']) {
-            res.setHeader('Content-Type', response.headers['content-type']);
+        if (isUpload) {
+            res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
+            return res.status(response.status).send(Buffer.from(response.data));
         }
-        res.setHeader('X-Proxy-Target', targetUrl);
-        res.setHeader('X-Proxy-Type', 'JSON');
 
         return res.status(response.status).json(response.data);
 
     } catch (error) {
-        console.error('Proxy JSON Error:', error.message);
+        console.error('Proxy Error:', error.message);
         return res.status(500).json({ 
-            error: 'Error en el túnel de conexión JSON', 
-            targetUrl,
-            details: error.message 
+            error: 'Error de conexión con el backend', 
+            details: error.message,
+            targetUrl
         });
     }
 }
