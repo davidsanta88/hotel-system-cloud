@@ -95,11 +95,23 @@ app.use('/api/estadisticas', require('./routes/estadisticas'));
 // Global Error Handler for JSON responses
 app.use((err, req, res, next) => {
     console.error('[GLOBAL ERROR]', err.stack);
+    
+    // Manejo específico para errores de Multer
+    if (err.name === 'MulterError') {
+        return res.status(500).json({
+            message: `Error de subida de archivo: ${err.message}`,
+            code: err.code
+        });
+    }
+
     res.status(err.status || 500).json({
         message: err.message || 'Error interno del servidor',
-        error: process.env.NODE_ENV === 'development' ? err : undefined
+        error: err,
+        stack: err.stack
     });
 });
+
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
