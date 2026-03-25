@@ -8,7 +8,7 @@ exports.getClientes = async (req, res) => {
             return {
                 id: c._id,
                 nombre: c.nombre,
-                documento: c.documentoNumber || c.documento,
+                documento: c.documentoNumero || c.documento,
                 tipo_documento: c.documentoTipo || c.tipo_documento,
                 telefono: c.telefono,
                 email: c.email,
