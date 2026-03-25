@@ -44,8 +44,17 @@ exports.getClientes = async (req, res) => {
 
 exports.createCliente = async (req, res) => {
     try {
-        const { nombre, documento, tipo_documento, telefono, email, municipio_origen_id } = req.body;
+        const payload = req.body;
+        const nombre = payload.nombre;
+        const documento = payload.documento || payload.documentoNumero;
+        const tipo_documento = payload.tipo_documento || payload.documentoTipo;
+        const telefono = payload.telefono;
+        const email = payload.email;
+        // SOPORTE PARA TODOS LOS NOMBRES POSIBLES DE ORIGEN
+        let originId = payload.municipio_origen_id || payload.ciudad || payload.municipio_id;
         
+        if (originId === '' || !originId) originId = null;
+
         // Check for duplicates
         if (documento) {
             const existing = await Cliente.findOne({ documento });
@@ -60,7 +69,7 @@ exports.createCliente = async (req, res) => {
             tipo_documento,
             telefono,
             email,
-            municipio_origen_id: (municipio_origen_id === '' || !municipio_origen_id) ? null : municipio_origen_id,
+            municipio_origen_id: originId,
             usuarioCreacion: req.userName || 'Sistema',
             fechaCreacion: Date.now()
         });
@@ -76,16 +85,19 @@ exports.createCliente = async (req, res) => {
 exports.updateCliente = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, documento, tipo_documento, telefono, email, municipio_origen_id } = req.body;
+        const payload = req.body;
         const cliente = await Cliente.findById(id);
         if (!cliente) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-        cliente.nombre = nombre;
-        cliente.documento = documento;
-        cliente.tipo_documento = tipo_documento;
-        cliente.telefono = telefono;
-        cliente.email = email;
-        cliente.municipio_origen_id = (municipio_origen_id === '' || !municipio_origen_id) ? null : municipio_origen_id;
+        cliente.nombre = payload.nombre;
+        cliente.documento = payload.documento || payload.documentoNumero;
+        cliente.tipo_documento = payload.tipo_documento || payload.documentoTipo;
+        cliente.telefono = payload.telefono;
+        cliente.email = payload.email;
+        
+        let originId = payload.municipio_origen_id || payload.ciudad || payload.municipio_id;
+        cliente.municipio_origen_id = (originId === '' || !originId) ? null : originId;
+        
         cliente.usuarioModificacion = req.userName || 'Sistema';
         cliente.fechaModificacion = Date.now();
 
