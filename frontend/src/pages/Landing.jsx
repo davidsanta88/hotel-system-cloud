@@ -230,7 +230,7 @@ const Landing = () => {
                         ))}
                     </div>
                     <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em] text-center px-4">
-                        © {new Date().getFullYear()} HOTEL BALCÓN PLAZA · Cra 4 #11-03 2do Piso (Plaza Córdoba) · Belalcázar, Caldas
+                        - CRA 4 #11-03 2DO PISO (PLAZA CÓRDOBA) - BELALCÁZAR, CALDAS
                     </p>
                 </div>
             </div>
