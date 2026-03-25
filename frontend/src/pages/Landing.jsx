@@ -137,13 +137,13 @@ const Landing = () => {
             <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6">
                 
                 {/* Header / Logo (Top Left) */}
-                <div className="absolute top-6 lg:top-8 left-6 lg:left-8 flex items-center gap-4 lg:gap-6 group z-[60]">
-                    <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden ring-2 ring-accent-400/50 shadow-[0_0_20px_rgba(253,185,19,0.3)] transition-transform group-hover:scale-110 duration-500">
+                <div className="absolute top-6 lg:top-8 left-6 lg:left-8 flex items-center gap-3 lg:gap-4 group z-[60]">
+                    <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full overflow-hidden ring-2 ring-accent-400/50 shadow-2xl transition-transform group-hover:scale-110 duration-500">
                         <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <div className="text-left">
-                        <h2 className="text-white font-black text-xl lg:text-3xl leading-tight tracking-[0.05em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">HOTEL BALCÓN PLAZA</h2>
-                        <p className="text-accent-500 text-[10px] lg:text-xs font-black tracking-[0.4em] uppercase drop-shadow-md">Belalcázar, Caldas</p>
+                        <p className="text-white font-black text-lg lg:text-xl leading-tight tracking-wider drop-shadow-md">HOTEL BALCÓN PLAZA</p>
+                        <p className="text-accent-500 text-[8px] lg:text-[10px] font-black tracking-[0.3em] uppercase drop-shadow-sm">Belalcázar, Caldas</p>
                     </div>
                 </div>
 
