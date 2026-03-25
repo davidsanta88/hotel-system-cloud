@@ -174,7 +174,7 @@ const Registros = () => {
         
         if (name === 'habitacion_id' || name === 'fecha_ingreso' || name === 'fecha_salida') {
             // Recalculate total for edit mode
-            const hab = habitaciones.find(h => h.id === parseInt(newData.habitacion_id));
+            const hab = habitaciones.find(h => String(h.id || h._id) === String(newData.habitacion_id));
             if (hab && newData.fecha_ingreso && newData.fecha_salida) {
                 const inDate = new Date(newData.fecha_ingreso);
                 const outDate = new Date(newData.fecha_salida);
@@ -199,7 +199,7 @@ const Registros = () => {
         setGuestEditForm({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '' });
         
         // Trigger total recalculation by calling handleEditFormChange with a dummy event or manual update
-        const hab = habitaciones.find(h => h.id === parseInt(editData.habitacion_id));
+        const hab = habitaciones.find(h => String(h.id || h._id) === String(editData.habitacion_id));
         if (hab && editData.fecha_ingreso && editData.fecha_salida) {
             const inDate = new Date(editData.fecha_ingreso);
             const outDate = new Date(editData.fecha_salida);
@@ -213,7 +213,7 @@ const Registros = () => {
 
     const handleRemoveGuestEdit = (index) => {
         const newList = editData.huespedes.filter((_, i) => i !== index);
-        const hab = habitaciones.find(h => h.id === parseInt(editData.habitacion_id));
+        const hab = habitaciones.find(h => String(h.id || h._id) === String(editData.habitacion_id));
         if (hab && editData.fecha_ingreso && editData.fecha_salida) {
             const inDate = new Date(editData.fecha_ingreso);
             const outDate = new Date(editData.fecha_salida);
@@ -260,7 +260,7 @@ const Registros = () => {
 
     const calculateTotal = (habId, fechaIn, fechaOut, listLength = huespedesList.length) => {
         if (!habId || !fechaIn || !fechaOut) return;
-        const hab = habitaciones.find(h => h.id === parseInt(habId));
+        const hab = habitaciones.find(h => String(h.id || h._id) === String(habId));
         if (!hab) return;
         
         const inDate = new Date(fechaIn);
