@@ -42,6 +42,11 @@ app.use('/api/checkin-digital', (req, res, next) => {
     next();
 }, require('./routes/checkin'));
 
+// 1.5 PUBLIC ROUTES (Allow public access for specific features)
+app.use('/api/solicitudes', require('./routes/solicitudes'));
+app.use('/api/municipios', require('./routes/municipios'));
+app.use('/api/tipos-habitacion', require('./routes/tiposHabitacion'));
+
 // 2. PROTECTED ROUTES (Require Token)
 app.use('/api', verifyToken);
 
@@ -83,7 +88,6 @@ app.use('/api/estados-habitacion', estadosHabitacionRoutes);
 app.use('/api/inventario', inventarioRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/reservas', reservasRoutes);
-app.use('/api/solicitudes', require('./routes/solicitudes'));
 app.use('/api/notificaciones', require('./routes/notificaciones'));
 app.use('/api/mantenimiento', require('./routes/mantenimiento'));
 app.use('/api/estadisticas', require('./routes/estadisticas'));
