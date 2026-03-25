@@ -33,8 +33,12 @@ app.use((req, res, next) => {
 const auditMiddleware = require('./middleware/auditMiddleware');
 const { verifyToken } = require('./middleware/auth');
 
+// 0. DIAGNOSTICS
+app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: new Date().toISOString(), version: '1.0.2' }));
+
 // 1. PUBLIC ROUTES (No Token)
 app.use('/api/auth', require('./routes/auth'));
+
 app.use('/api/checkin-digital', (req, res, next) => {
     // Solo dejamos pasar /public sin token
     if (req.path === '/public' && req.method === 'POST') return next();
