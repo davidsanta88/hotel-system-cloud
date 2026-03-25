@@ -134,7 +134,7 @@ const Landing = () => {
             </div>
 
             {/* ─── Contenido Centrado ─────────────────────────────────────────── */}
-            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6">
+            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6 pt-28 lg:pt-0">
                 
                 {/* Header / Logo (Top Left) */}
                 <div className="absolute top-6 lg:top-8 left-6 lg:left-8 flex items-center gap-3 lg:gap-4 group z-[60]">
@@ -148,14 +148,13 @@ const Landing = () => {
                 </div>
 
 
-
                 {/* Texto Principal */}
                 <div className="max-w-4xl space-y-6">
                     {SLIDES.map((s, i) => (
                         <div key={i} className={`transition-all duration-1000 ${i === slide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 absolute inset-x-0'}`}>
                             {i === slide && (
                                 <>
-                                    <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+                                    <h1 className="text-white text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black leading-tight drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                                         {s.title}
                                     </h1>
                                     <p className="text-white/80 text-base sm:text-lg md:text-xl lg:text-2xl font-medium mt-4 max-w-2xl mx-auto drop-shadow-lg px-4 sm:px-0">
