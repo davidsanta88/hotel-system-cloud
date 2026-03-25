@@ -1,0 +1,35 @@
+[
+  {
+    "_id": "69c2f5b476d15c64cbcb166d",
+    "nombre": "Admin",
+    "descripcion": "Administrador total del sistema",
+    "permisos": [],
+    "__v": 0
+  },
+  {
+    "_id": "69c30b307350475fc7cf1f50",
+    "nombre": "Empleado",
+    "descripcion": "",
+    "permisos": [
+      {
+        "p": "dashboard",
+        "v": true,
+        "e": true,
+        "d": true
+      },
+      {
+        "p": "registros",
+        "v": true,
+        "e": true,
+        "d": true
+      },
+      {
+        "p": "clientes",
+        "v": true,
+        "e": true,
+        "d": true
+      }
+    ],
+    "__v": 0
+  }
+]

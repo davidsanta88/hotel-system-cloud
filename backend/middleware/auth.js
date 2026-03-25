@@ -24,14 +24,27 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-const isAdmin = (req, res, next) => {
-    // En NoSQL usamos el nombre del rol guardado en el token para mayor velocidad
-    const role = req.userRoleName ? req.userRoleName.toLowerCase() : '';
-    if (role === 'admin' || role === 'administrador') {
-        next();
-        return;
+const isAdmin = async (req, res, next) => {
+    try {
+        // 1. Intentar por el nombre guardado en el token (más rápido)
+        const roleName = req.userRoleName ? req.userRoleName.toLowerCase() : '';
+        if (roleName === 'admin' || roleName === 'administrador') {
+            return next();
+        }
+
+        // 2. Fallback: buscar el rol en la DB por ID (más robusto si el token es antiguo)
+        if (req.userRole) {
+            const Rol = require('../models/Rol');
+            const rol = await Rol.findById(req.userRole);
+            if (rol && (rol.nombre.toLowerCase() === 'admin' || rol.nombre.toLowerCase() === 'administrador')) {
+                return next();
+            }
+        }
+
+        res.status(403).json({ message: 'Requiere rol de Administrador' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al verificar permisos de administrador' });
     }
-    res.status(403).json({ message: 'Requiere rol de Administrador' });
 };
 
 
@@ -57,7 +70,8 @@ const checkPermission = (pantalla, accion) => {
             if (!rol) return res.status(403).json({ message: 'Rol no encontrado' });
 
             // Case-insensitive check for admin
-            if (rol.nombre.toLowerCase() === 'admin') return next();
+            const roleName = rol.nombre.toLowerCase();
+            if (roleName === 'admin' || roleName === 'administrador') return next();
 
             const permiso = rol.permisos.find(p => p.p === pantalla);
             
