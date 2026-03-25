@@ -29,9 +29,9 @@ exports.createHabitacion = async (req, res) => {
         
         const newHab = new Habitacion({
             numero,
-            tipo: tipo_id, // Asumiendo que enviarán el ObjectId
+            tipo: tipo_id,
             estado: estado_id,
-            precios: { precio_1, precio_2, precio_3, precio_4, precio_5, precio_6 },
+            precio_1, precio_2, precio_3, precio_4, precio_5, precio_6,
             descripcion,
             usuarioCreacion: req.userName
         });
@@ -52,7 +52,7 @@ exports.updateHabitacion = async (req, res) => {
             numero,
             tipo: tipo_id,
             estado: estado_id,
-            precios: { precio_1, precio_2, precio_3, precio_4, precio_5, precio_6 },
+            precio_1, precio_2, precio_3, precio_4, precio_5, precio_6,
             descripcion,
             usuarioModificacion: req.userName,
             fechaModificacion: Date.now()
