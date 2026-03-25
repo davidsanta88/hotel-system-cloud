@@ -11,7 +11,9 @@ exports.getHabitaciones = async (req, res) => {
         // Formatear para mantener compatibilidad con el frontend si es necesario
         const formattedResult = habitaciones.map(h => ({
             ...h._doc,
-            id: h._id,
+            id: h._id.toString(),
+            tipo_id: h.tipo ? h.tipo._id.toString() : null,
+            estado_id: h.estado ? h.estado._id.toString() : null,
             tipo_nombre: h.tipo ? h.tipo.nombre : null,
             estado_nombre: h.estado ? h.estado.nombre : null,
             photos: h.fotos || []

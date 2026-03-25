@@ -230,12 +230,15 @@ const Rooms = () => {
         if (room) {
             setCurrentRoom({
                 ...room, 
-                precio_1: room.precio_1 !== null ? room.precio_1 : '',
-                precio_2: room.precio_2 !== null ? room.precio_2 : '',
-                precio_3: room.precio_3 !== null ? room.precio_3 : '',
-                precio_4: room.precio_4 !== null ? room.precio_4 : '',
-                precio_5: room.precio_5 !== null ? room.precio_5 : '',
-                precio_6: room.precio_6 !== null ? room.precio_6 : ''
+                // Asegurar que usamos los IDs si vienen de los nombres populados
+                tipo_id: room.tipo_id || (room.tipo?._id || room.tipo),
+                estado_id: room.estado_id || (room.estado?._id || room.estado),
+                precio_1: (room.precio_1 !== null && room.precio_1 !== undefined) ? room.precio_1 : '',
+                precio_2: (room.precio_2 !== null && room.precio_2 !== undefined) ? room.precio_2 : '',
+                precio_3: (room.precio_3 !== null && room.precio_3 !== undefined) ? room.precio_3 : '',
+                precio_4: (room.precio_4 !== null && room.precio_4 !== undefined) ? room.precio_4 : '',
+                precio_5: (room.precio_5 !== null && room.precio_5 !== undefined) ? room.precio_5 : '',
+                precio_6: (room.precio_6 !== null && room.precio_6 !== undefined) ? room.precio_6 : ''
             });
             setEditMode(true);
         } else {
