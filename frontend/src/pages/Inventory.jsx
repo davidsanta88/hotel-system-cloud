@@ -101,37 +101,64 @@ const Inventory = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        const data = new FormData();
-        Object.keys(formData).forEach(key => {
-            data.append(key, formData[key]);
-        });
-        if (selectedFile) {
-            data.append('imagen', selectedFile);
-        }
+        // Preparar datos en formato JSON (más robusto para el proxy)
+        const productData = {
+            ...formData,
+            precio_compra: parseFloat(formData.precio_compra) || 0,
+            precio: parseFloat(formData.precio) || 0,
+            margen: parseFloat(formData.margen) || 0,
+            stock: parseInt(formData.stock) || 0,
+            stock_minimo: parseInt(formData.stock_minimo) || 0
+        };
 
-        console.log('Submitting Data:');
-        for (let pair of data.entries()) {
-            console.log(pair[0]+ ', ' + pair[1]); 
-        }
+        console.log('Submitting Product Data (JSON):', productData);
 
         try {
+            let response;
             if (editingProduct) {
-                await api.put(`/productos/${editingProduct.id}`, data);
-                Swal.fire('Éxito', 'Producto actualizado', 'success');
+                const targetId = editingProduct.id || editingProduct._id;
+                response = await api.put(`/productos/${targetId}`, productData);
             } else {
-                await api.post('/productos', data);
-                Swal.fire('Éxito', 'Producto creado', 'success');
+                response = await api.post('/productos', productData);
             }
+
+            const savedProduct = response.data.producto;
+            const productId = savedProduct?.id || savedProduct?._id || (editingProduct?.id || editingProduct?._id);
+
+            // Si hay un archivo seleccionado, subirlo por separado
+            if (selectedFile && productId) {
+                console.log('Uploading image separately for product:', productId);
+                const fileData = new FormData();
+                fileData.append('imagen', selectedFile);
+                
+                try {
+                    await api.put(`/productos/${productId}/imagen`, fileData);
+                } catch (imgError) {
+                    console.error('Image Upload Error:', imgError);
+                    // No bloqueamos el éxito del producto si falla la imagen, pero avisamos
+                    Swal.fire({
+                        title: 'Atención',
+                        text: 'El producto se guardó, pero hubo un error al subir la imagen: ' + (imgError.response?.data?.message || imgError.message),
+                        icon: 'warning'
+                    });
+                }
+            }
+
+            if (!selectedFile || (selectedFile && !editingProduct)) {
+                 Swal.fire('Éxito', editingProduct ? 'Producto actualizado' : 'Producto creado', 'success');
+            }
+            
             setShowModal(false);
             setEditingProduct(null);
             setSelectedFile(null);
             fetchData();
         } catch (error) {
             console.error('Save Product Error:', error);
-            const detailedMsg = error.response?.data?.message || error.message || 'No se pudo guardar el producto';
+            const detailedMsg = error.response?.data?.message || error.stack || error.message || 'No se pudo guardar el producto';
             Swal.fire('Error', detailedMsg, 'error');
         }
     };
+
 
     const handleMovementSubmit = async (e) => {
         e.preventDefault();

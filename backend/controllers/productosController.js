@@ -131,4 +131,26 @@ exports.updateStock = async (req, res) => {
     }
 };
 
+exports.uploadImagen = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!req.file) {
+            return res.status(400).json({ message: 'No se subió ninguna imagen' });
+        }
 
+        const imagen_url = `/uploads/productos/${req.file.filename}`;
+        const product = await Producto.findByIdAndUpdate(id, { 
+            imagenUrl: imagen_url,
+            usuarioModificacion: req.userName,
+            fechaModificacion: Date.now()
+        }, { new: true });
+
+        if (!product) {
+            return res.status(404).json({ message: 'Producto no encontrado' });
+        }
+
+        res.json({ message: 'Imagen subida con éxito', producto: product });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
