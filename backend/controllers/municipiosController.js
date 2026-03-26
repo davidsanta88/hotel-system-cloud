@@ -38,3 +38,33 @@ exports.deleteMunicipio = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// Emergency Re-seed Trigger
+exports.reseed = async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const rawPath = path.join(__dirname, '../municipios_raw.txt');
+        const rawData = fs.readFileSync(rawPath, 'utf8');
+        
+        const docs = rawData.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => {
+                const parts = line.split('-');
+                return {
+                    nombre: line.trim(),
+                    departamento: parts[0].trim(),
+                    visualizar: true
+                };
+            })
+            .filter(d => d.nombre && d.departamento);
+
+        await Municipio.deleteMany({});
+        await Municipio.insertMany(docs);
+        
+        res.json({ message: 'Re-seed completed', count: docs.length });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

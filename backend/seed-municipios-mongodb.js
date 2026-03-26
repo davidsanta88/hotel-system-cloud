@@ -22,7 +22,7 @@ const seed = async () => {
                 return {
                     nombre: line.trim(),
                     departamento: departamento,
-                    visualizar: false
+                    visualizar: true // Set to true for full visibility
                 };
             })
             .filter(d => d.nombre && d.departamento);

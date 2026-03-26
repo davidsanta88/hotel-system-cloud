@@ -42,13 +42,13 @@ const auditMiddleware = require('./middleware/auditMiddleware');
 const { verifyToken } = require('./middleware/auth');
 
 // Root route for initial health check
-app.get('/', (req, res) => res.send('Hotel System API is running (v1.2.8)'));
+app.get('/', (req, res) => res.send('Hotel System API is running (v1.2.9)'));
 
 // Ping route for deployment verification (Versioned)
 app.get('/api/ping', (req, res) => {
     res.json({ 
         status: 'UP', 
-        version: '1.2.8 (Ultimate Compatibility)', 
+        version: '1.2.9 (Ultimate Compatibility)', 
         time: new Date().toISOString()
     });
 });
