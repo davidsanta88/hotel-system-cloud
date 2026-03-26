@@ -7,10 +7,10 @@ const { verifyToken, isAdmin } = require('../middleware/auth');
 router.use(verifyToken);
 
 router.get('/', notasController.getAll);
-router.get('/mis-alertas', notasController.getMyAlerts);
+// router.get('/mis-alertas', notasController.getMyAlerts); // Comentado por falta de implementación
 router.post('/', notasController.create);
 router.put('/:id', notasController.update);
-router.patch('/:id/leida', notasController.markAsRead);
+// router.patch('/:id/leida', notasController.markAsRead); // Comentado por falta de implementación
 router.delete('/:id', notasController.delete);
 
 module.exports = router;
