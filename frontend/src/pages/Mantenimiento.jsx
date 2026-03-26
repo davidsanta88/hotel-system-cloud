@@ -128,7 +128,7 @@ const Mantenimiento = () => {
                                 </span>
                                 <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                                     <Clock size={12} />
-                                    {format(new Date(task.fecha_reporte), "dd MMM, yyyy", { locale: es })}
+                                    {task.fecha_reporte ? format(new Date(task.fecha_reporte), "dd MMM, yyyy", { locale: es }) : '---'}
                                 </div>
                             </div>
 
@@ -186,7 +186,7 @@ const Mantenimiento = () => {
                             {task.estado === 'SOLUCIONADO' && (
                                 <div className="w-full py-3 text-center text-emerald-600 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
                                     <CheckCircle2 size={16} />
-                                    Solucionado el {format(new Date(task.fecha_solucion), "dd/MM")}
+                                    Solucionado {task.fecha_solucion ? `el ${format(new Date(task.fecha_solucion), "dd/MM")}` : ''}
                                 </div>
                             )}
                         </div>

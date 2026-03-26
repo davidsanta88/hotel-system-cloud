@@ -54,10 +54,16 @@ exports.getProductosMasVendidos = async (req, res) => {
     }
 };
 
+const EstadoHabitacion = require('../models/EstadoHabitacion');
+
 exports.getResumenGeneral = async (req, res) => {
     try {
-        const hab_disponibles = await Habitacion.countDocuments({ estado: { $regex: /disponible/i } });
-        const hab_ocupadas = await Habitacion.countDocuments({ estado: { $regex: /ocupada/i } });
+        // Resolver IDs de estados para conteo preciso
+        const estadoLimpia = await EstadoHabitacion.findOne({ nombre: { $regex: /limpia|disponible/i } });
+        const estadoOcupada = await EstadoHabitacion.findOne({ nombre: { $regex: /ocupada/i } });
+
+        const hab_disponibles = estadoLimpia ? await Habitacion.countDocuments({ estado: estadoLimpia._id }) : 0;
+        const hab_ocupadas = estadoOcupada ? await Habitacion.countDocuments({ estado: estadoOcupada._id }) : 0;
         const alertas_stock = await Producto.countDocuments({ $expr: { $lte: ["$stock", "$stockMinimo"] } });
         
         const hoy = new Date();
@@ -73,14 +79,46 @@ exports.getResumenGeneral = async (req, res) => {
         ]);
         const ventas_hoy = ventas_hoy_res[0] ? ventas_hoy_res[0].total : 0;
 
+        // Sumar pagos de registros realizados hoy
+        const pagos_hospedaje_hoy = await Registro.aggregate([
+            { $unwind: "$pagos" },
+            { $match: { "pagos.fecha": { $gte: hoy, $lt: mañana } } },
+            { $group: { _id: null, total: { $sum: "$pagos.monto" } } }
+        ]);
+        const pagos_hoy = pagos_hospedaje_hoy[0] ? pagos_hospedaje_hoy[0].total : 0;
+
         const egresos_hoy_res = await Gasto.aggregate([
             { $match: { fecha: { $gte: hoy, $lt: mañana } } },
             { $group: { _id: null, total: { $sum: "$monto" } } }
         ]);
         const egresos_hoy = egresos_hoy_res[0] ? egresos_hoy_res[0].total : 0;
 
-        const recientes_registros = await Registro.find().populate('cliente').populate('habitacion').sort({ fechaCreacion: -1 }).limit(5);
-        const recientes_ventas = await Venta.find().populate('empleado').sort({ fecha: -1 }).limit(5);
+        const recientes_registros = await Registro.find()
+            .populate('cliente')
+            .populate('habitacion')
+            .sort({ fechaCreacion: -1 })
+            .limit(5);
+
+        const recientes_ventas = await Venta.find()
+            .populate('empleado')
+            .sort({ fecha: -1 })
+            .limit(5);
+
+        // Mapeo para el frontend del dashboard
+        const mapped_registros = recientes_registros.map(r => ({
+            id: r._id,
+            cliente: r.cliente?.nombre || 'Huésped',
+            habitacion: r.habitacion?.numero || 'S/N',
+            fecha: r.fechaCreacion || r.fechaEntrada,
+            estado: r.estado === 'activo' ? 'CHECK-IN' : r.estado.toUpperCase()
+        }));
+
+        const mapped_ventas = recientes_ventas.map(v => ({
+            id: v._id,
+            empleado: v.empleado?.nombre || v.usuarioCreacion || 'Personal',
+            total: v.total,
+            fecha: v.fecha
+        }));
 
         res.json({
             hab_disponibles,
@@ -88,11 +126,11 @@ exports.getResumenGeneral = async (req, res) => {
             alertas_stock,
             registros_hoy,
             ventas_hoy,
-            ingresos_hoy: ventas_hoy,
+            ingresos_hoy: ventas_hoy + pagos_hoy,
             egresos_hoy,
             recientes: {
-                registros: recientes_registros,
-                ventas: recientes_ventas
+                registros: mapped_registros,
+                ventas: mapped_ventas
             }
         });
     } catch (err) {

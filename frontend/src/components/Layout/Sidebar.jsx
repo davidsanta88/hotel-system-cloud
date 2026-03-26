@@ -51,7 +51,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
                 { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' },
                 { name: 'Solicitudes Reserva', path: '/solicitudes', icon: <Bell size={20} />, code: 'solicitudes' },
-                { name: 'Gestión de Aseo', path: '/aseo', icon: <Brush size={20} />, code: 'aseo' },
                 { name: 'Mantenimiento', path: '/mantenimiento', icon: <Wrench size={20} />, code: 'mantenimiento' }
             ]
         },
