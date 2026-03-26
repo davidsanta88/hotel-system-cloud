@@ -47,6 +47,7 @@ const Inventory = () => {
         cantidad: '',
         motivo: ''
     });
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
@@ -79,7 +80,8 @@ const Inventory = () => {
                     tipo_inventario: p.tipoInventario || p.tipo_inventario || 'venta',
                     imagen_url: p.imagenUrl || p.imagen_url,
                     stock_minimo: p.stockMinimo || p.stock_minimo || 0,
-                    precio_compra: p.precio_compra || 0
+                    precio_compra: p.precio_compra || 0,
+                    margen: (p.precio || 0) - (p.precio_compra || 0)
                 }));
 
                 const filtered = view === 'alerts' 
@@ -109,6 +111,33 @@ const Inventory = () => {
         } catch (error) {
             Swal.fire('Error', 'No se pudo cambiar el estado del producto', 'error');
         }
+    };
+
+    const exportToCSV = () => {
+        const headers = ["Producto", "Categoría", "Precio Compra", "Precio Venta", "Margen", "Stock", "Estado"];
+        const rows = filteredProducts.map(p => [
+            p.nombre,
+            p.categoria,
+            p.precio_compra,
+            p.precio,
+            p.margen,
+            p.stock,
+            p.activo ? "Activo" : "Inactivo"
+        ]);
+
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8
+        csvContent += headers.join(",") + "\n";
+        rows.forEach(row => {
+            csvContent += row.join(",") + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `productos_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const handleSubmit = async (e) => {
@@ -229,6 +258,11 @@ const Inventory = () => {
         setShowModal(true);
     };
 
+    const filteredProducts = productos.filter(p => {
+        const searchStr = `${p.nombre} ${p.categoria}`.toLowerCase();
+        return searchStr.includes(searchTerm.toLowerCase());
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -236,34 +270,52 @@ const Inventory = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Registro de Productos</h1>
                     <p className="text-gray-500">Gestione los productos, stock y alertas de la tienda</p>
                 </div>
-                <div className="flex flex-col gap-4">
-                    <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
+                <div className="flex flex-col sm:flex-row gap-4 items-center w-full md:w-auto">
+                    {view === 'products' && (
+                        <div className="relative w-full sm:w-64">
+                            <input 
+                                type="text" 
+                                placeholder="Buscar producto..." 
+                                className="input-field pl-4 pr-10 py-2 w-full text-sm"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    )}
+                    <div className="flex bg-gray-100 p-1 rounded-xl w-fit shrink-0">
                         <button onClick={() => setView('products')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'products' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}>Productos</button>
                         <button onClick={() => setView('movements')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'movements' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}>Movimientos</button>
                         <button onClick={() => setView('alerts')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'alerts' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}>Alertas Stock</button>
                     </div>
                 </div>
-                {canEdit && view === 'products' && (
-                    <button onClick={() => { 
-                        setEditingProduct(null); 
-                        setFormData({
-                            nombre:'', 
-                            categoria:'', 
-                            precio_compra: '',
-                            precio:'', 
-                            margen: '',
-                            stock:'', 
-                            stock_minimo:'', 
-                            descripcion:'',
-                            tipo_inventario: 'venta'
-                        }); 
-                        setSelectedFile(null);
-                        setShowModal(true); 
-                    }} className="btn-primary flex items-center space-x-2">
-                        <Plus size={20} />
-                        <span>Nuevo Producto</span>
-                    </button>
-                )}
+                <div className="flex gap-2">
+                    {view === 'products' && (
+                        <button onClick={exportToCSV} className="btn-secondary flex items-center space-x-2">
+                            <span>CSV / Excel</span>
+                        </button>
+                    )}
+                    {canEdit && view === 'products' && (
+                        <button onClick={() => { 
+                            setEditingProduct(null); 
+                            setFormData({
+                                nombre:'', 
+                                categoria:'', 
+                                precio_compra: '',
+                                precio:'', 
+                                margen: '',
+                                stock:'', 
+                                stock_minimo:'', 
+                                descripcion:'',
+                                tipo_inventario: 'venta'
+                            }); 
+                            setSelectedFile(null);
+                            setShowModal(true); 
+                        }} className="btn-primary flex items-center space-x-2">
+                            <Plus size={20} />
+                            <span>Nuevo</span>
+                        </button>
+                    )}
+                </div>
                 {canEdit && view === 'movements' && (
                     <button onClick={() => setShowMovementModal(true)} className="btn-primary flex items-center space-x-2">
                         <PackagePlus size={20} />
@@ -274,68 +326,74 @@ const Inventory = () => {
 
             {view === 'products' || view === 'alerts' ? (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Img</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                {canEdit && <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Activo</th>}
-                                {(canEdit || canDelete) && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>}
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {productos.map((prod) => (
-                                <tr key={prod.id} className={`transition-colors ${prod.activo === false || prod.activo === 0 ? 'opacity-50 bg-gray-50' : 'hover:bg-gray-50'}`}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="h-16 w-16 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center relative group">
-                                            {prod.imagen_url ? (
-                                                <img 
-                                                    src={`${API_BASE_URL}${prod.imagen_url}`} 
-                                                    alt={prod.nombre} 
-                                                    className="w-full h-full object-cover rounded-xl"
-                                                />
-                                            ) : (
-                                                <Package className="text-gray-300" size={24} />
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{prod.nombre}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 uppercase">{prod.categoria}</span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">${formatCurrency(prod.precio)}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center space-x-2">
-                                            <span className={`font-bold ${prod.stock <= prod.stock_minimo ? 'text-red-500' : 'text-green-600'}`}>{prod.stock}</span>
-                                            {prod.stock <= prod.stock_minimo && <AlertTriangle size={16} className="text-red-500" />}
-                                        </div>
-                                    </td>
-                                    {canEdit && (
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <ToggleSwitch
-                                                    checked={prod.activo === true || prod.activo === 1}
-                                                    onChange={() => handleToggleActivo(prod)}
-                                                />
-                                                <span className={`text-[10px] font-bold ${prod.activo === false || prod.activo === 0 ? 'text-gray-400' : 'text-green-600'}`}>
-                                                    {prod.activo === false || prod.activo === 0 ? 'Inactivo' : 'Activo'}
-                                                </span>
+                    <div className="overflow-x-auto max-h-[600px]">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Img</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Compra</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Venta</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margen</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                    {canEdit && <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Activo</th>}
+                                    {(canEdit || canDelete) && <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>}
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredProducts.map((prod) => (
+                                    <tr key={prod.id} className={`transition-colors ${prod.activo === false || prod.activo === 0 ? 'opacity-50 bg-gray-50' : 'hover:bg-gray-50'}`}>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="h-12 w-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center relative group">
+                                                {prod.imagen_url ? (
+                                                    <img 
+                                                        src={`${API_BASE_URL}${prod.imagen_url}`} 
+                                                        alt={prod.nombre} 
+                                                        className="w-full h-full object-cover rounded-xl"
+                                                    />
+                                                ) : (
+                                                    <Package className="text-gray-300" size={20} />
+                                                )}
                                             </div>
                                         </td>
-                                    )}
-                                    {(canEdit || canDelete) && (
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            {canEdit && <button onClick={() => openEdit(prod)} className="text-primary-600 hover:text-primary-900 p-1 rounded-lg hover:bg-primary-50"><Edit size={18} /></button>}
-                                            {canDelete && <button onClick={() => handleDelete(prod.id)} className="text-red-600 hover:text-red-900 p-1 rounded-lg hover:bg-red-50"><Trash2 size={18} /></button>}
+                                        <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-900 text-sm">{prod.nombre}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="px-2 py-0.5 text-[10px] font-black rounded-md bg-blue-50 text-blue-600 uppercase border border-blue-100">{prod.categoria}</span>
                                         </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">${formatCurrency(prod.precio_compra)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900">${formatCurrency(prod.precio)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-xs font-bold text-emerald-600">
+                                            ${formatCurrency(prod.margen)}
+                                            <span className="ml-1 text-[10px] text-gray-400">({Math.round((prod.margen / (prod.precio || 1)) * 100)}%)</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center space-x-2">
+                                                <span className={`font-black text-sm ${prod.stock <= prod.stock_minimo ? 'text-red-500 bg-red-50 px-2 py-0.5 rounded' : 'text-gray-700'}`}>{prod.stock}</span>
+                                                {prod.stock <= prod.stock_minimo && <AlertTriangle size={14} className="text-red-500" />}
+                                            </div>
+                                        </td>
+                                        {canEdit && (
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <ToggleSwitch
+                                                        checked={prod.activo === true || prod.activo === 1}
+                                                        onChange={() => handleToggleActivo(prod)}
+                                                    />
+                                                </div>
+                                            </td>
+                                        )}
+                                        {(canEdit || canDelete) && (
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
+                                                {canEdit && <button onClick={() => openEdit(prod)} className="text-primary-600 hover:bg-primary-50 p-2 rounded-lg"><Edit size={16} /></button>}
+                                                {canDelete && <button onClick={() => handleDelete(prod.id)} className="text-red-600 hover:bg-red-50 p-2 rounded-lg"><Trash2 size={16} /></button>}
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ) : (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
