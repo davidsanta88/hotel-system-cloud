@@ -32,8 +32,8 @@ router.post('/', async (req, res) => {
         };
 
         reserva.abonos.push(nuevoAbono);
-        // Actualizar el valor_abonado acumulado si existe ese campo o similar
-        reserva.abono = (reserva.abono || 0) + parseFloat(monto);
+        // Actualizar el valor_abonado acumulado (nombre correcto en el modelo)
+        reserva.valor_abonado = (reserva.valor_abonado || 0) + parseFloat(monto);
         
         await reserva.save();
         res.status(201).json({ message: 'Abono registrado correctamente', abonos: reserva.abonos });
@@ -51,7 +51,7 @@ router.delete('/:abonoId', async (req, res) => {
 
         const abono = reserva.abonos.id(abonoId);
         if (abono) {
-            reserva.abono -= abono.monto;
+            reserva.valor_abonado = Math.max((reserva.valor_abonado || 0) - (parseFloat(abono.monto) || 0), 0);
             abono.remove();
             await reserva.save();
         }
