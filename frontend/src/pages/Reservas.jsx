@@ -135,6 +135,26 @@ const Reservas = () => {
         setShowModal(true);
     };
 
+    const handleDeleteReserva = async (id) => {
+        const confirm = await Swal.fire({
+            title: '¿Eliminar permanentemente?',
+            text: 'Esta acción borrará la reserva y sus abonos de forma definitiva.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Sí, eliminar todo',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!confirm.isConfirmed) return;
+        try {
+            await api.delete(`/reservas/${id}`);
+            Swal.fire('Eliminado', 'La reserva ha sido borrada.', 'success');
+            fetchData();
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'Error al eliminar', 'error');
+        }
+    };
+
     const handleViewDetail = async (r) => {
         setSelectedReserva(r);
         setAbonos([]);
@@ -467,7 +487,7 @@ const Reservas = () => {
                                             >
                                                 <Eye size={18} />
                                             </button>
-                                            {canEdit && r.estado !== 'Cancelada' && r.estado !== 'Concluida' && (
+                                            {canEdit && r.estado !== 'Concluida' && (
                                                 <button 
                                                     onClick={() => handleEdit(r)}
                                                     className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
@@ -476,11 +496,17 @@ const Reservas = () => {
                                                     <Edit2 size={18} />
                                                 </button>
                                             )}
-                                            {canDelete && r.estado !== 'Cancelada' && (
+                                            {canDelete && (
                                                 <button 
-                                                    onClick={() => updateStatus(r.id, 'Cancelada')}
+                                                    onClick={() => {
+                                                        if (r.estado === 'Cancelada') {
+                                                            handleDeleteReserva(r.id);
+                                                        } else {
+                                                            updateStatus(r.id, 'Cancelada');
+                                                        }
+                                                    }}
                                                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Cancelar Reserva"
+                                                    title={r.estado === 'Cancelada' ? "Eliminar Permanentes" : "Cancelar Reserva"}
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>

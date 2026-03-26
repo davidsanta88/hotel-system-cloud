@@ -12,7 +12,10 @@ const gastosController = {
             }
             if (categoria_id) filter.categoria = categoria_id;
 
-            const gastos = await Gasto.find(filter).populate('categoria').sort({ fecha: -1 });
+            const gastos = await Gasto.find(filter)
+                .populate('categoria')
+                .populate('usuario', 'nombre')
+                .sort({ fecha: -1 });
             res.json(gastos);
         } catch (error) {
             res.status(500).json({ message: 'Error al obtener gastos', error: error.message });

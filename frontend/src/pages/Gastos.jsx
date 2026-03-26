@@ -3,7 +3,7 @@ import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Plus, Trash2, Filter, Search, Paperclip, ImageIcon, Edit2 } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { formatCurrency, cleanNumericValue } from '../utils/format';
+import { formatCurrency, cleanNumericValue, getImageUrl } from '../utils/format';
 import { usePermissions } from '../hooks/usePermissions';
 
 const Gastos = () => {
@@ -50,7 +50,22 @@ const Gastos = () => {
             if (categoriaFilter) params.append('categoria_id', categoriaFilter);
 
             const res = await api.get(`/gastos?${params.toString()}`);
-            setGastos(res.data);
+            
+            // Mapear campos del backend a lo que espera el frontend
+            const mapped = res.data.map(g => ({
+                id: g._id || g.id,
+                concepto: g.descripcion || 'Sin descripción',
+                categoria_id: g.categoria?._id || g.categoria?.id || '',
+                categoria_nombre: g.categoria?.nombre || 'Sin Categoría',
+                tipo: g.categoria?.tipo || 'Gasto',
+                monto: parseFloat(g.monto) || 0,
+                fecha_gasto: g.fecha || g.fecha_gasto,
+                notas: g.observaciones || g.notas || '',
+                imagen_url: g.imagen_url || g.comprobante_url || '',
+                UsuarioCreacion: g.usuario?.nombre || 'Sist.'
+            }));
+
+            setGastos(mapped);
             setLoading(false);
         } catch (error) {
             Swal.fire('Error', 'No se pudieron cargar los movimientos financieros', 'error');
@@ -144,8 +159,8 @@ const Gastos = () => {
 
     // Filtro por texto local (ya que el rango de fechas es desde el servidor)
     const filteredGastos = gastos.filter(g => 
-        g.concepto.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (g.notas && g.notas.toLowerCase().includes(searchTerm.toLowerCase()))
+        (g.concepto?.toLowerCase() || '').includes(searchTerm.toLowerCase()) || 
+        (g.notas?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
 
     const totalEgresos = filteredGastos.filter(g => g.tipo === 'Gasto').reduce((sum, g) => sum + g.monto, 0);
@@ -256,7 +271,7 @@ const Gastos = () => {
                                             <div className="flex items-center gap-2">
                                                 <div className="font-bold text-gray-900 leading-tight">{item.concepto}</div>
                                                 {item.imagen_url && (
-                                                    <a href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${item.imagen_url}`} target="_blank" rel="noreferrer" title="Ver Factura" className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition hover:scale-105 shadow-sm">
+                                                    <a href={getImageUrl(item.imagen_url)} target="_blank" rel="noreferrer" title="Ver Factura" className="text-blue-500 hover:text-blue-700 bg-blue-50 p-1.5 rounded transition hover:scale-105 shadow-sm">
                                                         <ImageIcon size={14} />
                                                     </a>
                                                 )}
