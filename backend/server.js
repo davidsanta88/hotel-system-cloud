@@ -41,9 +41,8 @@ app.get('/', (req, res) => res.send('Hotel System API is running (v1.2.1)'));
 app.get('/api/ping', (req, res) => {
     res.json({ 
         status: 'UP', 
-        version: '1.2.1 (Ultimate Compatibility)', 
-        time: new Date().toISOString(),
-        db: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+        version: '1.2.2 (Ultimate Compatibility)', 
+        time: new Date().toISOString()
     });
 });
 
