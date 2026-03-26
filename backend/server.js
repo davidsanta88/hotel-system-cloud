@@ -42,39 +42,32 @@ const auditMiddleware = require('./middleware/auditMiddleware');
 const { verifyToken } = require('./middleware/auth');
 
 // Root route for initial health check
-app.get('/', (req, res) => res.send('Hotel System API is running (v1.2.10)'));
+app.get('/', (req, res) => res.send('Hotel System API is running (v1.2.11)'));
 
 // Ping route for deployment verification (Versioned)
 app.get('/api/ping', (req, res) => {
     res.json({ 
         status: 'UP', 
-        version: '1.2.10 (Ultimate Compatibility)', 
+        version: '1.2.11 (Ultimate Compatibility)', 
         time: new Date().toISOString()
     });
 });
 
-// 1. PUBLIC ROUTES (No Token)
+// 1. PUBLIC ROUTES (No Token required for these prefixes/routes)
 app.use('/api/auth', require('./routes/auth'));
-
+app.use('/api/solicitudes', require('./routes/solicitudes'));
+app.use('/api/municipios', require('./routes/municipios')); // Incluye /fix/reseed
+app.use('/api/tipos-habitacion', require('./routes/tiposHabitacion'));
 app.use('/api/checkin-digital', (req, res, next) => {
-    // Solo dejamos pasar /public sin token
     if (req.path === '/public' && req.method === 'POST') return next();
-    // Para el resto, aplicamos verifyToken si queremos protegerlos aquí o en el route file
     next();
 }, require('./routes/checkin'));
 
-// 1.5 PUBLIC ROUTES (Allow public access for specific features)
-app.use('/api/solicitudes', require('./routes/solicitudes'));
-app.use('/api/municipios', require('./routes/municipios'));
-app.use('/api/tipos-habitacion', require('./routes/tiposHabitacion'));
-
 // 2. PROTECTED ROUTES (Require Token)
 app.use('/api', verifyToken);
-
-// 3. AUDIT MIDDLEWARE (Requires Token for user identification)
 app.use(auditMiddleware);
 
-// 4. REST OF ROUTES
+// 3. FEATURE ROUTES
 app.use('/api/auditoria', require('./routes/auditoria'));
 app.use('/api/habitaciones', require('./routes/habitaciones'));
 app.use('/api/registros', require('./routes/registros'));
@@ -92,23 +85,12 @@ app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/roles', require('./routes/roles'));
 app.use('/api/tipos-registro', require('./routes/tiposRegistro'));
 app.use('/api/notas', require('./routes/notas'));
-const ventasRoutes = require('./routes/ventas');
-const clientesRoutes = require('./routes/clientes');
-const municipiosRoutes = require('./routes/municipios');
-const tiposHabitacionRoutes = require('./routes/tiposHabitacion');
-const estadosHabitacionRoutes = require('./routes/estadosHabitacion');
-const inventarioRoutes = require('./routes/inventario');
-const reportesRoutes = require('./routes/reportes');
-const reservasRoutes = require('./routes/reservas');
-
-app.use('/api/ventas', ventasRoutes);
-app.use('/api/clientes', clientesRoutes);
-app.use('/api/municipios', municipiosRoutes);
-app.use('/api/tipos-habitacion', tiposHabitacionRoutes);
-app.use('/api/estados-habitacion', estadosHabitacionRoutes);
-app.use('/api/inventario', inventarioRoutes);
-app.use('/api/reportes', reportesRoutes);
-app.use('/api/reservas', reservasRoutes);
+app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/clientes', require('./routes/clientes'));
+app.use('/api/estados-habitacion', require('./routes/estadosHabitacion'));
+app.use('/api/inventario', require('./routes/inventario'));
+app.use('/api/reportes', require('./routes/reportes'));
+app.use('/api/reservas', require('./routes/reservas'));
 app.use('/api/notificaciones', require('./routes/notificaciones'));
 app.use('/api/mantenimiento', require('./routes/mantenimiento'));
 app.use('/api/estadisticas', require('./routes/estadisticas'));
