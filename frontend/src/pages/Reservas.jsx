@@ -64,12 +64,22 @@ const Reservas = () => {
             const noches = salida.diff(entrada, 'days');
             
             if (noches > 0) {
-                const totalHabitaciones = formData.habitaciones.reduce((acc, curr) => acc + curr.precio, 0);
-                const totalCalculado = totalHabitaciones * noches;
+                // Cálculo de personas por habitación (mínimo 1)
+                const ppr = Math.max(1, Math.ceil(formData.numero_personas / formData.habitaciones.length));
+                // capped a 6 según el modelo
+                const tier = Math.min(6, ppr);
+
+                const totalCalculado = formData.habitaciones.reduce((acc, curr) => {
+                    // Buscar la habitación original para obtener los precios por volumen
+                    const habData = habitaciones.find(h => h.id === (curr.value || curr.id));
+                    const precioAplicable = habData ? (habData[`precio_${tier}`] || habData.precio_1 || 0) : (curr.precio || 0);
+                    return acc + (precioAplicable * noches);
+                }, 0);
+
                 setFormData(prev => ({ ...prev, valor_total: totalCalculado }));
             }
         }
-    }, [formData.habitaciones, formData.fecha_entrada, formData.fecha_salida]);
+    }, [formData.habitaciones, formData.fecha_entrada, formData.fecha_salida, formData.numero_personas, habitaciones]);
 
     const fetchData = async () => {
         try {
@@ -305,11 +315,18 @@ const Reservas = () => {
         label: `${c.nombre} (${c.documento})`
     }));
 
-    const roomOptions = habitaciones.map(h => ({
-        value: h.id,
-        label: `Hab ${h.numero} - ${h.tipo_nombre} ($${formatCurrency(h.precio_1)})`,
-        precio: h.precio_1
-    }));
+    const roomOptions = habitaciones.map(h => {
+        // Encontrar precio dinámico si hay personas seleccionadas
+        const ppr = Math.max(1, Math.ceil(formData.numero_personas / (formData.habitaciones.length || 1)));
+        const tier = Math.min(6, ppr);
+        const precioActual = h[`precio_${tier}`] || h.precio_1;
+
+        return {
+            value: h.id,
+            label: `Hab ${h.numero} - ${h.tipo_nombre} ($${formatCurrency(precioActual)})`,
+            precio: precioActual
+        };
+    });
 
     const eventStyleGetter = (event) => {
         const color = event.resource.estado === 'Cancelada' ? '#94a3b8' : '#3b82f6';
