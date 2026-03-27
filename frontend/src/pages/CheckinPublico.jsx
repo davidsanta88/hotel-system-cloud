@@ -23,6 +23,7 @@ const CheckinPublico = () => {
         correo: '',
         procedencia: '',
         municipioId: '',
+        notas: '',
         fechaLlegada: new Date().toISOString().split('T')[0],
         habitacionNumero: ''
     });
@@ -235,6 +236,20 @@ const CheckinPublico = () => {
                         </div>
 
                         <div className="group space-y-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Notas / Observaciones Especiales</label>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-4 text-slate-300 group-focus-within:text-slate-950 transition-colors" size={18} />
+                                <textarea 
+                                    rows="2"
+                                    placeholder="Ej: Llegaré tarde, necesito cuna..."
+                                    value={formData.notas}
+                                    onChange={e => setFormData({...formData, notas: e.target.value})}
+                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-5 py-4 text-sm outline-none focus:bg-white focus:border-slate-900 transition-all font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="group space-y-1 pb-4">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ciudad de Origen / Municipio</label>
                             <div className="relative">
                                 <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 z-10" size={18} />
@@ -245,6 +260,7 @@ const CheckinPublico = () => {
                                     onChange={setSelectedMunicipio}
                                     styles={customStyles}
                                     noOptionsMessage={() => "No se encontró el municipio"}
+                                    menuPlacement="auto"
                                     className="relative z-0"
                                 />
                             </div>
