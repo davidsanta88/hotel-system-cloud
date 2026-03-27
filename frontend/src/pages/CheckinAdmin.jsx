@@ -108,13 +108,15 @@ const CheckinAdmin = () => {
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-gray-600 font-medium">
                                     <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400"><Calendar size={16} /></div>
-                                    Llegada: <span className="text-gray-900 font-bold ml-1">{format(new Date(item.fecha_llegada), "dd MMM, yyyy", { locale: es })}</span>
+                                    Llegada: <span className="text-gray-900 font-bold ml-1">
+                                        {item.fechaLlegada ? format(new Date(item.fechaLlegada), "dd MMM, yyyy", { locale: es }) : 'Fecha no disp.'}
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Solicitada</span>
-                                <span className="text-xl font-black text-slate-900">{item.habitacion_numero}</span>
+                                <span className="text-xl font-black text-slate-900">{item.habitacionNumero || 'S/N'}</span>
                             </div>
                         </div>
 
