@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { 
     Users, 
@@ -16,6 +17,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const CheckinAdmin = () => {
+    const navigate = useNavigate();
     const [checkins, setCheckins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showQrModal, setShowQrModal] = useState(false);
@@ -42,7 +44,11 @@ const CheckinAdmin = () => {
     const handleStatus = async (id, status) => {
         try {
             await api.put(`/checkin-digital/${id}`, { estado: status });
-            fetchCheckins();
+            if (status === 'PROCESADO') {
+                navigate('/clientes');
+            } else {
+                fetchCheckins();
+            }
         } catch (err) {
             console.error('Error updating status:', err);
         }

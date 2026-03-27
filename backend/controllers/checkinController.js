@@ -1,4 +1,5 @@
 const CheckinDigital = require('../models/CheckinDigital');
+const Cliente = require('../models/Cliente');
 
 const checkinController = {
     createPublicCheckin: async (req, res) => {
@@ -23,7 +24,24 @@ const checkinController = {
     updateCheckinStatus: async (req, res) => {
         try {
             const { id } = req.params;
-            const updated = await CheckinDigital.findByIdAndUpdate(id, { estado: req.body.estado }, { new: true });
+            const { estado } = req.body;
+            
+            // 1. Actualizar el estado del registro digital
+            const updated = await CheckinDigital.findByIdAndUpdate(id, { estado }, { new: true });
+
+            // 2. Si se procesa, migrar datos a Clientes
+            if (estado === 'PROCESADO') {
+                await Cliente.findOneAndUpdate(
+                    { documento: updated.documento },
+                    { 
+                        nombre: updated.nombre,
+                        telefono: updated.celular,
+                        documento: updated.documento
+                    },
+                    { upsert: true, new: true }
+                );
+            }
+
             res.json(updated);
         } catch (err) {
             res.status(500).json({ error: err.message });
