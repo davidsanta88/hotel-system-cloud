@@ -10,5 +10,6 @@ router.post('/', verifyToken, registrosController.createRegistro);
 router.put('/checkout/:id', verifyToken, registrosController.checkout);
 router.put('/anular/:id', verifyToken, registrosController.anular);
 router.put('/:id', verifyToken, registrosController.updateRegistro);
+router.delete('/:id', verifyToken, registrosController.deleteRegistro);
 
 module.exports = router;

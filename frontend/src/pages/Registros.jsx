@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
-import { Plus, CheckCircle, XCircle, Search, Eye, Edit } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
 import useTableData from '../hooks/useTableData';
 import Pagination from '../components/common/Pagination';
@@ -205,6 +205,30 @@ const Registros = () => {
             setShowDetailsModal(true);
         } catch (error) {
             Swal.fire('Error', 'No se pudieron cargar los detalles del registro.', 'error');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const result = await Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción eliminará el registro permanentemente y liberará la habitación si está activa.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                await api.delete(`/registros/${id}`);
+                Swal.fire('Eliminado', 'El registro ha sido eliminado correctamente.', 'success');
+                fetchData();
+            }
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'No se pudo eliminar el registro', 'error');
         }
     };
 
@@ -483,6 +507,9 @@ const Registros = () => {
                                                     Check-out
                                                 </button>
                                             )}
+                                            <button onClick={() => handleDelete(res.id)} className="text-red-400 hover:text-red-600 mx-1" title="Eliminar Registro">
+                                                <Trash2 size={18} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}

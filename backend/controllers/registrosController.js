@@ -93,10 +93,13 @@ exports.createRegistro = async (req, res) => {
 
         const huesped_ids = [];
         for (const h of huespedes) {
-            if (h.id) {
-                huesped_ids.push(h.id);
-            } else {
-                // Determine if a client with this document already exists to avoid duplicate key errors
+            // Handle if h is already an ID (string) or an object with an ID
+            const guestId = (typeof h === 'string') ? h : (h.id || h._id);
+            
+            if (guestId) {
+                huesped_ids.push(guestId);
+            } else if (typeof h === 'object' && h.documento) {
+                // ...existing logic for new client creation...
                 let existingCliente = await Cliente.findOne({ documento: h.documento });
 
                 if (existingCliente) {
@@ -216,6 +219,33 @@ exports.updateRegistro = async (req, res) => {
         const { id } = req.params;
         const updated = await Registro.findByIdAndUpdate(id, req.body, { new: true });
         res.json({ message: 'Registro actualizado', registro: updated });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.deleteRegistro = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const registro = await Registro.findById(id);
+        
+        if (!registro) {
+            return res.status(404).json({ message: 'Registro no encontrado' });
+        }
+
+        // Si el registro estaba activo, liberar la habitación
+        if (registro.estado === 'activo') {
+            const EstadoHabitacion = require('../models/EstadoHabitacion');
+            const estadoDisponible = await EstadoHabitacion.findOne({ nombre: /disponible/i });
+            
+            await Habitacion.findByIdAndUpdate(registro.habitacion, { 
+                estado: estadoDisponible ? estadoDisponible._id : undefined,
+                estadoLimpieza: 'Limpia' // Al ser eliminación, asumimos que se libera
+            });
+        }
+
+        await Registro.findByIdAndDelete(id);
+        res.json({ message: 'Registro eliminado con éxito' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
