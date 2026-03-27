@@ -73,6 +73,29 @@ exports.getResumenGeneral = async (req, res) => {
 
         const registros_hoy = await Registro.countDocuments({ fechaCreacion: { $gte: hoy, $lt: mañana } });
         
+        // 1. Egresos e Ingresos manuales del día (desde la colección Gasto)
+        const movimientos_manuales = await Gasto.aggregate([
+            { $match: { fecha: { $gte: hoy, $lt: mañana } } },
+            {
+                $lookup: {
+                    from: 'categoriagastos',
+                    localField: 'categoria',
+                    foreignField: '_id',
+                    as: 'catInfo'
+                }
+            },
+            { $unwind: '$catInfo' },
+            {
+                $group: {
+                    _id: '$catInfo.tipo',
+                    total: { $sum: "$monto" }
+                }
+            }
+        ]);
+
+        const egresos_hoy = movimientos_manuales.find(m => m._id === 'Gasto')?.total || 0;
+        const ingresos_manuales_hoy = movimientos_manuales.find(m => m._id === 'Ingreso')?.total || 0;
+
         const ventas_hoy_res = await Venta.aggregate([
             { $match: { fecha: { $gte: hoy, $lt: mañana } } },
             { $group: { _id: null, total: { $sum: "$total" } } }
@@ -87,11 +110,7 @@ exports.getResumenGeneral = async (req, res) => {
         ]);
         const pagos_hoy = pagos_hospedaje_hoy[0] ? pagos_hospedaje_hoy[0].total : 0;
 
-        const egresos_hoy_res = await Gasto.aggregate([
-            { $match: { fecha: { $gte: hoy, $lt: mañana } } },
-            { $group: { _id: null, total: { $sum: "$monto" } } }
-        ]);
-        const egresos_hoy = egresos_hoy_res[0] ? egresos_hoy_res[0].total : 0;
+        const ingresos_hoy = ventas_hoy + pagos_hoy + ingresos_manuales_hoy;
 
         const recientes_registros = await Registro.find()
             .populate('cliente')
@@ -126,7 +145,7 @@ exports.getResumenGeneral = async (req, res) => {
             alertas_stock,
             registros_hoy,
             ventas_hoy,
-            ingresos_hoy: ventas_hoy + pagos_hoy,
+            ingresos_hoy,
             egresos_hoy,
             recientes: {
                 registros: mapped_registros,

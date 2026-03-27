@@ -413,10 +413,9 @@ const Gastos = () => {
                                         required
                                         className={`input-field pl-8 font-black text-xl ${current.tipo === 'Ingreso' ? 'text-emerald-700' : 'text-red-700'}`}
                                         placeholder="0"
-                                        value={current.monto === 0 || current.monto === '0' ? '' : current.monto}
+                                        value={formatCurrency(current.monto)}
                                         onChange={e => {
-                                            // Permite solo números y punto decimal
-                                            const raw = e.target.value.replace(/[^0-9.]/g, '');
+                                            const raw = cleanNumericValue(e.target.value);
                                             setCurrent({...current, monto: raw});
                                         }}
                                     />

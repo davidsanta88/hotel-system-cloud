@@ -553,9 +553,9 @@ const Reservas = () => {
                             </button>
                         </div>
                         
-                        <form onSubmit={handleSave} className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
+                        <form onSubmit={handleSave} className="p-6 space-y-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="md:col-span-3">
                                     <div className="flex justify-between items-center mb-2">
                                         <label className="block text-sm font-bold text-gray-700">Cliente *</label>
                                         <button 
@@ -639,7 +639,7 @@ const Reservas = () => {
                                     )}
                                 </div>
 
-                                <div className="md:col-span-2">
+                                <div className="md:col-span-3">
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Habitaciones a Reservar *</label>
                                     <Select
                                         isMulti
@@ -701,7 +701,16 @@ const Reservas = () => {
                                     />
                                 </div>
 
-                                <div className="md:col-span-2 bg-blue-50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Días / Noches</label>
+                                    <div className="w-full px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 font-black text-gray-700 text-sm text-center">
+                                        {formData.fecha_entrada && formData.fecha_salida ? (
+                                            Math.max(0, moment(formData.fecha_salida).diff(moment(formData.fecha_entrada), 'days'))
+                                        ) : 0}
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-3 bg-blue-50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
                                     <div className="flex-1">
                                         <label className="block text-xs font-bold text-blue-600 uppercase tracking-widest mb-1">Valor Total Estimado</label>
                                         <div className="flex items-center text-blue-900">
@@ -721,7 +730,7 @@ const Reservas = () => {
                                 </div>
                             </div>
 
-                            <div className="md:col-span-2">
+                            <div className="md:col-span-3">
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Observaciones / Notas</label>
                                     <textarea
                                         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm"
