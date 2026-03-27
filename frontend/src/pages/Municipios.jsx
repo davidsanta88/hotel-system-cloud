@@ -126,8 +126,8 @@ const Municipios = () => {
                 )}
             </div>
 
-            <div className="card">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
                     <div className="relative w-64">
                         <input
                             type="text"
@@ -140,10 +140,10 @@ const Municipios = () => {
                     </div>
                 </div>
                 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-600 border-b border-gray-100">
+                        <thead className="bg-gray-50 sticky top-0 z-10">
+                            <tr className="text-gray-600 border-b border-gray-100">
                                 <th className="p-4 font-semibold uppercase text-xs tracking-wider">Nombre del Lugar (Municipio)</th>
                                 <th className="p-4 font-semibold text-center uppercase text-xs tracking-wider">Visible</th>
                                 <th className="p-4 font-semibold text-right uppercase text-xs tracking-wider">Acciones</th>
