@@ -57,6 +57,7 @@ const Reports = () => {
     const [ventasDiarias, setVentasDiarias] = useState([]);
     const [gastosDiarios, setGastosDiarios] = useState([]);
     const [hospedajeDiario, setHospedajeDiario] = useState([]);
+    const [manualIncomesDiarios, setManualIncomesDiarios] = useState([]);
     const [gastosCat, setGastosCat] = useState([]);
     const [ventasMensuales, setVentasMensuales] = useState([]);
     const [productosTop, setProductosTop] = useState([]);
@@ -66,7 +67,7 @@ const Reports = () => {
         setLoading(true);
         try {
             const q = `inicio=${dates.inicio}&fin=${dates.fin}`;
-            const [rVentas, rGastos, rHosp, rCat, rMensual, rTop, rResumen] = await Promise.all([
+            const [rVentas, rGastos, rHosp, rCat, rMensual, rTop, rResumen, rManual] = await Promise.all([
                 api.get(`/reportes/ventas?${q}`),
                 api.get(`/reportes/gastos-periodo?${q}`),
                 api.get(`/reportes/ingresos-hospedaje?${q}`),
@@ -74,10 +75,12 @@ const Reports = () => {
                 api.get('/reportes/ventas-mensuales'),
                 api.get('/reportes/productos-mas-vendidos'),
                 api.get('/reportes/resumen'),
+                api.get(`/reportes/ingresos-manuales?${q}`),
             ]);
             setVentasDiarias(rVentas.data);
             setGastosDiarios(rGastos.data);
             setHospedajeDiario(rHosp.data);
+            setManualIncomesDiarios(rManual.data || []);
             setGastosCat(rCat.data);
             setVentasMensuales(rMensual.data);
             setProductosTop(rTop.data.slice(0, 8));
@@ -107,7 +110,12 @@ const Reports = () => {
         hospedajeDiario.forEach(d => {
             const key = d.fecha?.slice(0, 10);
             if (!map[key]) map[key] = { fecha: key, ventas: 0, gastos: 0, hospedaje: 0 };
-            map[key].hospedaje = parseFloat(d.total_hospedaje) || 0;
+            map[key].hospedaje += parseFloat(d.total_hospedaje) || 0;
+        });
+        manualIncomesDiarios.forEach(d => {
+            const key = d.fecha?.slice(0, 10);
+            if (!map[key]) map[key] = { fecha: key, ventas: 0, gastos: 0, hospedaje: 0 };
+            map[key].hospedaje += parseFloat(d.total_ingresos) || 0;
         });
         return Object.values(map).sort((a, b) => a.fecha.localeCompare(b.fecha));
     })();
@@ -116,7 +124,8 @@ const Reports = () => {
     const totalVentas = ventasDiarias.reduce((s, d) => s + (parseFloat(d.gran_total) || 0), 0);
     const totalGastos = gastosDiarios.reduce((s, d) => s + (parseFloat(d.total_gastos) || 0), 0);
     const totalHospedaje = hospedajeDiario.reduce((s, d) => s + (parseFloat(d.total_hospedaje) || 0), 0);
-    const totalIngresos = totalVentas + totalHospedaje;
+    const totalManualIncomes = manualIncomesDiarios.reduce((s, d) => s + (parseFloat(d.total_ingresos) || 0), 0);
+    const totalIngresos = totalVentas + totalHospedaje + totalManualIncomes;
     const utilidadNeta = totalIngresos - totalGastos;
     const numVentas = ventasDiarias.reduce((s, d) => s + (parseInt(d.num_ventas) || 0), 0);
 
@@ -185,7 +194,7 @@ const Reports = () => {
                         <KpiCard
                             title="Ingresos Totales"
                             value={`$${formatCurrency(totalIngresos)}`}
-                            sub="Ventas + Hospedaje"
+                            sub="Ventas + Hospedaje + Otros"
                             icon={<DollarSign size={22} />}
                             color="primary"
                             trend={totalIngresos > 0}

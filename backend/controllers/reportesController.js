@@ -170,6 +170,16 @@ exports.getGastosPorPeriodo = async (req, res) => {
         const report = await Gasto.aggregate([
             { $match: filter },
             {
+                $lookup: {
+                    from: 'categoriagastos',
+                    localField: 'categoria',
+                    foreignField: '_id',
+                    as: 'catInfo'
+                }
+            },
+            { $unwind: '$catInfo' },
+            { $match: { 'catInfo.tipo': 'Gasto' } },
+            {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
                     total_gastos: { $sum: "$monto" },
@@ -185,12 +195,69 @@ exports.getGastosPorPeriodo = async (req, res) => {
     }
 };
 
-exports.getGastosPorCategoria = async (req, res) => {
+exports.getIngresosManualesPorPeriodo = async (req, res) => {
     try {
+        const { inicio, fin } = req.query;
+        const filter = {};
+        if (inicio || fin) {
+            filter.fecha = {};
+            if (inicio) filter.fecha.$gte = new Date(inicio);
+            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+        }
+
         const report = await Gasto.aggregate([
+            { $match: filter },
+            {
+                $lookup: {
+                    from: 'categoriagastos',
+                    localField: 'categoria',
+                    foreignField: '_id',
+                    as: 'catInfo'
+                }
+            },
+            { $unwind: '$catInfo' },
+            { $match: { 'catInfo.tipo': 'Ingreso' } },
             {
                 $group: {
-                    _id: "$categoria",
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
+                    total_ingresos: { $sum: "$monto" },
+                    num_ingresos: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } },
+            { $project: { fecha: "$_id", total_ingresos: 1, num_ingresos: 1, _id: 0 } }
+        ]);
+        res.json(report);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.getGastosPorCategoria = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const filter = {};
+        if (inicio || fin) {
+            filter.fecha = {};
+            if (inicio) filter.fecha.$gte = new Date(inicio);
+            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+        }
+
+        const report = await Gasto.aggregate([
+            { $match: filter },
+            {
+                $lookup: {
+                    from: 'categoriagastos',
+                    localField: 'categoria',
+                    foreignField: '_id',
+                    as: 'catInfo'
+                }
+            },
+            { $unwind: '$catInfo' },
+            { $match: { 'catInfo.tipo': 'Gasto' } },
+            {
+                $group: {
+                    _id: "$catInfo.nombre",
                     total: { $sum: "$monto" },
                     cantidad: { $sum: 1 }
                 }
