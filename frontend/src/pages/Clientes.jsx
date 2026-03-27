@@ -20,7 +20,8 @@ const Clientes = () => {
         tipo_documento: 'CC',
         telefono: '',
         email: '',
-        municipio_origen_id: ''
+        municipio_origen_id: '',
+        observaciones: ''
     });
     const [isEditing, setIsEditing] = useState(false);
 
@@ -53,7 +54,7 @@ const Clientes = () => {
             });
             setIsEditing(true);
         } else {
-            setCurrentCliente({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '' });
+            setCurrentCliente({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '', observaciones: '' });
             setIsEditing(false);
         }
         setShowModal(true);
@@ -61,7 +62,7 @@ const Clientes = () => {
 
     const handleCloseModal = () => {
         setShowModal(false);
-        setCurrentCliente({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '' });
+        setCurrentCliente({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '', observaciones: '' });
     };
 
     const handleSave = async (e) => {
@@ -214,8 +215,13 @@ const Clientes = () => {
                                                     </a>
                                                 )}
                                             </div>
-                                            <div className="text-gray-400 text-[10px]">{cliente.email || ''}</div>
-                                        </td>
+                                             <div className="text-gray-400 text-[10px]">{cliente.email || ''}</div>
+                                             {cliente.observaciones && (
+                                                <div className="mt-1 p-1 bg-amber-50 text-[10px] text-amber-700 rounded border border-amber-100 italic">
+                                                    Obs: {cliente.observaciones}
+                                                </div>
+                                             )}
+                                         </td>
                                         <td className="p-4 text-gray-600 text-sm whitespace-nowrap">
                                             {cliente.municipio_nombre || (cliente.municipio_origen_id && municipios.find(m => String(m.id) === String(cliente.municipio_origen_id))?.nombre) || '-'}
                                         </td>
@@ -338,6 +344,16 @@ const Clientes = () => {
                                     styles={selectStyles}
                                     noOptionsMessage={() => "No se encontró el municipio"}
                                     isClearable
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Notas / Observaciones</label>
+                                <textarea
+                                    className="input-field min-h-[80px]"
+                                    placeholder="Notas especiales del cliente..."
+                                    value={currentCliente.observaciones || ''}
+                                    onChange={e => setCurrentCliente({...currentCliente, observaciones: e.target.value})}
                                 />
                             </div>
 
