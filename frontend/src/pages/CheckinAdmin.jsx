@@ -182,13 +182,6 @@ const CheckinAdmin = () => {
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Solicitada</span>
                                 <span className="text-xl font-black text-slate-900">{item.habitacionNumero || 'S/N'}</span>
                             </div>
-
-                            {item.notas && (
-                                <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100/50">
-                                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest block mb-1">Nota del Huésped:</span>
-                                    <p className="text-xs text-amber-900 font-medium italic">"{item.notas}"</p>
-                                </div>
-                            )}
                         </div>
 
                         <div className="p-4 bg-gray-50 border-t border-gray-100 grid grid-cols-2 gap-4">
