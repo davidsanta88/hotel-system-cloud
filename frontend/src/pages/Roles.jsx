@@ -31,7 +31,8 @@ const TODOS_LOS_PERMISOS = [
 
 const Roles = () => {
     const { user } = useContext(AuthContext);
-    const isAdmin = user?.rol_id === 1 || user?.rol_nombre === 'Admin' || user?.nombre === 'Administrador';
+    const isSuperAdmin = user?.rol_id === 1 || user?.rol_nombre?.toLowerCase()?.includes('admin') || user?.nombre === 'Administrador';
+    const isAdmin = isSuperAdmin;
     
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);

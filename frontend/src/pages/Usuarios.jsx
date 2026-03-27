@@ -106,7 +106,8 @@ const Usuarios = () => {
         }
     };
 
-    if (!canView && user?.rol_nombre !== 'Admin' && user?.nombre !== 'Administrador') {
+    const isSuperAdmin = user?.rol_id === 1 || user?.rol_nombre?.toLowerCase()?.includes('admin') || user?.nombre === 'Administrador';
+    if (!canView && !isSuperAdmin) {
         return <div className="p-8 text-center text-red-500 font-bold">Acceso Denegado. Área exclusiva para Administradores autorizados.</div>;
     }
 
@@ -177,8 +178,8 @@ const Usuarios = () => {
                                             <div className="text-gray-500 text-[11px] font-medium mt-1 uppercase tracking-wider">{item.telefono || 'Sin teléfono'}</div>
                                         </td>
                                         <td className="p-4 text-center">
-                                            <span className={`px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest ${item.rol?.nombre === 'Admin' || item.rol_nombre === 'Admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-green-100 text-green-700 border border-green-200 shadow-sm'}`}>
-                                                {roles.find(r => (r._id || r.id) === item.rol_id)?.nombre || (item.rol?.nombre === 'Admin' || item.rol_nombre === 'Admin' ? 'Administrador' : 'Empleado')}
+                                            <span className={`px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest ${item.rol?.nombre?.toLowerCase()?.includes('admin') || item.rol_nombre?.toLowerCase()?.includes('admin') ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-green-100 text-green-700 border border-green-200 shadow-sm'}`}>
+                                                {roles.find(r => (r._id || r.id) === item.rol_id)?.nombre || (item.rol?.nombre?.toLowerCase()?.includes('admin') || item.rol_nombre?.toLowerCase()?.includes('admin') ? 'Administrador' : 'Empleado')}
                                             </span>
                                         </td>
                                         {(canEdit || canDelete) && (
