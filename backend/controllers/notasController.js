@@ -84,3 +84,46 @@ exports.delete = async (req, res) => {
     }
 };
 
+
+exports.getMyAlerts = async (req, res) => {
+    try {
+        const query = {
+            $or: [
+                { usuarioDestino: req.userId },
+                { usuarioDestino: null }
+            ],
+            leida: { $ne: true }
+        };
+
+        const list = await Nota.find(query)
+            .populate('usuario', 'nombre')
+            .sort({ fechaAlerta: -1, fecha: -1 });
+
+        const mapped = list.map(n => {
+            const doc = n.toObject();
+            return {
+                id: doc._id,
+                titulo: doc.titulo,
+                descripcion: doc.descripcion || doc.contenido || '',
+                prioridad: doc.prioridad || 'Normal',
+                fecha_alerta: doc.fechaAlerta || doc.fecha,
+                usuario_creacion_nombre: doc.usuario?.nombre || 'Personal',
+                leida: doc.leida || false
+            };
+        });
+
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.markAsRead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await Nota.findByIdAndUpdate(id, { leida: true });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
