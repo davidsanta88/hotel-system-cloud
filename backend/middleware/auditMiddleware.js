@@ -36,7 +36,8 @@ const logAction = async (req, res) => {
             usuario: req.userName || 'Sistema',
             accion: req.method,
             tabla: modulo,
-            detalles: detail
+            detalles: detail,
+            ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip
         });
 
         await newLog.save();

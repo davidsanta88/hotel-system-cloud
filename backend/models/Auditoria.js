@@ -6,6 +6,7 @@ const auditoriaSchema = new mongoose.Schema({
     tabla: String,
     registroId: String,
     detalles: mongoose.Schema.Types.Mixed,
+    ip_address: String,
     fecha: { type: Date, default: Date.now }
 });
 
