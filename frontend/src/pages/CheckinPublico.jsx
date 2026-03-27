@@ -20,8 +20,8 @@ const CheckinPublico = () => {
         celular: '',
         correo: '',
         procedencia: '',
-        fecha_llegada: new Date().toISOString().split('T')[0],
-        habitacion_numero: ''
+        fechaLlegada: new Date().toISOString().split('T')[0],
+        habitacionNumero: ''
     });
     const [status, setStatus] = useState('IDLE'); // IDLE, LOADING, SUCCESS, ERROR
     const [message, setMessage] = useState('');
@@ -30,8 +30,8 @@ const CheckinPublico = () => {
         e.preventDefault();
         setStatus('LOADING');
         try {
-            // Usamos axios directo porque esta ruta es pública y no requiere el interceptor de auth
-            await axios.post('http://localhost:5000/api/checkin-digital/public', formData);
+            // Usamos una ruta relativa para que funcione en cualquier dominio (local o nube)
+            await axios.post('/api/checkin-digital/public', formData);
             setStatus('SUCCESS');
         } catch (err) {
             console.error('Error in public checkin:', err);
@@ -149,8 +149,8 @@ const CheckinPublico = () => {
                                     required
                                     type="text" 
                                     placeholder="Ej: 201"
-                                    value={formData.habitacion_numero}
-                                    onChange={e => setFormData({...formData, habitacion_numero: e.target.value})}
+                                    value={formData.habitacionNumero}
+                                    onChange={e => setFormData({...formData, habitacionNumero: e.target.value})}
                                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-5 py-4 text-sm outline-none focus:bg-white focus:border-slate-900 transition-all font-medium"
                                 />
                             </div>
