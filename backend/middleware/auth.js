@@ -26,9 +26,9 @@ const verifyToken = (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
     try {
-        // 1. Intentar por el nombre guardado en el token (más rápido)
+        // 1. Intentar por el nombre guardado en el token
         const roleName = req.userRoleName ? req.userRoleName.toLowerCase() : '';
-        if (roleName === 'admin' || roleName === 'administrador') {
+        if (roleName.includes('admin') || roleName.includes('administrador')) {
             return next();
         }
 
@@ -36,7 +36,7 @@ const isAdmin = async (req, res, next) => {
         if (req.userRole) {
             const Rol = require('../models/Rol');
             const rol = await Rol.findById(req.userRole);
-            if (rol && (rol.nombre.toLowerCase() === 'admin' || rol.nombre.toLowerCase() === 'administrador')) {
+            if (rol && (rol.nombre.toLowerCase().includes('admin') || rol.nombre.toLowerCase().includes('administrador'))) {
                 return next();
             }
         }
@@ -69,9 +69,9 @@ const checkPermission = (pantalla, accion) => {
             
             if (!rol) return res.status(403).json({ message: 'Rol no encontrado' });
 
-            // Case-insensitive check for admin
+            // Case-insensitive check for admin variants
             const roleName = rol.nombre.toLowerCase();
-            if (roleName === 'admin' || roleName === 'administrador') return next();
+            if (roleName.includes('admin') || roleName.includes('administrador')) return next();
 
             const permiso = rol.permisos.find(p => p.p === pantalla);
             

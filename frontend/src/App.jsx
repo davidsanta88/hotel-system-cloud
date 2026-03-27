@@ -39,7 +39,8 @@ const PrivateRoute = ({ children, roles, code }) => {
   if (!user) return <Navigate to="/login" />;
   
   // SuperAdmin override: acceso total para Admin
-  if (user.rol_id === 1 || user.rol_nombre === 'Admin') return children;
+  const isSuperAdmin = user?.rol_id === 1 || user?.rol_nombre?.toLowerCase()?.includes('admin');
+  if (isSuperAdmin) return children;
 
   // if roles specifies required roles
   if (roles && !roles.includes(user.rol_id)) {

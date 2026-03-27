@@ -33,8 +33,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     const hasPermission = (code) => {
         if (!code) return true;
-        // En NoSQL el administrador se identifica por su nombre de rol
-        if (user?.rol_nombre === 'Admin' || user?.rol_nombre === 'admin' || user?.rol_id === 1 || user?.nombre === 'Administrador') return true;
+        // El administrador total se identifica por su rol_id 1 o si el nombre contiene "admin"
+        const isSuperAdmin = user?.rol_id === 1 || user?.rol_nombre?.toLowerCase()?.includes('admin') || user?.nombre === 'Administrador';
+        if (isSuperAdmin) return true;
         return user?.permisos?.some(p => p.p === code && p.v);
     };
 
