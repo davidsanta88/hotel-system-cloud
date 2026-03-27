@@ -79,7 +79,16 @@ const SLIDES = [
 const Landing = () => {
     const [slide, setSlide] = useState(0);
     const [showModal, setShowModal] = useState(false);
-    const [formData, setFormData] = useState({ nombre: '', celular: '', correo: '', huespedes: 1, fecha: '', notas: '' });
+    const [formData, setFormData] = useState({ 
+        nombre: '', 
+        celular: '', 
+        tipoDocumento: 'CC',
+        documento: '',
+        correo: '', 
+        huespedes: 1, 
+        fecha: '', 
+        notas: '' 
+    });
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
 
@@ -96,6 +105,8 @@ const Landing = () => {
             await api.post('/solicitudes', {
                 nombre: formData.nombre,
                 celular: formData.celular,
+                tipoDocumento: formData.tipoDocumento,
+                documento: formData.documento,
                 correo: formData.correo,
                 num_huespedes: formData.huespedes,
                 fecha_llegada: formData.fecha,
@@ -105,7 +116,16 @@ const Landing = () => {
             setTimeout(() => { 
                 setShowModal(false); 
                 setSent(false); 
-                setFormData({ nombre: '', celular: '', correo: '', huespedes: 1, fecha: '', notas: '' }); 
+                setFormData({ 
+                    nombre: '', 
+                    celular: '', 
+                    tipoDocumento: 'CC',
+                    documento: '',
+                    correo: '', 
+                    huespedes: 1, 
+                    fecha: '', 
+                    notas: '' 
+                }); 
             }, 3000);
         } catch (err) {
             console.error(err);
@@ -265,9 +285,9 @@ const Landing = () => {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="col-span-2">
                                             <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 ml-1">Nombre Completo</label>
-                                            <input type="text" required placeholder="Ej: Juan Pérez" 
-                                                   value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})}
-                                                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-accent-500/50 transition-all text-sm" />
+                                            <input type="text" required placeholder="Ej: JUAN PÉREZ" 
+                                                   value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value.toUpperCase()})}
+                                                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-accent-500/50 transition-all text-sm uppercase" />
                                         </div>
                                         <div>
                                             <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 ml-1">Celular / WhatsApp</label>
@@ -276,9 +296,23 @@ const Landing = () => {
                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-accent-500/50 transition-all text-sm" />
                                         </div>
                                         <div>
-                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 ml-1">Correo (Opcional)</label>
-                                            <input type="email" placeholder="tu@correo.com" 
-                                                   value={formData.correo} onChange={e => setFormData({...formData, correo: e.target.value})}
+                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 ml-1">Tipo de Documento</label>
+                                            <select 
+                                                value={formData.tipoDocumento} 
+                                                onChange={e => setFormData({...formData, tipoDocumento: e.target.value})}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-accent-500/50 transition-all text-sm appearance-none"
+                                            >
+                                                <option value="CC" className="bg-[#1c0f05]">Cédula de Ciudadanía</option>
+                                                <option value="CE" className="bg-[#1c0f05]">Cédula de Extranjería</option>
+                                                <option value="TI" className="bg-[#1c0f05]">Tarjeta de Identidad</option>
+                                                <option value="PP" className="bg-[#1c0f05]">Pasaporte</option>
+                                                <option value="NIT" className="bg-[#1c0f05]">NIT</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-black uppercase tracking-widest text-white/40 mb-1.5 ml-1">Número de Documento</label>
+                                            <input type="text" required placeholder="N° Documento" 
+                                                   value={formData.documento} onChange={e => setFormData({...formData, documento: e.target.value})}
                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white outline-none focus:border-accent-500/50 transition-all text-sm" />
                                         </div>
                                         <div>

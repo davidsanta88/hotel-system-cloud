@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Phone, Mail, User, Calendar, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { Phone, Mail, User, Calendar, CheckCircle, Clock, Trash2, UserPlus, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import Swal from 'sweetalert2';
 
 const Solicitudes = () => {
+    const navigate = useNavigate();
     const [solicitudes, setSolicitudes] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -29,6 +30,26 @@ const Solicitudes = () => {
             fetchSolicitudes();
         } catch (err) {
             console.error('Error updating status:', err);
+        }
+    };
+
+    const handleMigrar = async (id) => {
+        try {
+            setLoading(true);
+            await api.post(`/solicitudes/${id}/convertir`);
+            Swal.fire({
+                title: '¡Cliente Migrado!',
+                text: 'El cliente ha sido creado exitosamente.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            setTimeout(() => {
+                navigate('/clientes');
+            }, 2000);
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.error || 'No se pudo migrar el cliente', 'error');
+            setLoading(false);
         }
     };
 
@@ -88,6 +109,12 @@ const Solicitudes = () => {
                                         <div>
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</p>
                                             <p className="font-bold text-gray-800">{s.nombre || 'Sin nombre'}</p>
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded leading-none uppercase">
+                                                    {s.tipoDocumento || 'CC'}
+                                                </span>
+                                                <span className="text-[10px] font-medium text-gray-500">{s.documento || 'No registrado'}</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -149,10 +176,31 @@ const Solicitudes = () => {
                                         >
                                             Marcar como Contactado
                                         </button>
+                                    ) : (s.estado?.toLowerCase() === 'contactado') ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 text-hotel-green bg-hotel-green/10 px-4 py-2 rounded-xl border border-hotel-green/20">
+                                                <CheckCircle size={18} />
+                                                <span className="font-black text-xs uppercase tracking-widest">Contactado</span>
+                                            </div>
+                                            {!s.convertido && (
+                                                <button 
+                                                    onClick={() => handleMigrar(s.id)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-accent-500 hover:bg-accent-600 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-accent-900/20"
+                                                    title="Convertir en Cliente"
+                                                >
+                                                    <UserPlus size={16} />
+                                                    Migrar Cliente
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : s.estado?.toLowerCase() === 'convertida' ? (
+                                        <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+                                            <UserPlus size={18} />
+                                            <span className="font-black text-xs uppercase tracking-widest">Migrado a Clientes</span>
+                                        </div>
                                     ) : (
-                                        <div className="flex items-center gap-2 text-hotel-green bg-hotel-green/10 px-4 py-2 rounded-xl border border-hotel-green/20">
-                                            <CheckCircle size={18} />
-                                            <span className="font-black text-xs uppercase tracking-widest">Contactado</span>
+                                        <div className="flex items-center gap-2 text-gray-400 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
+                                            <span className="font-black text-xs uppercase tracking-widest">{s.estado}</span>
                                         </div>
                                     )}
 

@@ -280,9 +280,9 @@ const Clientes = () => {
                                 <input
                                     type="text"
                                     required
-                                    className="input-field"
+                                    className="input-field uppercase"
                                     value={currentCliente.nombre}
-                                    onChange={e => setCurrentCliente({...currentCliente, nombre: e.target.value})}
+                                    onChange={e => setCurrentCliente({...currentCliente, nombre: e.target.value.toUpperCase()})}
                                 />
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4">

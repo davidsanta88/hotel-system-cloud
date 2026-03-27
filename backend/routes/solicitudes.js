@@ -8,6 +8,7 @@ router.post('/', solicitudesController.crearSolicitud);
 
 // Rutas protegidas para administrador
 router.get('/', verifyToken, solicitudesController.getSolicitudes);
+router.post('/:id/convertir', verifyToken, solicitudesController.convertirACliente);
 router.put('/:id', verifyToken, solicitudesController.actualizarEstado);
 router.delete('/:id', verifyToken, solicitudesController.eliminarSolicitud);
 

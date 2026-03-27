@@ -607,10 +607,10 @@ const Reservas = () => {
                                                 <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-1">Nombre Completo *</label>
                                                 <input 
                                                     type="text"
-                                                    className="w-full px-3 py-2 rounded-xl border border-blue-100 text-sm outline-none focus:ring-2 focus:ring-blue-400"
-                                                    placeholder="Nombre y Apelliido"
+                                                    className="w-full px-3 py-2 rounded-xl border border-blue-100 text-sm outline-none focus:ring-2 focus:ring-blue-400 uppercase"
+                                                    placeholder="Nombre y Apellido"
                                                     value={formData.nuevoCliente.nombre}
-                                                    onChange={(e) => setFormData({...formData, nuevoCliente: {...formData.nuevoCliente, nombre: e.target.value}})}
+                                                    onChange={(e) => setFormData({...formData, nuevoCliente: {...formData.nuevoCliente, nombre: e.target.value.toUpperCase()}})}
                                                 />
                                             </div>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
