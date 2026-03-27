@@ -14,8 +14,19 @@ const checkinController = {
 
     getPendingCheckins: async (req, res) => {
         try {
-            const list = await CheckinDigital.find({ estado: 'PENDIENTE' }).sort({ createdAt: -1 });
+            // Retornar los últimos 10 independientemente del estado (Historial)
+            const list = await CheckinDigital.find().sort({ createdAt: -1 }).limit(10);
             res.json(list);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    },
+
+    deleteCheckin: async (req, res) => {
+        try {
+            const { id } = req.params;
+            await CheckinDigital.findByIdAndDelete(id);
+            res.json({ message: 'Registro eliminado correctamente' });
         } catch (err) {
             res.status(500).json({ error: err.message });
         }

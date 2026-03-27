@@ -54,6 +54,16 @@ const CheckinAdmin = () => {
         }
     };
 
+    const handleDelete = async (id) => {
+        if (!window.confirm('¿Seguro que deseas eliminar este registro del historial?')) return;
+        try {
+            await api.delete(`/checkin-digital/${id}`);
+            fetchCheckins();
+        } catch (err) {
+            console.error('Error deleting checkin:', err);
+        }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">
             <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
@@ -98,8 +108,26 @@ const CheckinAdmin = () => {
                                     <h3 className="text-xl font-black text-gray-900 tracking-tight">{item.nombre}</h3>
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">C.C. {item.documento}</p>
                                 </div>
-                                <div className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                    Pendiente
+                                <div className="flex flex-col items-end gap-2">
+                                    {item.estado === 'PENDIENTE' ? (
+                                        <div className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                            Pendiente
+                                        </div>
+                                    ) : (
+                                        <div className="px-3 py-1 bg-green-50 text-green-700 border border-green-100 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                            Procesado
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(item._id);
+                                        }}
+                                        className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                                        title="Eliminar registro"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
                             </div>
 
