@@ -396,26 +396,27 @@ const Registros = () => {
                                     return (
                                         <tr key={res.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-gray-900 uppercase">{res.nombre_cliente}</div>
-                                                {res.telefono_cliente && (
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <div className="text-xs text-blue-600 flex items-center gap-1">
-                                                            <Phone size={10} /> {res.telefono_cliente}
+                                                <div className="text-sm font-bold text-gray-900 uppercase leading-none mb-1">{res.nombre_cliente}</div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] text-gray-500 font-medium leading-none mb-1">Doc: {res.documento_cliente || 'N/A'}</span>
+                                                    {(res.telefono_cliente || res.cliente?.telefono) && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[9px] font-bold text-gray-400 bg-teal-50 px-1.5 py-0.5 rounded-md leading-none">{(res.telefono_cliente || res.cliente?.telefono)}</span>
+                                                            <a 
+                                                                href={`https://wa.me/${(res.telefono_cliente || res.cliente?.telefono).toString().replace(/\s+/g, '')}`} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="text-emerald-600 hover:text-emerald-800 transition-colors"
+                                                                title="Escribir al WhatsApp"
+                                                            >
+                                                                <MessageCircle size={10} />
+                                                            </a>
                                                         </div>
-                                                        <a 
-                                                            href={`https://wa.me/${res.telefono_cliente.replace(/\D/g, '')}`} 
-                                                            target="_blank" 
-                                                            rel="noopener noreferrer"
-                                                            className="text-green-500 hover:text-green-600 transition-colors"
-                                                            title="Contactar por WhatsApp"
-                                                        >
-                                                            <MessageCircle size={14} />
-                                                        </a>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{res.numero_habitacion}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">#{res.numero_habitacion}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] text-gray-500 font-medium">
                                                 {format(new Date(res.fecha_ingreso), 'dd/MM/yyyy')} - {format(new Date(res.fecha_salida), 'dd/MM/yyyy')}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">

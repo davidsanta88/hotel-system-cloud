@@ -633,11 +633,11 @@ const Reservas = () => {
                                                 <div className="font-bold text-gray-800">{r.cliente_nombre || (r.cliente && typeof r.cliente === 'object' ? r.cliente.nombre : '') || r.cliente || 'Desconocido'}</div>
                                                 <div className="flex flex-col">
                                                     <span className="text-xs text-gray-500 font-medium">{r.identificacion || r.documento}</span>
-                                                    {r.telefono && (
+                                                    {(r.telefono || r.cliente?.telefono) && (
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded leading-none">{r.telefono}</span>
+                                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded leading-none">{(r.telefono || r.cliente?.telefono)}</span>
                                                             <a 
-                                                                href={`https://wa.me/${r.telefono.replace(/\s+/g, '')}`} 
+                                                                href={`https://wa.me/${(r.telefono || r.cliente?.telefono).replace(/\s+/g, '')}`} 
                                                                 target="_blank" 
                                                                 rel="noopener noreferrer"
                                                                 className="text-green-600 hover:text-green-800 transition-colors"
