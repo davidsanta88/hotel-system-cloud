@@ -65,67 +65,81 @@ exports.getMapaVisual = async (req, res) => {
             estado: { $in: ['Confirmada', 'Pendiente'] }
         }).populate('cliente', 'nombre');
 
-        const resultado = habitaciones.map(hab => {
-            const idHab = hab._id.toString();
-            
-            // Buscar registro activo
-            const registroActivo = registrosActivos.find(r => r.habitacion.toString() === idHab);
-            
-            // Buscar si tiene reserva ACTIVA para HOY (desde entrada hasta salida exclusiva)
-            const reservaHoy = reservasFuturas.find(r => {
-                const entrada = new Date(r.fecha_entrada);
-                const salida = new Date(r.fecha_salida);
-                entrada.setHours(0,0,0,0);
-                salida.setHours(0,0,0,0); // Normalizar a medianoche para comparación limpia
+        // 4. Mapear cada habitación de forma asíncrona para cargar consumos y estados
+        const resultadoPromesas = habitaciones.map(async hab => {
+            try {
+                const idHab = hab._id.toString();
+                const habObj = hab.toObject();
                 
-                const tEntrada = entrada.getTime();
-                const tSalida = salida.getTime();
-                const tHoy = hoy.getTime();
+                // Buscar registro activo
+                const registroActivo = registrosActivos.find(r => r.habitacion && r.habitacion.toString() === idHab);
                 
-                // Una habitación está reservada hoy si hoy >= entrada Y hoy < salida
-                // (El día de salida la habitación ya está disponible para otro)
-                return hab._id.equals(r.habitacion) && tHoy >= tEntrada && tHoy < tSalida;
-            });
+                // Buscar si tiene reserva ACTIVA para HOY (desde entrada hasta salida exclusiva)
+                const reservaHoy = reservasFuturas.find(r => {
+                    if (!r.habitacion || !r.fecha_entrada || !r.fecha_salida) return false;
+                    const entrada = new Date(r.fecha_entrada);
+                    const salida = new Date(r.fecha_salida);
+                    entrada.setHours(0,0,0,0);
+                    salida.setHours(0,0,0,0);
+                    
+                    const tEntrada = entrada.getTime();
+                    const tSalida = salida.getTime();
+                    const tHoy = hoy.getTime();
+                    
+                    return hab._id.equals(r.habitacion) && tHoy >= tEntrada && tHoy < tSalida;
+                });
 
-            // Filtrar reservas futuras (excluyendo la de hoy si ya está ocupada o reservada)
-            const proximasReservas = reservasFuturas
-                .filter(r => r.habitacion && r.habitacion.toString() === idHab && new Date(r.fecha_entrada) >= hoy)
-                .sort((a, b) => new Date(a.fecha_entrada) - new Date(b.fecha_entrada))
-                .slice(0, 5)
-                .map(r => ({
-                    id: r._id,
-                    cliente: r.cliente ? r.cliente.nombre : 'Desconocido',
-                    entrada: r.fecha_entrada,
-                    salida: r.fecha_salida,
-                    estado: r.estado
-                }));
+                // Filtrar próximas reservas
+                const proximasReservas = reservasFuturas
+                    .filter(r => r.habitacion && r.habitacion.toString() === idHab && new Date(r.fecha_entrada) >= hoy)
+                    .sort((a, b) => new Date(a.fecha_entrada) - new Date(b.fecha_entrada))
+                    .slice(0, 5)
+                    .map(r => ({
+                        id: r._id,
+                        cliente: r.cliente ? r.cliente.nombre : 'Desconocido',
+                        entrada: r.fecha_entrada,
+                        salida: r.fecha_salida,
+                        estado: r.estado
+                    }));
 
-            // 1. Recoger datos informativos (Huésped o Reserva hoy)
-            let detalleEstado = '';
-            if (registroActivo) {
-                // Obtener consumos vinculados al registro
-                const Venta = require('../models/Venta');
-                const ventas = await Venta.find({ registro: registroActivo._id });
-                const consumosTotal = ventas.reduce((acc, v) => acc + v.total, 0);
-                
-                const totalPagado = registroActivo.pagos.reduce((acc, p) => acc + p.monto, 0);
-                
-                const totalEstancia = registroActivo.total || 0;
-                const totalGeneral = totalEstancia + consumosTotal;
-                
-                detalleEstado = {
-                    huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A',
-                    entrada: registroActivo.fechaEntrada,
-                    salida: registroActivo.fechaSalida,
-                    totalEstancia: totalEstancia,
-                    totalConsumos: consumosTotal,
-                    totalGeneral: totalGeneral,
-                    pagado: totalPagado,
-                    saldo: totalGeneral - totalPagado
-                };
-            } else if (reservaHoy) {
-                detalleEstado = `Reserva: ${reservaHoy.cliente ? reservaHoy.cliente.nombre : 'N/A'}`;
-            }
+                let detalleEstado = '';
+                if (registroActivo) {
+                    const Venta = require('../models/Venta');
+                    const ventas = await Venta.find({ registro: registroActivo._id });
+                    const consumosTotal = (ventas || []).reduce((acc, v) => acc + (v.total || 0), 0);
+                    const totalPagado = (registroActivo.pagos || []).reduce((acc, p) => acc + (p.monto || 0), 0);
+                    
+                    let totalEstancia = registroActivo.total || 0;
+                    let esEstimado = false;
+                    
+                    if (totalEstancia <= 0 && registroActivo.fechaEntrada && registroActivo.fechaSalida) {
+                        const inDate = new Date(registroActivo.fechaEntrada);
+                        const outDate = new Date(registroActivo.fechaSalida);
+                        const diffDays = Math.max(Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24)), 1);
+                        const numHuespedes = Math.min(Math.max((registroActivo.huespedes || []).length, 1), 6);
+                        
+                        // Acceso seguro mediante habObj
+                        const precioKey = `precio_${numHuespedes}`;
+                        const precioBase = parseFloat(habObj[precioKey]) || parseFloat(habObj.precio_1) || 0;
+                        totalEstancia = precioBase * diffDays;
+                        esEstimado = true;
+                    }
+                    
+                    const totalGeneral = totalEstancia + consumosTotal;
+                    detalleEstado = {
+                        huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A',
+                        entrada: registroActivo.fechaEntrada,
+                        salida: registroActivo.fechaSalida,
+                        totalEstancia,
+                        totalConsumos: consumosTotal,
+                        totalGeneral,
+                        pagado: totalPagado,
+                        saldo: totalGeneral - totalPagado,
+                        esEstimado
+                    };
+                } else if (reservaHoy) {
+                    detalleEstado = `Reserva: ${reservaHoy.cliente ? reservaHoy.cliente.nombre : 'N/A'}`;
+                }
 
             // 2. Determinar estado visual prioritario (OPERATIVO)
             let estadoVisual = 'disponible';
@@ -150,21 +164,33 @@ exports.getMapaVisual = async (req, res) => {
                 color = 'yellow';
             }
 
-            return {
-                id: idHab,
-                numero: hab.numero,
-                tipo: hab.tipo ? hab.tipo.nombre : 'N/A',
-                estadoActual: hab.estado ? hab.estado.nombre : 'N/A',
-                estadoLimpieza: hab.estadoLimpieza,
-                estadoVisual,
-                color,
-                detalleEstado,
-                reservasFuturas: proximasReservas
-            };
+                return {
+                    id: idHab,
+                    numero: hab.numero,
+                    tipo: hab.tipo ? hab.tipo.nombre : 'N/A',
+                    estadoActual: hab.estado ? hab.estado.nombre : 'N/A',
+                    estadoLimpieza: hab.estadoLimpieza || 'Limpia',
+                    detalleEstado: detalleEstado,
+                    proximasReservas: proximasReservas,
+                    estadoVisual: estadoVisual,
+                    color: color
+                };
+            } catch (error) {
+                console.error(`Error procesando hab ${hab.numero}:`, error);
+                return {
+                    id: hab._id.toString(),
+                    numero: hab.numero,
+                    estadoVisual: 'error',
+                    color: 'gray',
+                    detalleEstado: 'Error de datos'
+                };
+            }
         });
 
+        const resultado = await Promise.all(resultadoPromesas);
         res.json(resultado);
     } catch (err) {
+        console.error('[MAPA ERROR]', err);
         res.status(500).json({ message: err.message });
     }
 };

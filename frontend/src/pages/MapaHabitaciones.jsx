@@ -305,7 +305,9 @@ const MapaHabitaciones = () => {
                                                     <div className="flex items-center gap-1"><LogIn size={10} /> {new Date(hab.detalleEstado.entrada).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
                                                     <div className="flex items-center gap-1"><LogOut size={10} /> {new Date(hab.detalleEstado.salida).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
                                                     <div className="col-span-2 pt-1 mt-1 border-t border-gray-100 flex justify-between text-[8px] uppercase tracking-tighter">
-                                                        <span>Aloj. + Consumos:</span>
+                                                        <span className={hab.detalleEstado.esEstimado ? 'text-amber-600 italic font-bold' : ''}>
+                                                            Aloj. + Consumos {hab.detalleEstado.esEstimado ? '(EST.)' : ''}:
+                                                        </span>
                                                         <span className="font-black text-gray-700">${formatCurrency(hab.detalleEstado.totalGeneral || 0)}</span>
                                                     </div>
                                                     <div className="col-span-2 flex justify-between text-[8px] uppercase tracking-tighter">
