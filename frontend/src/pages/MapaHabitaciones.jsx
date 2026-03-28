@@ -241,8 +241,13 @@ const MapaHabitaciones = () => {
                 <div class="text-left space-y-3">
                     <p class="text-sm text-gray-600">Esta acción liberará la habitación y la marcará para aseo.</p>
                     ${tieneSaldo ? `
-                        <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-amber-700 text-xs">
-                            <strong>¡Atención! Saldo Pendiente:</strong> $${formatCurrency(saldo)}
+                        <div class="bg-red-50 border-2 border-red-500 p-5 rounded-2xl text-red-700 shadow-lg animate-pulse">
+                            <div class="flex items-center gap-3 mb-2 justify-center">
+                                <span class="bg-red-500 text-white p-1 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+                                <strong class="text-lg font-black uppercase tracking-tighter">¡SALDO PENDIENTE!</strong>
+                            </div>
+                            <p class="text-3xl font-black text-center mb-1">$${formatCurrency(saldo)}</p>
+                            <p class="text-[11px] font-bold text-center opacity-80 uppercase tracking-widest">DEBE COBRAR ANTES DE LIBERAR LA HABITACIÓN</p>
                         </div>
                     ` : ''}
                     <div class="mt-4">
