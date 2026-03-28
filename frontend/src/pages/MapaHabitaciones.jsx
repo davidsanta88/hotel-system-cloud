@@ -15,9 +15,10 @@ import {
     Brush, 
     CheckSquare,
     Loader2,
-    DollarSign,
     LogIn,
-    LogOut
+    LogOut,
+    CreditCard,
+    DollarSign
 } from 'lucide-react';
 import RegistroModal from '../components/modals/RegistroModal';
 import { formatCurrency } from '../utils/format';
