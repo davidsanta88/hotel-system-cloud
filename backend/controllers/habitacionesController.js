@@ -103,15 +103,18 @@ exports.getMapaVisual = async (req, res) => {
                 
                 const totalPagado = registroActivo.pagos.reduce((acc, p) => acc + p.monto, 0);
                 
+                const totalEstancia = registroActivo.total || 0;
+                const totalGeneral = totalEstancia + consumosTotal;
+                
                 detalleEstado = {
                     huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A',
                     entrada: registroActivo.fechaEntrada,
                     salida: registroActivo.fechaSalida,
-                    totalEstancia: registroActivo.total,
+                    totalEstancia: totalEstancia,
                     totalConsumos: consumosTotal,
-                    totalGeneral: registroActivo.total + consumosTotal,
+                    totalGeneral: totalGeneral,
                     pagado: totalPagado,
-                    saldo: (registroActivo.total + consumosTotal) - totalPagado
+                    saldo: totalGeneral - totalPagado
                 };
             } else if (reservaHoy) {
                 detalleEstado = `Reserva: ${reservaHoy.cliente ? reservaHoy.cliente.nombre : 'N/A'}`;
