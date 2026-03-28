@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import moment from 'moment';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
-import { format } from 'date-fns';
 import { 
     Plus, 
     CheckCircle, 
@@ -33,11 +33,11 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     
-    // Form state
+    // Form state - USO DE MOMENT.UTC PARA EVITAR DESFASES
     const [formData, setFormData] = useState({
         habitacion_id: initialHabitacionId || '',
-        fecha_ingreso: format(new Date(), 'yyyy-MM-dd'),
-        fecha_salida: format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'),
+        fecha_ingreso: moment.utc().format('YYYY-MM-DD'),
+        fecha_salida: moment.utc().add(1, 'days').format('YYYY-MM-DD'),
         total: '0.00',
         medio_pago_id: '',
         valor_cobrado: '0.00',
@@ -98,6 +98,12 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
                 const formal = resTipos.data.find(t => t.nombre.toLowerCase().includes('formal')) || resTipos.data[0];
                 setFormData(prev => ({ ...prev, tipo_registro_id: formal.id }));
             }
+
+            // AUTO-SELECCIONAR EFECTIVO POR DEFECTO
+            if (resMedios.data.length > 0) {
+                const efectivo = resMedios.data.find(m => m.nombre.toUpperCase().includes('EFECTIVO')) || resMedios.data[0];
+                setFormData(prev => ({ ...prev, medio_pago_id: efectivo.id || efectivo._id }));
+            }
         } catch (error) {
             console.error('Error fetching modal data:', error);
             Swal.fire('Error', 'No se pudieron cargar los datos necesarios para el registro', 'error');
@@ -110,12 +116,12 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
         const hab = habitaciones.find(h => String(h.id || h._id) === String(habId));
         if (!hab) return;
         
-        const inDate = new Date(fechaIn);
-        const outDate = new Date(fechaOut);
-        if (outDate < inDate) return;
+        // USO DE MOMENT.UTC PARA CALCULO DE DIAS EXACTOS
+        const inDate = moment.utc(fechaIn);
+        const outDate = moment.utc(fechaOut);
+        if (outDate.isBefore(inDate)) return;
 
-        const diffTime = outDate - inDate;
-        const diffDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
+        const diffDays = Math.max(outDate.diff(inDate, 'days'), 1);
         
         const numPersonas = Math.min(Math.max(listLength, 1), 6);
         const pNoche = parseFloat(hab[`precio_${numPersonas}`]) || parseFloat(hab.precio_1) || 0;
@@ -239,7 +245,7 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
                 <div className="bg-gray-950 p-6 flex justify-between items-center text-white border-b border-white/10">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-emerald-500 rounded-xl shadow-lg shadow-emerald-500/20">
-                            <Plus size={20} endurance={2.5} />
+                            <Plus size={20} />
                         </div>
                         <div>
                             <h2 className="text-xl font-black uppercase tracking-tight">Nuevo Registro</h2>
@@ -401,9 +407,14 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
                                         <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block">Habitación</label>
                                         <select name="habitacion_id" required className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl text-xs font-black focus:border-emerald-500 outline-none" value={formData.habitacion_id} onChange={handleFormChange}>
                                             <option value="">SELECCIONA HABITACIÓN...</option>
-                                            {habitaciones.map(h => (
-                                                <option key={h.id} value={h.id}>HAB {h.numero} - {h.tipo?.nombre || 'TIPO'} (${formatCurrency(h.precio_1)})</option>
-                                            ))}
+                                            {habitaciones
+                                                .filter(h => (h.estado_nombre && h.estado_nombre.toUpperCase() === 'DISPONIBLE') || String(h.id || h._id) === String(formData.habitacion_id))
+                                                .map(h => (
+                                                    <option key={h.id || h._id} value={h.id || h._id}>
+                                                        HAB {h.numero} - {h.tipo_nombre || 'TIPO'} (${formatCurrency(h.precio_1)})
+                                                    </option>
+                                                ))
+                                            }
                                         </select>
                                     </div>
                                     <div>

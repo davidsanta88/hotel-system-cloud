@@ -4,6 +4,7 @@ const Reserva = require('../models/Reserva');
 const cloudinary = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');
+const Venta = require('../models/Venta');
  
 // Helper para subir buffer a Cloudinary
 const streamUpload = (buffer) => {
@@ -45,53 +46,54 @@ exports.getHabitaciones = async (req, res) => {
 exports.getMapaVisual = async (req, res) => {
     try {
         const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
+        hoy.setUTCHours(0, 0, 0, 0);
 
-        const mañana = new Date(hoy);
-        mañana.setDate(hoy.getDate() + 1);
+        // 1. Obtener datos base
+        console.log('[DEBUG] Consultando base de datos...');
+        const [habitaciones, registrosActivos, todasReservas] = await Promise.all([
+            Habitacion.find().populate('tipo', 'nombre').populate('estado', 'nombre'),
+            Registro.find({ estado: 'activo' }).populate('cliente', 'nombre'),
+            Reserva.find({
+                fecha_salida: { $gte: hoy },
+                estado: { $in: ['Confirmada', 'Pendiente'] }
+            }).populate('cliente', 'nombre')
+        ]);
+        console.log(`[DEBUG] Datos cargados: ${habitaciones.length} habs, ${registrosActivos.length} registros, ${todasReservas.length} reservas`);
 
-        // 1. Obtener todas las habitaciones
-        const habitaciones = await Habitacion.find()
-            .populate('tipo', 'nombre')
-            .populate('estado', 'nombre');
-
-        // 2. Obtener todos los registros activos (Check-ins)
-        const registrosActivos = await Registro.find({ estado: 'activo' })
-            .populate('cliente', 'nombre');
-
-        // 3. Obtener reservas próximas (desde hoy en adelante)
-        const reservasFuturas = await Reserva.find({
-            fecha_salida: { $gte: hoy },
-            estado: { $in: ['Confirmada', 'Pendiente'] }
-        }).populate('cliente', 'nombre');
-
-        // 4. Mapear cada habitación de forma asíncrona para cargar consumos y estados
-        const resultadoPromesas = habitaciones.map(async hab => {
+        // 2. Procesar cada habitación
+        const resultadoPromesas = habitaciones.map(async (hab) => {
             try {
                 const idHab = hab._id.toString();
                 const habObj = hab.toObject();
                 
-                // Buscar registro activo
-                const registroActivo = registrosActivos.find(r => r.habitacion && r.habitacion.toString() === idHab);
+                // Buscar registro activo (Check-in)
+                const registroActivo = registrosActivos.find(r => 
+                    r.habitacion && r.habitacion.toString() === idHab
+                );
                 
-                // Buscar si tiene reserva ACTIVA para HOY (desde entrada hasta salida exclusiva)
-                const reservaHoy = reservasFuturas.find(r => {
-                    if (!r.habitacion || !r.fecha_entrada || !r.fecha_salida) return false;
-                    const entrada = new Date(r.fecha_entrada);
-                    const salida = new Date(r.fecha_salida);
-                    entrada.setHours(0,0,0,0);
-                    salida.setHours(0,0,0,0);
-                    
-                    const tEntrada = entrada.getTime();
-                    const tSalida = salida.getTime();
-                    const tHoy = hoy.getTime();
-                    
-                    return hab._id.equals(r.habitacion) && tHoy >= tEntrada && tHoy < tSalida;
+                // Buscar reserva para hoy
+                const reservaHoy = todasReservas.find(r => {
+                    try {
+                        if (!r.fecha_entrada || !r.fecha_salida) return false;
+                        const tieneHab = (r.habitacion && r.habitacion.toString() === idHab) || 
+                                        (r.habitaciones && r.habitaciones.some(rh => rh.habitacion && rh.habitacion.toString() === idHab));
+                        if (!tieneHab) return false;
+
+                        const entrada = new Date(r.fecha_entrada);
+                        const salida = new Date(r.fecha_salida);
+                        entrada.setUTCHours(0,0,0,0);
+                        salida.setUTCHours(0,0,0,0);
+                        return hoy.getTime() >= entrada.getTime() && hoy.getTime() < salida.getTime();
+                    } catch (e) { return false; }
                 });
 
-                // Filtrar próximas reservas
-                const proximasReservas = reservasFuturas
-                    .filter(r => r.habitacion && r.habitacion.toString() === idHab && new Date(r.fecha_entrada) >= hoy)
+                // Reservas futuras para esta habitación
+                const proximasReservas = todasReservas
+                    .filter(r => {
+                        const tieneHab = (r.habitacion && r.habitacion.toString() === idHab) || 
+                                        (r.habitaciones && r.habitaciones.some(rh => rh.habitacion && rh.habitacion.toString() === idHab));
+                        return tieneHab && new Date(r.fecha_entrada) >= hoy;
+                    })
                     .sort((a, b) => new Date(a.fecha_entrada) - new Date(b.fecha_entrada))
                     .slice(0, 5)
                     .map(r => ({
@@ -102,87 +104,97 @@ exports.getMapaVisual = async (req, res) => {
                         estado: r.estado
                     }));
 
-                let detalleEstado = '';
+                let detalleEstado = null;
                 if (registroActivo) {
-                    const Venta = require('../models/Venta');
-                    const ventas = await Venta.find({ registro: registroActivo._id });
-                    const consumosTotal = (ventas || []).reduce((acc, v) => acc + (v.total || 0), 0);
-                    const totalPagado = (registroActivo.pagos || []).reduce((acc, p) => acc + (p.monto || 0), 0);
-                    
-                    let totalEstancia = registroActivo.total || 0;
-                    let esEstimado = false;
-                    
-                    if (totalEstancia <= 0 && registroActivo.fechaEntrada && registroActivo.fechaSalida) {
-                        const inDate = new Date(registroActivo.fechaEntrada);
-                        const outDate = new Date(registroActivo.fechaSalida);
-                        const diffDays = Math.max(Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24)), 1);
-                        const numHuespedes = Math.min(Math.max((registroActivo.huespedes || []).length, 1), 6);
+                    try {
+                        // Cargar consumos de la tienda con catch preventivo
+                        const ventas = await Venta.find({ registro: registroActivo._id }).catch(() => []);
+                        const consumosTotal = (ventas || []).reduce((acc, v) => acc + (v.total || 0), 0);
                         
-                        // Acceso seguro mediante habObj
-                        const precioKey = `precio_${numHuespedes}`;
-                        const precioBase = parseFloat(habObj[precioKey]) || parseFloat(habObj.precio_1) || 0;
-                        totalEstancia = precioBase * diffDays;
-                        esEstimado = true;
+                        // Asegurar que pagos sea un array
+                        const pagos = registroActivo.pagos || [];
+                        const totalPagado = pagos.reduce((acc, p) => acc + (p.monto || 0), 0);
+                        
+                        let totalEstancia = registroActivo.total || 0;
+                        if (totalEstancia <= 0 && registroActivo.fechaEntrada && registroActivo.fechaSalida) {
+                            const inDate = new Date(registroActivo.fechaEntrada);
+                            const outDate = new Date(registroActivo.fechaSalida);
+                            if (!isNaN(inDate) && !isNaN(outDate)) {
+                                const diffDays = Math.max(Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24)), 1);
+                                const numHuespedes = Math.min(Math.max((registroActivo.huespedes || []).length, 1), 6);
+                                const precioKey = `precio_${numHuespedes}`;
+                                const precioBase = parseFloat(habObj[precioKey]) || parseFloat(habObj.precio_1) || 0;
+                                totalEstancia = precioBase * diffDays;
+                            }
+                        }
+                        
+                        const totalGeneral = totalEstancia + consumosTotal;
+                        detalleEstado = {
+                            id_registro: registroActivo._id, // Necesario para el Check-out rápido
+                            huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'Huésped',
+                            entrada: registroActivo.fechaEntrada,
+                            salida: registroActivo.fechaSalida,
+                            totalEstancia,
+                            totalConsumos: consumosTotal,
+                            totalGeneral,
+                            pagado: totalPagado,
+                            saldo: totalGeneral - totalPagado
+                        };
+                    } catch (e) {
+                        console.error(`Error procesando detalle para registro ${registroActivo._id}:`, e);
+                        detalleEstado = {
+                            huesped: 'Error en datos',
+                            totalGeneral: 0,
+                            pagado: 0,
+                            saldo: 0
+                        };
                     }
-                    
-                    const totalGeneral = totalEstancia + consumosTotal;
-                    detalleEstado = {
-                        huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A',
-                        entrada: registroActivo.fechaEntrada,
-                        salida: registroActivo.fechaSalida,
-                        totalEstancia,
-                        totalConsumos: consumosTotal,
-                        totalGeneral,
-                        pagado: totalPagado,
-                        saldo: totalGeneral - totalPagado,
-                        esEstimado
-                    };
                 } else if (reservaHoy) {
-                    detalleEstado = `Reserva: ${reservaHoy.cliente ? reservaHoy.cliente.nombre : 'N/A'}`;
+                    detalleEstado = {
+                        huesped: reservaHoy.cliente ? reservaHoy.cliente.nombre : 'Reserva',
+                        entrada: reservaHoy.fecha_entrada,
+                        salida: reservaHoy.fecha_salida,
+                        reserva: true
+                    };
                 }
 
-            // 2. Determinar estado visual prioritario (OPERATIVO)
-            let estadoVisual = 'disponible';
-            let color = 'green';
+                // 2. Determinar estado visual prioritario
+                let estadoVisual = 'disponible';
+                let color = 'green';
 
-            const esSucia = hab.estadoLimpieza && (
-                hab.estadoLimpieza.toUpperCase() === 'SUCIA' || 
-                hab.estadoLimpieza.toUpperCase() === 'PENDIENTE POR ASEAR'
-            );
+                const esSucia = hab.estadoLimpieza && 
+                    (['SUCIA', 'PENDIENTE POR ASEAR'].includes(hab.estadoLimpieza.toUpperCase()));
 
-            if (esSucia) {
-                // PRIORIDAD 1: SI ESTÁ SUCIA, MOSTRAR AZUL (Independiente de si hay alguien)
-                estadoVisual = 'por_asear';
-                color = 'blue';
-            } else if (registroActivo) {
-                // PRIORIDAD 2: SI NO ESTÁ SUCIA PERO TIENE HUESPED, MOSTRAR ROJO
-                estadoVisual = 'ocupada';
-                color = 'red';
-            } else if (reservaHoy) {
-                // PRIORIDAD 3: SI NO ESTÁ SUCIA NI OCUPADA PERO RESERVADA PARA HOY, MOSTRAR AMARILLO
-                estadoVisual = 'reservada';
-                color = 'yellow';
-            }
+                if (esSucia) {
+                    estadoVisual = 'por_asear';
+                    color = 'blue';
+                } else if (registroActivo) {
+                    estadoVisual = 'ocupada';
+                    color = 'red';
+                } else if (reservaHoy) {
+                    estadoVisual = 'reservada';
+                    color = 'yellow';
+                }
 
                 return {
                     id: idHab,
                     numero: hab.numero,
                     tipo: hab.tipo ? hab.tipo.nombre : 'N/A',
                     estadoActual: hab.estado ? hab.estado.nombre : 'N/A',
+                    estado_nombre: hab.estado ? hab.estado.nombre : 'N/A',
                     estadoLimpieza: hab.estadoLimpieza || 'Limpia',
-                    detalleEstado: detalleEstado,
-                    proximasReservas: proximasReservas,
-                    estadoVisual: estadoVisual,
-                    color: color
+                    detalleEstado,
+                    reservasFuturas: proximasReservas, 
+                    estadoVisual,
+                    color
                 };
             } catch (error) {
-                console.error(`Error procesando hab ${hab.numero}:`, error);
+                console.error(`Error en hab ${hab.numero}:`, error);
                 return {
-                    id: hab._id.toString(),
-                    numero: hab.numero,
+                    id: hab._id ? hab._id.toString() : 'err',
+                    numero: hab.numero || '?',
                     estadoVisual: 'error',
-                    color: 'gray',
-                    detalleEstado: 'Error de datos'
+                    error: true
                 };
             }
         });
@@ -190,8 +202,8 @@ exports.getMapaVisual = async (req, res) => {
         const resultado = await Promise.all(resultadoPromesas);
         res.json(resultado);
     } catch (err) {
-        console.error('[MAPA ERROR]', err);
-        res.status(500).json({ message: err.message });
+        console.error('[MAPA ERROR GLOBAL]', err);
+        res.status(500).json({ message: 'Error interno al cargar el mapa visual', error: err.message });
     }
 };
 

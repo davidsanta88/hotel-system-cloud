@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -6,7 +7,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Select from 'react-select';
-import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign, Map } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
@@ -15,6 +16,7 @@ moment.locale('es');
 const localizer = momentLocalizer(moment);
 
 const Reservas = () => {
+    const navigate = useNavigate();
     const { user } = useContext(AuthContext);
     const { canView, canEdit, canDelete } = usePermissions('reservas');
     const [view, setView] = useState('calendar'); // 'calendar' or 'list'
@@ -52,15 +54,45 @@ const Reservas = () => {
         observaciones: ''
     });
 
+    const location = useLocation();
+    
     useEffect(() => {
         fetchData();
-    }, []);
+        
+        // Manejar navegación desde el Mapa de Habitaciones
+        if (location.state?.fromMap && location.state?.selectedHab) {
+            const hab = location.state.selectedHab;
+            
+            // Limpiar estado previo
+            setIsNewClient(false);
+            setFormData({
+                id: null,
+                cliente_id: null,
+                nuevoCliente: { nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '' },
+                habitaciones: [{
+                    value: hab.id,
+                    label: `Hab ${hab.numero}`,
+                    precio: hab.precio_1 || hab.precio || 0
+                }],
+                fecha_entrada: moment().format('YYYY-MM-DD'),
+                fecha_salida: moment().add(1, 'days').format('YYYY-MM-DD'),
+                numero_personas: 1,
+                valor_total: hab.precio_1 || hab.precio || 0,
+                valor_abonado: 0,
+                observaciones: ''
+            });
+            setShowModal(true);
+            
+            // Limpiar el estado de navegación para evitar reapertura en refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
 
     // Cálculo automático del valor total estimado
     useEffect(() => {
         if (formData.habitaciones.length > 0 && formData.fecha_entrada && formData.fecha_salida) {
-            const entrada = moment(formData.fecha_entrada);
-            const salida = moment(formData.fecha_salida);
+            const entrada = moment.utc(formData.fecha_entrada);
+            const salida = moment.utc(formData.fecha_salida);
             const noches = salida.diff(entrada, 'days');
             
             if (noches > 0) {
@@ -109,8 +141,8 @@ const Reservas = () => {
             return {
                 id: r.id,
                 title: `${r.cliente_nombre} — ${habs}`,
-                start: new Date(fechaEntrada + 'T12:00:00'),
-                end: new Date(fechaSalida + 'T12:00:00'),
+                start: moment.utc(fechaEntrada).toDate(),
+                end: moment.utc(fechaSalida).toDate(),
                 resource: r,
                 allDay: true
             };
@@ -353,32 +385,43 @@ const Reservas = () => {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-6 animate-fade-in text-gray-800">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-2">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-                        <CalendarIcon className="text-blue-600" />
+                    <h1 className="text-3xl font-black flex items-center gap-3 text-slate-800">
+                        <div className="p-2 bg-blue-100 rounded-2xl">
+                            <CalendarIcon className="text-blue-600" size={28} />
+                        </div>
                         Gestión de Reservas
                     </h1>
-                    <p className="text-gray-500 font-medium">Planifica y controla la ocupación futura del hotel</p>
+                    <p className="text-gray-500 font-medium ml-1">Planifica y controla la ocupación futura del hotel</p>
                 </div>
                 
-                <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex items-center gap-4">
                     <button 
-                        onClick={() => setView('calendar')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-sm ${view === 'calendar' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                        onClick={() => navigate('/mapa-habitaciones')}
+                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg"
                     >
-                        <CalendarIcon size={18} />
-                        Calendario
+                        <Map size={20} />
+                        <span>Ir a Mapa</span>
                     </button>
-                    <button 
-                        onClick={() => setView('list')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-sm ${view === 'list' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                    >
-                        <List size={18} />
-                        Listado
-                    </button>
-                    <div className="w-px h-6 bg-gray-200 mx-1"></div>
+
+                    <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200">
+                        <button 
+                            onClick={() => setView('calendar')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all font-bold text-sm ${view === 'calendar' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            <CalendarIcon size={18} />
+                            Calendario
+                        </button>
+                        <button 
+                            onClick={() => setView('list')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all font-bold text-sm ${view === 'list' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            <List size={18} />
+                            Listado
+                        </button>
+                    </div>
                     {canEdit && (
                         <button 
                             onClick={() => setShowModal(true)}
@@ -474,10 +517,10 @@ const Reservas = () => {
                                     </td>
                                     <td className="p-4">
                                         <div className="text-xs font-bold text-gray-700">
-                                            {moment(r.fecha_entrada).format('DD MMM')} - {moment(r.fecha_salida).format('DD MMM')}
+                                            {moment.utc(r.fecha_entrada).format('DD MMM')} - {moment.utc(r.fecha_salida).format('DD MMM')}
                                         </div>
                                         <div className="text-[10px] text-gray-400 font-medium">
-                                            {moment(r.fecha_salida).diff(moment(r.fecha_entrada), 'days')} noches
+                                            {moment.utc(r.fecha_salida).diff(moment.utc(r.fecha_entrada), 'days')} noches
                                         </div>
                                     </td>
                                     <td className="p-4 font-bold text-gray-600">{r.numero_personas}</td>
@@ -705,7 +748,7 @@ const Reservas = () => {
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Días / Noches</label>
                                     <div className="w-full px-4 py-2.5 rounded-xl border border-gray-100 bg-gray-50 font-black text-gray-700 text-sm text-center">
                                         {formData.fecha_entrada && formData.fecha_salida ? (
-                                            Math.max(0, moment(formData.fecha_salida).diff(moment(formData.fecha_entrada), 'days'))
+                                            Math.max(0, moment.utc(formData.fecha_salida).diff(moment.utc(formData.fecha_entrada), 'days'))
                                         ) : 0}
                                     </div>
                                 </div>

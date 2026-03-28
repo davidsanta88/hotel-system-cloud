@@ -71,7 +71,12 @@ const Store = () => {
             setProductos(mappedProductos);
             setMediosPago(resMP.data);
             setRegistrosActivos(resReg.data);
-            if (resMP.data.length > 0) setMedioPagoId(resMP.data[0].id);
+            
+            // AUTO-SELECCIONAR EFECTIVO POR DEFECTO
+            if (resMP.data.length > 0) {
+                const efectivo = resMP.data.find(m => m.nombre.toUpperCase().includes('EFECTIVO')) || resMP.data[0];
+                setMedioPagoId(efectivo.id || efectivo._id);
+            }
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar la información', 'error');
         } finally {
@@ -149,6 +154,11 @@ const Store = () => {
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar el detalle de la venta', 'error');
         }
+    };
+
+    const handleAddAbono = async (e) => {
+        e.preventDefault();
+        if (!abonoForm.monto || !abonoForm.medio) return;
     };
 
     const abrirEdicion = async (venta) => {
