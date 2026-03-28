@@ -18,7 +18,8 @@ import {
     LogIn,
     LogOut,
     CreditCard,
-    DollarSign
+    DollarSign,
+    Edit3
 } from 'lucide-react';
 import RegistroModal from '../components/modals/RegistroModal';
 import { formatCurrency } from '../utils/format';
@@ -311,7 +312,7 @@ const MapaHabitaciones = () => {
                                                     }}
                                                     className="w-full mt-1.5 py-1 px-2 bg-gray-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-black transition-colors flex items-center justify-center gap-1"
                                                 >
-                                                    <CreditCard size={10} /> Gestionar / Abonar
+                                                    <Edit3 size={10} /> Editar Registro / Pagos
                                                 </button>
                                             </div>
                                         )
