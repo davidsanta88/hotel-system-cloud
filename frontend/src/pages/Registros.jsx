@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import RegistroModal from '../components/modals/RegistroModal';
 import DetallesRegistroModal from '../components/modals/DetallesRegistroModal';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
+import Pagination from '../components/common/Pagination';
 
 const Registros = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -56,7 +57,6 @@ const Registros = () => {
         notas: '',
         tipo_registro_id: ''
     });
-
     const [huespedesList, setHuespedesList] = useState([]);
     const [guestForm, setGuestForm] = useState({ 
         nombre: '', 
@@ -67,6 +67,21 @@ const Registros = () => {
         municipio_origen_id: '' 
     });
 
+    // Estados para búsqueda, filtrado y paginación
+    const [searchTerm, setSearchTerm] = useState('');
+    const [columnFilters, setColumnFilters] = useState({
+        huesped: '',
+        habitacion: '',
+        fechas: '',
+        estado: ''
+    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const handleFilterChange = (column, value) => {
+        setColumnFilters(prev => ({ ...prev, [column]: value }));
+        setCurrentPage(1);
+    };
 
     useEffect(() => {
         fetchData();
@@ -96,6 +111,43 @@ const Registros = () => {
             setLoading(false);
         }
     };
+
+    // Filtrado y Paginación Local
+    const filteredRegistros = React.useMemo(() => {
+        return registros.filter(res => {
+            const searchLower = searchTerm.toLowerCase();
+            const cliente = (res.nombre_cliente || '').toLowerCase();
+            const habitacion = (res.numero_habitacion || '').toString();
+            
+            // Búsqueda global
+            const matchesGlobal = searchTerm === '' || 
+                cliente.includes(searchLower) || 
+                habitacion.includes(searchLower);
+
+            // Filtros por columna
+            const matchesHuesped = columnFilters.huesped === '' || 
+                cliente.includes(columnFilters.huesped.toLowerCase());
+                
+            const matchesHab = columnFilters.habitacion === '' || 
+                habitacion.includes(columnFilters.habitacion);
+                
+            const matchesFechas = columnFilters.fechas === '' || 
+                format(new Date(res.fecha_ingreso), 'dd/MM/yyyy').includes(columnFilters.fechas) ||
+                format(new Date(res.fecha_salida), 'dd/MM/yyyy').includes(columnFilters.fechas);
+                
+            const matchesEstado = columnFilters.estado === '' || 
+                (res.estado || '').toLowerCase().includes(columnFilters.estado.toLowerCase());
+
+            return matchesGlobal && matchesHuesped && matchesHab && matchesFechas && matchesEstado;
+        });
+    }, [registros, searchTerm, columnFilters]);
+
+    const paginatedRegistros = React.useMemo(() => {
+        return filteredRegistros.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+        );
+    }, [filteredRegistros, currentPage, itemsPerPage]);
 
     const handleAutoEdit = (id) => {
         handleViewDetails(id, true);
@@ -260,26 +312,86 @@ const Registros = () => {
                 </div>
             </div>
 
+            {/* Barra de Búsqueda Global */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                        type="text" 
+                        placeholder="Buscar por nombre de huésped o habitación..."
+                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-1 focus:ring-blue-400 outline-none placeholder:text-slate-300"
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-6">
                 {loading ? (
                     <div className="text-center p-8 text-gray-400">Cargando registros...</div>
                 ) : (
                     <div className="card overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Huésped</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hab.</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fechas</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Alojamiento</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Abonado</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Saldo</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Huésped</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab.</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Fechas</th>
+                                    <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Alojamiento</th>
+                                    <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Abonado</th>
+                                    <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
+                                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Acciones</th>
+                                </tr>
+                                {/* Fila de Filtros */}
+                                <tr className="bg-white">
+                                    <th className="px-6 py-2 border-b border-slate-50">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Filtrar huésped..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                            value={columnFilters.huesped}
+                                            onChange={(e) => handleFilterChange('huesped', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-6 py-2 border-b border-slate-50">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Hab..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300 text-center"
+                                            value={columnFilters.habitacion}
+                                            onChange={(e) => handleFilterChange('habitacion', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-6 py-2 border-b border-slate-50">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Filtrar fecha..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                            value={columnFilters.fechas}
+                                            onChange={(e) => handleFilterChange('fechas', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Estado..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                            value={columnFilters.estado}
+                                            onChange={(e) => handleFilterChange('estado', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {registros.map((res) => {
+                                {paginatedRegistros.map((res) => {
                                     const saldo = (res.total || 0) - (res.valor_pagado || 0);
                                     return (
                                         <tr key={res.id} className="hover:bg-gray-50">
@@ -357,15 +469,31 @@ const Registros = () => {
                                         </tr>
                                     );
                                 })}
-                                {registros.length === 0 && (
+                                {paginatedRegistros.length === 0 && (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-8 text-center text-gray-400">
-                                            No hay registros.
+                                        <td colSpan="8" className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center">
+                                                <Info className="text-slate-200 mb-2" size={48} />
+                                                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No se encontraron registros</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
+                        
+                        <div className="mt-4">
+                            <Pagination 
+                                currentPage={currentPage}
+                                totalItems={filteredRegistros.length}
+                                itemsPerPage={itemsPerPage}
+                                onPageChange={setCurrentPage}
+                                onItemsPerPageChange={(val) => {
+                                    setItemsPerPage(val);
+                                    setCurrentPage(1);
+                                }}
+                            />
+                        </div>
                     </div>
                 )}
             </div>

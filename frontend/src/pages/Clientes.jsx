@@ -26,6 +26,14 @@ const Clientes = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     
+    // Filtros por columna
+    const [columnFilters, setColumnFilters] = useState({
+        documento: '',
+        nombre: '',
+        telefono: '',
+        municipio: ''
+    });
+    
     // Estados para paginación
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -115,10 +123,32 @@ const Clientes = () => {
         }
     };
 
-    const filteredClientes = clientes.filter(c => 
-        c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        c.documento.includes(searchTerm)
-    );
+    const handleFilterChange = (column, value) => {
+        setColumnFilters(prev => ({ ...prev, [column]: value }));
+        setCurrentPage(1);
+    };
+
+    const filteredClientes = clientes.filter(c => {
+        // Búsqueda global
+        const matchesGlobal = searchTerm === '' || 
+            c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            c.documento.includes(searchTerm);
+        
+        // Filtros por columna
+        const matchesDocumento = columnFilters.documento === '' || 
+            c.documento.toLowerCase().includes(columnFilters.documento.toLowerCase());
+            
+        const matchesNombre = columnFilters.nombre === '' || 
+            c.nombre.toLowerCase().includes(columnFilters.nombre.toLowerCase());
+            
+        const matchesTelefono = columnFilters.telefono === '' || 
+            (c.telefono || '').toLowerCase().includes(columnFilters.telefono.toLowerCase());
+            
+        const matchesMunicipio = columnFilters.municipio === '' || 
+            (c.municipio_origen_nombre || '').toLowerCase().includes(columnFilters.municipio.toLowerCase());
+
+        return matchesGlobal && matchesDocumento && matchesNombre && matchesTelefono && matchesMunicipio;
+    });
 
     // Lógica para paginar los clientes filtrados
     const paginatedClientes = filteredClientes.slice(
@@ -191,16 +221,55 @@ const Clientes = () => {
                 
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-600 border-b border-gray-100">
-                                <th className="p-4 font-semibold">T. Doc</th>
-                                <th className="p-4 font-semibold">Documento</th>
-                                <th className="p-4 font-semibold">Nombre Completo</th>
-                                <th className="p-4 font-semibold">Contacto</th>
-                                <th className="p-4 font-semibold">Origen</th>
-                                <th className="p-4 font-semibold text-xs text-gray-400 uppercase tracking-wider">Registrado Por</th>
-                                <th className="p-4 font-semibold text-xs text-gray-400 uppercase tracking-wider">Última Mod.</th>
-                                {(canEdit || canDelete) && <th className="p-4 font-semibold text-right">Acciones</th>}
+                        <thead className="bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">T. Doc</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Documento</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre Completo</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto</th>
+                                <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Origen</th>
+                                <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Acciones</th>
+                            </tr>
+                            {/* Fila de Filtros */}
+                            <tr className="bg-white">
+                                <th className="px-6 py-2 border-b border-slate-50"></th>
+                                <th className="px-6 py-2 border-b border-slate-50">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Filtrar doc..."
+                                        className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                        value={columnFilters.documento}
+                                        onChange={(e) => handleFilterChange('documento', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-2 border-b border-slate-50">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Filtrar nombre..."
+                                        className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                        value={columnFilters.nombre}
+                                        onChange={(e) => handleFilterChange('nombre', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-2 border-b border-slate-50">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Filtrar tel..."
+                                        className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                        value={columnFilters.telefono}
+                                        onChange={(e) => handleFilterChange('telefono', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-2 border-b border-slate-50">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Filtrar ciudad..."
+                                        className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                        value={columnFilters.municipio}
+                                        onChange={(e) => handleFilterChange('municipio', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-2 border-b border-slate-50"></th>
                             </tr>
                         </thead>
                         <tbody>

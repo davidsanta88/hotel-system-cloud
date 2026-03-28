@@ -43,7 +43,18 @@ const Reservas = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     
-    // Form state
+    // Filtros por columna
+    const [columnFilters, setColumnFilters] = useState({
+        cliente: '',
+        habitacion: '',
+        fechas: '',
+        estado: ''
+    });
+
+    const handleFilterChange = (column, value) => {
+        setColumnFilters(prev => ({ ...prev, [column]: value }));
+        setCurrentPage(1);
+    };
     const [formData, setFormData] = useState({
         id: null,
         cliente_id: null,
@@ -148,12 +159,31 @@ const Reservas = () => {
 
     const filteredReservas = useMemo(() => {
         return reservas.filter(r => {
+            // Búsqueda global
             const searchLower = searchTerm.toLowerCase();
             const cliente = (r.cliente_nombre || '').toLowerCase();
             const doc = (r.identificacion || r.documento || '').toLowerCase();
-            return cliente.includes(searchLower) || doc.includes(searchLower);
+            const matchesGlobal = searchTerm === '' || cliente.includes(searchLower) || doc.includes(searchLower);
+
+            // Filtros por columna
+            const matchesCliente = columnFilters.cliente === '' || 
+                (r.cliente_nombre || '').toLowerCase().includes(columnFilters.cliente.toLowerCase()) ||
+                (r.identificacion || r.documento || '').toLowerCase().includes(columnFilters.cliente.toLowerCase());
+
+            const matchesHabitacion = columnFilters.habitacion === '' || 
+                (r.habitaciones || []).some(h => (h.numero || '').toString().includes(columnFilters.habitacion)) ||
+                (r.habitacion?.numero || '').toString().includes(columnFilters.habitacion);
+
+            const matchesFechas = columnFilters.fechas === '' || 
+                moment.utc(r.fecha_entrada).format('DD/MM/YYYY').includes(columnFilters.fechas) ||
+                moment.utc(r.fecha_salida).format('DD/MM/YYYY').includes(columnFilters.fechas);
+
+            const matchesEstado = columnFilters.estado === '' || 
+                (r.estado || '').toLowerCase().includes(columnFilters.estado.toLowerCase());
+
+            return matchesGlobal && matchesCliente && matchesHabitacion && matchesFechas && matchesEstado;
         });
-    }, [reservas, searchTerm]);
+    }, [reservas, searchTerm, columnFilters]);
 
     const paginatedReservas = useMemo(() => {
         return filteredReservas.slice(
@@ -532,15 +562,57 @@ const Reservas = () => {
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50/50">
-                                <tr className="text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
+                            <thead className="bg-slate-50 border-b border-slate-100">
+                                <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
                                     <th className="p-4">Cliente</th>
                                     <th className="p-4">Habitaciones</th>
                                     <th className="p-4">Fechas</th>
-                                    <th className="p-4">Personas</th>
+                                    <th className="p-4 text-center">Personas</th>
                                     <th className="p-4">Financiero</th>
                                     <th className="p-4">Estado</th>
                                     <th className="p-4 text-right">Acciones</th>
+                                </tr>
+                                {/* Fila de Filtros */}
+                                <tr className="bg-white border-b border-slate-50">
+                                    <th className="px-4 py-2">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Filtrar cliente..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                            value={columnFilters.cliente}
+                                            onChange={(e) => handleFilterChange('cliente', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-4 py-2">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Hab..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300 text-center"
+                                            value={columnFilters.habitacion}
+                                            onChange={(e) => handleFilterChange('habitacion', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-4 py-2">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Filtrar fecha..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                            value={columnFilters.fechas}
+                                            onChange={(e) => handleFilterChange('fechas', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-4 py-2"></th>
+                                    <th className="px-4 py-2"></th>
+                                    <th className="px-4 py-2">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Estado..."
+                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
+                                            value={columnFilters.estado}
+                                            onChange={(e) => handleFilterChange('estado', e.target.value)}
+                                        />
+                                    </th>
+                                    <th className="px-4 py-2"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
