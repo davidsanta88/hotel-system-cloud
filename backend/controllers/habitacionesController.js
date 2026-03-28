@@ -93,14 +93,9 @@ exports.getMapaVisual = async (req, res) => {
                     estado: r.estado
                 }));
 
-            // Determinar estado visual prioritario
-            let estadoVisual = 'disponible';
-            let color = 'green';
+            // 1. Recoger datos informativos (Huésped o Reserva hoy)
             let detalleEstado = '';
-
             if (registroActivo) {
-                estadoVisual = 'ocupada';
-                color = 'red';
                 const totalPagado = registroActivo.pagos.reduce((acc, p) => acc + p.monto, 0);
                 detalleEstado = {
                     huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A',
@@ -110,12 +105,25 @@ exports.getMapaVisual = async (req, res) => {
                     pagado: totalPagado
                 };
             } else if (reservaHoy) {
-                estadoVisual = 'reservada';
-                color = 'yellow';
                 detalleEstado = `Reserva: ${reservaHoy.cliente ? reservaHoy.cliente.nombre : 'N/A'}`;
-            } else if (hab.estadoLimpieza && hab.estadoLimpieza.toUpperCase() === 'SUCIA') {
+            }
+
+            // 2. Determinar estado visual prioritario (OPERATIVO)
+            let estadoVisual = 'disponible';
+            let color = 'green';
+
+            if (hab.estadoLimpieza && hab.estadoLimpieza.toUpperCase() === 'SUCIA') {
+                // PRIORIDAD 1: SI ESTÁ SUCIA, MOSTRAR AZUL (Independiente de si hay alguien)
                 estadoVisual = 'por_asear';
                 color = 'blue';
+            } else if (registroActivo) {
+                // PRIORIDAD 2: SI NO ESTÁ SUCIA PERO TIENE HUESPED, MOSTRAR ROJO
+                estadoVisual = 'ocupada';
+                color = 'red';
+            } else if (reservaHoy) {
+                // PRIORIDAD 3: SI NO ESTÁ SUCIA NI OCUPADA PERO RESERVADA PARA HOY, MOSTRAR AMARILLO
+                estadoVisual = 'reservada';
+                color = 'yellow';
             }
 
             return {

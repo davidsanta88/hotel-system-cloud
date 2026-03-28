@@ -4,6 +4,7 @@ import api from '../services/api';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
 import { Plus, CheckCircle, XCircle, Search, Eye, Edit, Trash2, Phone, MessageCircle } from 'lucide-react';
+import RegistroModal from '../components/modals/RegistroModal';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
 import useTableData from '../hooks/useTableData';
 import Pagination from '../components/common/Pagination';
@@ -570,200 +571,18 @@ const Registros = () => {
                 )}
             </div>
 
-            {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50 mt-12 pb-12">
-                    <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-2xl font-bold mb-6">Nuevo Registro</h2>
-                        <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Cliente details */}
-                            <div className="col-span-1 md:col-span-2 flex justify-between items-center border-b pb-2">
-                                <h3 className="font-semibold text-gray-700">Participantes del Registro</h3>
-                            </div>
-                            
-                            {/* Buscar cliente */}
-                            <div className="col-span-1 md:col-span-2 relative">
-                                <div className="relative">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Buscar cliente existente (Nombre o Documento)..." 
-                                        className="input-field pl-10 bg-gray-50 border-gray-300"
-                                        value={clienteSearch}
-                                        onChange={(e) => setClienteSearch(e.target.value)}
-                                    />
-                                    <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-                                </div>
-                                {clienteSearch.length > 0 && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                        {filteredClientes.length > 0 ? (
-                                            filteredClientes.map(cliente => (
-                                                <div 
-                                                    key={cliente.id} 
-                                                    className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0"
-                                                    onClick={() => handleClienteSelect(cliente)}
-                                                >
-                                                    <div className="font-medium text-gray-800">{cliente.nombre}</div>
-                                                    <div className="text-sm text-gray-500">Doc: {cliente.documento}</div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="p-3 text-sm text-gray-500 text-center">No encontrado. Ingresa los datos abajo para nuevo registro.</div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+            {/* Registro Modal Reutilizado */}
+            <RegistroModal 
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                initialHabitacionId={formData.habitacion_id}
+                onSuccess={() => {
+                    fetchData();
+                    setShowModal(false);
+                }}
+            />
 
-                            {/* Guest entry form */}
-                            <div className="col-span-1 md:col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                                    <div className="sm:col-span-4">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Nombre Completo *</label>
-                                        <input type="text" className="input-field text-sm" value={guestForm.nombre} onChange={e => setGuestForm({...guestForm, nombre: e.target.value})} />
-                                    </div>
-                                    <div className="sm:col-span-4">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Tipo Doc.</label>
-                                        <select className="input-field text-sm" value={guestForm.tipo_documento} onChange={e => setGuestForm({...guestForm, tipo_documento: e.target.value})}>
-                                            <option value="CC">CÉDULA</option>
-                                            <option value="CE">EXTRANJERÍA</option>
-                                            <option value="PASAPORTE">PASAPORTE</option>
-                                            <option value="TI">T. IDENTIDAD</option>
-                                            <option value="NIT">NIT</option>
-                                                                       </select>
-                                    </div>
-                                    <div className="sm:col-span-4">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Documento *</label>
-                                        <input type="text" className="input-field text-sm" value={guestForm.documento} onChange={e => setGuestForm({...guestForm, documento: e.target.value})} />
-                                    </div>
-                                    
-                                    <div className="sm:col-span-3">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
-                                        <input type="text" className="input-field text-sm" value={guestForm.telefono} onChange={e => setGuestForm({...guestForm, telefono: e.target.value})} />
-                                    </div>
-                                    <div className="sm:col-span-4">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
-                                        <input type="email" className="input-field text-sm" value={guestForm.email} onChange={e => setGuestForm({...guestForm, email: e.target.value})} />
-                                    </div>
-                                    <div className="sm:col-span-5">
-                                        <label className="block text-xs font-medium text-gray-500 mb-1">Lugar Origen</label>
-                                        <div className="flex gap-2 items-center">
-                                            <select className="input-field text-sm flex-1" value={guestForm.municipio_origen_id} onChange={e => setGuestForm({...guestForm, municipio_origen_id: e.target.value})}>
-                                                <option value="">Seleccione...</option>
-                                                {municipios.filter(m => m.visualizar).map(m => (
-                                                    <option key={m.id} value={m.id}>{m.nombre}</option>
-                                                ))}
-                                            </select>
-                                            <button type="button" onClick={handleAddGuest} className="bg-primary-600 text-white p-2.5 rounded-md hover:bg-primary-700 transition shadow-sm h-[38px] flex items-center justify-center shrink-0" title="Añadir al registro">
-                                                <Plus size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                {selectedCliente && (
-                                    <div className="mt-3 text-xs text-blue-600 flex justify-between items-center px-1">
-                                        <span className="font-medium flex items-center gap-1"><CheckCircle size={14}/> Cliente cargado de la base de datos</span>
-                                        <button type="button" onClick={() => { setSelectedCliente(null); setGuestForm({ nombre: '', documento: '', tipo_documento: 'CC', telefono: '', email: '', municipio_origen_id: '' }); }} className="hover:underline text-gray-500">Limpiar</button>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Added Guests List */}
-                            <div className="col-span-1 md:col-span-2 mt-2">
-                                <h4 className="text-sm font-medium text-gray-700 mb-3">Lista de Participantes ({huespedesList.length})</h4>
-                                {huespedesList.length === 0 ? (
-                                    <div className="text-sm text-gray-500 italic p-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-center flex flex-col items-center gap-2">
-                                        <span>No hay huéspedes en este registro.</span>
-                                        <span>Añade al menos uno usando el formulario superior (el primero será marcado como el Titular responsable).</span>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                                        {huespedesList.map((h, index) => (
-                                            <div key={index} className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
-                                                        {h.nombre.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-medium text-gray-800 text-sm flex items-center gap-2">
-                                                            <span>{h.nombre}</span>
-                                                            {index === 0 && <span className="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-800 rounded-full uppercase tracking-wider border border-green-200">Titular</span>}
-                                                            {index !== 0 && <span className="px-2 py-0.5 text-[10px] font-bold bg-gray-100 text-gray-600 rounded-full uppercase tracking-wider">Acompañante</span>}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500">Doc: {h.documento}</div>
-                                                    </div>
-                                                </div>
-                                                <button type="button" onClick={() => handleRemoveGuest(index)} className="text-red-400 hover:text-red-700 p-2 rounded-md hover:bg-red-50 transition-colors" title="Eliminar de la lista">
-                                                    <XCircle size={18} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Reserva details */}
-                            <div className="col-span-1 md:col-span-2 mt-4"><h3 className="font-semibold text-gray-700 border-b pb-2">Detalles del Alojamiento</h3></div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Habitación</label>
-                                <select name="habitacion_id" required className="input-field" value={formData.habitacion_id} onChange={handleFormChange}>
-                                    <option value="">Seleccione una habitación</option>
-                                    {habitaciones.filter(h => h.estado_nombre && h.estado_nombre.toLowerCase() === 'disponible').map(h => (
-                                        <option key={h.id} value={h.id}>#{h.numero} - {h.tipo_nombre || h.tipo} (P1: ${formatCurrency(h.precio_1)} - P2: ${formatCurrency(h.precio_2)})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Tipo de Registro *</label>
-                                <select name="tipo_registro_id" required className="input-field" value={formData.tipo_registro_id} onChange={handleFormChange}>
-                                    <option value="">Seleccione tipo...</option>
-                                    {tiposRegistro.filter(t => t.visualizar).map(t => (
-                                        <option key={t.id} value={t.id}>{t.nombre}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Fecha Check-in</label>
-                                <input type="date" name="fecha_ingreso" required className="input-field" value={formData.fecha_ingreso} onChange={handleFormChange} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Fecha Check-out</label>
-                                <input type="date" name="fecha_salida" required className="input-field" value={formData.fecha_salida} onChange={handleFormChange} />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Total Calculado ($)</label>
-                                <input type="text" className="input-field bg-gray-50" readOnly value={formatCurrency(formData.total)} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Medio de Pago</label>
-                                <select name="medio_pago_id" className="input-field" value={formData.medio_pago_id} onChange={handleFormChange}>
-                                    <option value="">Ninguno / Por definir...</option>
-                                    {mediosPago.map(mp => (
-                                        <option key={mp.id} value={mp.id}>{mp.nombre}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Valor Real a Cobrar ($) *</label>
-                                <input type="text" required className="input-field" value={formatCurrency(formData.valor_cobrado)} onChange={(e) => setFormData({...formData, valor_cobrado: cleanNumericValue(e.target.value)})} />
-                            </div>
-                            
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">Notas / Observaciones</label>
-                                <textarea className="input-field" rows="2" value={formData.notas} onChange={(e) => setFormData({...formData, notas: e.target.value})}></textarea>
-                            </div>
-                            
-                            <div className="col-span-1 md:col-span-2 flex justify-end space-x-3 pt-6">
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancelar</button>
-                                <button type="submit" className="btn-primary">Guardar Registro</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* View Details Modal */}
+            {/* View Details Modal remains inline for now as it's specific to this view */}
             {showDetailsModal && selectedRegistroDetails && (
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
                     <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-2xl">

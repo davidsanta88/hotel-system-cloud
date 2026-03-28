@@ -19,6 +19,7 @@ import {
     LogIn,
     LogOut
 } from 'lucide-react';
+import RegistroModal from '../components/modals/RegistroModal';
 import { formatCurrency } from '../utils/format';
 import Swal from 'sweetalert2';
 
@@ -27,6 +28,8 @@ const MapaHabitaciones = () => {
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(null);
     const [filter, setFilter] = useState('todas');
+    const [showRegistroModal, setShowRegistroModal] = useState(false);
+    const [selectedHabitacionId, setSelectedHabitacionId] = useState(null);
     const navigate = useNavigate();
 
     const fetchMapa = async () => {
@@ -51,15 +54,22 @@ const MapaHabitaciones = () => {
 
     const toggleLimpieza = async (habId, currentStatus) => {
         setUpdating(habId);
+        const nextStatus = isClean(currentStatus) ? 'SUCIA' : 'LIMPIA';
+        
+        // Optimistic update
+        setHabitaciones(prev => prev.map(h => 
+            h.id === habId ? { ...h, estadoLimpieza: nextStatus } : h
+        ));
+
         try {
-            const newStatus = currentStatus === 'Sucia' ? 'Limpia' : 'Sucia';
             await api.patch(`/habitaciones/${habId}/limpieza`, {
-                estado_limpieza: isClean(currentStatus) ? 'SUCIA' : 'LIMPIA',
+                estado_limpieza: nextStatus,
                 comentario_limpieza: 'Actualizado desde el Mapa Visual'
             });
             await fetchMapa();
         } catch (error) {
             Swal.fire('Error', 'No se pudo actualizar el estado de limpieza', 'error');
+            await fetchMapa(); // Revert on error
         } finally {
             setUpdating(null);
         }
@@ -114,7 +124,8 @@ const MapaHabitaciones = () => {
         if (hab.estadoVisual === 'ocupada') {
             navigate(`/registros?habitacion=${hab.numero}`);
         } else if (hab.estadoVisual === 'disponible') {
-            navigate(`/registros?nueva=true&habitacionId=${hab.id}`);
+            setSelectedHabitacionId(hab.id);
+            setShowRegistroModal(true);
         } else {
             // Bloqueo de seguridad solicitado por el usuario
             let mensaje = '';
@@ -249,20 +260,20 @@ const MapaHabitaciones = () => {
                                     <div className={`p-1.5 rounded-lg bg-white shadow-sm ${styles.icon} transition-transform group-hover:scale-110 duration-500`}>
                                         <Hotel size={20} strokeWidth={2.5} />
                                     </div>
-                                    <h2 className="text-sm font-black text-gray-950 tracking-tighter text-center leading-none">Hab {hab.numero}</h2>
-                                    <span className={`px-1.5 py-0.5 rounded-full text-[7px] font-black uppercase tracking-[0.05em] flex items-center gap-1 ${styles.badge}`}>
+                                    <h2 className="text-base font-black text-gray-950 tracking-tighter text-center leading-none">Hab {hab.numero}</h2>
+                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${styles.badge}`}>
                                         {hab.estadoVisual.replace('_', ' ')}
                                         {isDirty(hab.estadoLimpieza) && hab.estadoVisual === 'ocupada' && (
-                                            <span className="w-1 h-1 bg-orange-500 rounded-full animate-pulse" title="Requiere aseo"></span>
+                                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" title="Requiere aseo"></span>
                                         )}
                                     </span>
                                 </div>
 
                                 {/* Card Body */}
                                 <div className="p-2 flex-1 flex flex-col space-y-2">
-                                    <div className="flex justify-between items-center text-[9px]">
-                                        <span className="text-gray-400 font-black uppercase tracking-widest text-[7px]">Tipo</span>
-                                        <span className="font-black text-gray-800 tracking-tight truncate ml-1">{hab.tipo}</span>
+                                    <div className="flex justify-between items-center text-[10px]">
+                                        <span className="text-gray-400 font-black uppercase tracking-widest text-[8px]">Tipo</span>
+                                        <span className="font-black text-gray-800 tracking-tight truncate ml-1 uppercase">{hab.tipo}</span>
                                     </div>
                                     
                                     {hab.detalleEstado && (
@@ -273,15 +284,15 @@ const MapaHabitaciones = () => {
                                             </div>
                                         ) : (
                                             <div className="space-y-1.5 p-2 rounded-xl bg-red-50/50 border border-red-100">
-                                                <div className="flex items-center gap-1.5 text-[9px] font-black text-red-700 uppercase tracking-tight truncate">
-                                                    <User size={10} /> {hab.detalleEstado.huesped}
+                                                <div className="flex items-center gap-1.5 text-[10px] font-black text-red-700 uppercase tracking-tight truncate">
+                                                    <User size={12} /> {hab.detalleEstado.huesped}
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-1 text-[8px] font-bold text-gray-500">
-                                                    <div className="flex items-center gap-1"><LogIn size={8} /> {new Date(hab.detalleEstado.entrada).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
-                                                    <div className="flex items-center gap-1"><LogOut size={8} /> {new Date(hab.detalleEstado.salida).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
+                                                <div className="grid grid-cols-2 gap-1 text-[9px] font-bold text-gray-500">
+                                                    <div className="flex items-center gap-1"><LogIn size={10} /> {new Date(hab.detalleEstado.entrada).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
+                                                    <div className="flex items-center gap-1"><LogOut size={10} /> {new Date(hab.detalleEstado.salida).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
                                                 </div>
-                                                <div className="pt-1 border-t border-red-100 flex justify-between items-center text-[9px] font-black text-red-800">
-                                                    <div className="flex items-center gap-1"><DollarSign size={8} /> TOTAL:</div>
+                                                <div className="pt-1 border-t border-red-100 flex justify-between items-center text-[10px] font-black text-red-800">
+                                                    <div className="flex items-center gap-1"><DollarSign size={10} /> TOTAL:</div>
                                                     <div>{formatCurrency(hab.detalleEstado.total)}</div>
                                                 </div>
                                             </div>
@@ -328,6 +339,19 @@ const MapaHabitaciones = () => {
                     <p className="text-gray-500 font-black uppercase tracking-widest text-sm">No se encontraron habitaciones</p>
                 </div>
             )}
+
+            {/* Modal de Registro Integrado */}
+            <RegistroModal 
+                isOpen={showRegistroModal}
+                onClose={() => {
+                    setShowRegistroModal(false);
+                    setSelectedHabitacionId(null);
+                }}
+                initialHabitacionId={selectedHabitacionId}
+                onSuccess={() => {
+                    fetchMapa();
+                }}
+            />
         </div>
     );
 };
