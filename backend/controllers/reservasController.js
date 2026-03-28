@@ -1,5 +1,27 @@
-const Reserva = require('../models/Reserva');
-const Habitacion = require('../models/Habitacion');
+// Helper to check for overlapping reservations
+const verificarDisponibilidad = async (habitacionesIds, fechaEntrada, fechaSalida, excludeReservaId = null) => {
+    const entrada = new Date(fechaEntrada);
+    const salida = new Date(fechaSalida);
+    
+    // Normalizar a fechas simples si no vienen con hora específica (opcional, pero ayuda)
+    // if (!fechaEntrada.includes('T')) entrada.setHours(14,0,0,0);
+    // if (!fechaSalida.includes('T')) salida.setHours(11,0,0,0);
+
+    const match = {
+        estado: { $in: ['Pendiente', 'Confirmada'] },
+        'habitaciones.habitacion': { $in: habitacionesIds },
+        $and: [
+            { fecha_entrada: { $lt: salida } },
+            { fecha_salida: { $gt: entrada } }
+        ]
+    };
+
+    if (excludeReservaId) {
+        match._id = { $ne: excludeReservaId };
+    }
+
+    return await Reserva.findOne(match).populate('habitaciones.habitacion');
+};
 
 exports.getReservas = async (req, res) => {
     try {
@@ -46,6 +68,20 @@ exports.createReserva = async (req, res) => {
     try {
         const { cliente_id, habitaciones, fecha_entrada, fecha_salida, ...rest } = req.body;
         
+        // --- VALIDACIÓN DE DISPONIBILIDAD ---
+        const habIds = habitaciones.map(h => h.id || h.habitacion_id);
+        const conflicto = await verificarDisponibilidad(habIds, fecha_entrada, fecha_salida);
+        
+        if (conflicto) {
+            // Encontrar qué habitación de las enviadas es la que choca
+            const habConflicto = conflicto.habitaciones.find(h => habIds.includes(h.habitacion.toString()));
+            return res.status(400).json({ 
+                message: `La habitación ${habConflicto?.numero || ''} ya está reservada en esas fechas.`,
+                conflicto: conflicto
+            });
+        }
+        // ------------------------------------
+
         const payload = {
             ...rest,
             cliente: cliente_id,
@@ -99,6 +135,21 @@ exports.updateReserva = async (req, res) => {
     try {
         const { id } = req.params;
         const { cliente_id, habitaciones, fecha_entrada, fecha_salida, ...rest } = req.body;
+
+        // --- VALIDACIÓN DE DISPONIBILIDAD ---
+        if (fecha_entrada && fecha_salida && habitaciones) {
+            const habIds = habitaciones.map(h => h.id || h.habitacion_id || h.value);
+            const conflicto = await verificarDisponibilidad(habIds, fecha_entrada, fecha_salida, id);
+            
+            if (conflicto) {
+                const habConflicto = conflicto.habitaciones.find(h => habIds.includes(h.habitacion.toString()));
+                return res.status(400).json({ 
+                    message: `Conflicto detectado: La habitación ${habConflicto?.numero || ''} ya tiene una reserva activa.`,
+                    conflicto: conflicto
+                });
+            }
+        }
+        // ------------------------------------
 
         const updateData = {
             ...rest,

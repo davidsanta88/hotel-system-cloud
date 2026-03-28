@@ -101,7 +101,14 @@ exports.getMapaVisual = async (req, res) => {
             if (registroActivo) {
                 estadoVisual = 'ocupada';
                 color = 'red';
-                detalleEstado = `Huésped: ${registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A'}`;
+                const totalPagado = registroActivo.pagos.reduce((acc, p) => acc + p.monto, 0);
+                detalleEstado = {
+                    huesped: registroActivo.cliente ? registroActivo.cliente.nombre : 'N/A',
+                    entrada: registroActivo.fechaEntrada,
+                    salida: registroActivo.fechaSalida,
+                    total: registroActivo.total,
+                    pagado: totalPagado
+                };
             } else if (reservaHoy) {
                 estadoVisual = 'reservada';
                 color = 'yellow';
