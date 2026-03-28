@@ -7,12 +7,13 @@ import moment from 'moment';
 import 'moment/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Select from 'react-select';
-import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign, Map, LogIn, Users } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign, Map, LogIn, Users, Printer } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
 import RegistroModal from '../components/modals/RegistroModal';
 import Pagination from '../components/common/Pagination';
+import { generateVoucher } from '../utils/voucherGenerator';
 
 moment.locale('es');
 const localizer = momentLocalizer(moment);
@@ -706,6 +707,13 @@ const Reservas = () => {
                                                     >
                                                         <Eye size={18} />
                                                     </button>
+                                                    <button 
+                                                        onClick={() => generateVoucher({ ...r, tipo: 'reserva' })}
+                                                        className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                                                        title="Imprimir Voucher PDF"
+                                                    >
+                                                        <Printer size={18} />
+                                                    </button>
                                                     {canEdit && r.estado !== 'Concluida' && (
                                                         <button 
                                                             onClick={() => handleEdit(r)}
@@ -1004,6 +1012,12 @@ const Reservas = () => {
                                         <Edit2 size={14} /> Editar
                                     </button>
                                 )}
+                                <button 
+                                    onClick={() => generateVoucher({ ...selectedReserva, tipo: 'reserva' })}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors font-bold text-xs"
+                                >
+                                    <Printer size={14} /> Voucher
+                                </button>
                                 <button onClick={() => setShowDetailModal(false)} className="p-2 hover:bg-gray-200 rounded-full text-gray-400 transition-colors">
                                     <X size={24} />
                                 </button>
