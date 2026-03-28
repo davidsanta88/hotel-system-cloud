@@ -286,8 +286,20 @@ const MapaHabitaciones = () => {
                                             </div>
                                         ) : (
                                             <div className="space-y-1.5 p-2 rounded-xl bg-red-50/50 border border-red-100">
-                                                <div className="flex items-center gap-1.5 text-[10px] font-black text-red-700 uppercase tracking-tight truncate border-b border-red-100 pb-1 mb-1">
-                                                    <User size={12} /> {hab.detalleEstado.huesped}
+                                                <div className="flex items-center justify-between gap-1.5 text-[10px] font-black text-red-700 uppercase tracking-tight border-b border-red-100 pb-1 mb-1">
+                                                    <div className="flex items-center gap-1.5 truncate">
+                                                        <User size={12} /> {hab.detalleEstado.huesped}
+                                                    </div>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/registros?habitacion=${hab.numero}&verPagos=true`);
+                                                        }}
+                                                        className="p-1 hover:bg-red-200/50 rounded-md transition-colors text-red-800"
+                                                        title="Editar Registro / Pagos"
+                                                    >
+                                                        <Edit3 size={12} />
+                                                    </button>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] font-bold text-gray-500">
                                                     <div className="flex items-center gap-1"><LogIn size={10} /> {new Date(hab.detalleEstado.entrada).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}</div>
@@ -305,15 +317,6 @@ const MapaHabitaciones = () => {
                                                     <div className="flex items-center gap-1"><DollarSign size={10} /> SALDO:</div>
                                                     <div>${formatCurrency(hab.detalleEstado.saldo || 0)}</div>
                                                 </div>
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/registros?habitacion=${hab.numero}&verPagos=true`);
-                                                    }}
-                                                    className="w-full mt-1.5 py-1 px-2 bg-gray-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-black transition-colors flex items-center justify-center gap-1"
-                                                >
-                                                    <Edit3 size={10} /> Editar Registro / Pagos
-                                                </button>
                                             </div>
                                         )
                                     )}
