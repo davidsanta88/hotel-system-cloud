@@ -82,6 +82,7 @@ exports.getRegistroById = async (req, res) => {
             nombre_cliente: raw.nombre_cliente || (raw.cliente ? raw.cliente.nombre : 'Sín Nombre'),
             numero_habitacion: raw.numero_habitacion || (raw.habitacion ? raw.habitacion.numero : '?'),
             notas: raw.notas || raw.observaciones || '',
+            notasSalida: raw.notasSalida || '',
             valor_pagado: (raw.pagos || []).reduce((acc, p) => acc + (p.monto || 0), 0)
         };
         
@@ -215,9 +216,7 @@ exports.checkout = async (req, res) => {
         // 1. Finalizar registro
         registro.estado = 'finalizado';
         registro.fechaSalida = Date.now();
-        if (notasSalida) {
-            registro.notasSalida = notasSalida;
-        }
+        registro.notasSalida = notasSalida || "";
         await registro.save();
 
         // 2. Liberar habitación (Marcar como disponible pero SUCIA para que pase a azul)

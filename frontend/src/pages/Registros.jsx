@@ -475,13 +475,13 @@ const Registros = () => {
                                         {selectedRegistroDetails.notas || 'Sin notas registradas para este ingreso.'}
                                     </p>
                                     
-                                    {selectedRegistroDetails.notasSalida && (
+                                    {selectedRegistroDetails.estado === 'finalizado' && (
                                         <div className="mt-4 pt-4 border-t border-red-100">
                                             <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2 flex items-center gap-1">
                                                 <Info size={12} /> Notas de Salida (Check-out)
                                             </h4>
-                                            <div className="bg-red-50/50 p-4 rounded-xl border border-red-100 italic font-black text-red-900 text-xs shadow-sm">
-                                                {selectedRegistroDetails.notasSalida}
+                                            <div className="bg-red-50/50 p-4 rounded-xl border border-red-100 italic font-black text-red-900 text-xs shadow-sm min-h-[50px] flex items-center">
+                                                {selectedRegistroDetails.notasSalida || 'Sin observaciones registradas en la salida.'}
                                             </div>
                                         </div>
                                     )}
