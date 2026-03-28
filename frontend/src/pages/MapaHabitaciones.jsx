@@ -122,7 +122,7 @@ const MapaHabitaciones = () => {
 
     const handleRoomClick = (hab) => {
         if (hab.estadoVisual === 'ocupada') {
-            navigate(`/registros?habitacion=${hab.numero}`);
+            navigate(`/registros?habitacion=${hab.numero}&verPagos=true`);
         } else if (hab.estadoVisual === 'disponible') {
             setSelectedHabitacionId(hab.id);
             setShowRegistroModal(true);

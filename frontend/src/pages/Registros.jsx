@@ -71,6 +71,8 @@ const Registros = () => {
     useEffect(() => {
         const roomToSelect = searchParams.get('habitacionId');
         const isNew = searchParams.get('nueva');
+        const roomToView = searchParams.get('habitacion');
+        const verPagos = searchParams.get('verPagos');
         
         if (isNew === 'true' && roomToSelect && habitaciones.length > 0) {
             const fechaIn = format(new Date(), 'yyyy-MM-dd');
@@ -89,8 +91,17 @@ const Registros = () => {
             newSearchParams.delete('nueva');
             newSearchParams.delete('habitacionId');
             setSearchParams(newSearchParams);
+        } else if (verPagos === 'true' && roomToView && registros.length > 0) {
+            const registro = registros.find(r => String(r.numero_habitacion) === String(roomToView) && r.estado === 'activa');
+            if (registro) {
+                handleViewDetails(registro.id);
+            }
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.delete('verPagos');
+            newSearchParams.delete('habitacion');
+            setSearchParams(newSearchParams);
         }
-    }, [habitaciones, searchParams, setSearchParams]);
+    }, [habitaciones, registros, searchParams, setSearchParams]);
 
     const fetchData = async () => {
         try {
@@ -495,6 +506,11 @@ const Registros = () => {
                                             <button onClick={() => handleViewDetails(res.id)} className="text-gray-500 hover:text-gray-900 mx-1" title="Ver Detalles">
                                                 <Eye size={18} />
                                             </button>
+                                            {res.estado === 'activa' && (
+                                                <button onClick={() => { handleViewDetails(res.id); setTimeout(() => setShowAbonoForm(true), 100); }} className="text-emerald-600 hover:text-emerald-900 mx-1" title="Registrar Pago / Abono">
+                                                    <CreditCard size={18} />
+                                                </button>
+                                            )}
                                             {res.estado === 'pendiente' && (
                                                 <>
                                                     <button onClick={() => updateStatus(res.id, 'activa')} className="text-green-600 hover:text-green-900 mx-1" title="Check-in">

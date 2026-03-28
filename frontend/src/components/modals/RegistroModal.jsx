@@ -435,12 +435,16 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-[8px] font-black uppercase tracking-widest text-emerald-600/60 mb-1 block">Valor a Cobrar</label>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <label className="text-[8px] font-black uppercase tracking-widest text-emerald-600/60 block">Valor Recibido / Abono Inicial</label>
+                                            <span className="text-[7px] font-bold text-emerald-400 uppercase italic">Puede ser pago parcial</span>
+                                        </div>
                                         <div className="relative">
                                             <DollarSign className="absolute left-2 top-2 text-emerald-300" size={12} />
                                             <input 
                                                 type="text" 
                                                 className="w-full pl-6 pr-2 py-1.5 bg-white border border-emerald-200 rounded-lg text-sm font-black text-emerald-800 outline-none focus:ring-2 ring-emerald-500/20" 
+                                                placeholder="0.00"
                                                 value={formatCurrency(formData.valor_cobrado)} 
                                                 onChange={(e) => setFormData(prev => ({ ...prev, valor_cobrado: cleanNumericValue(e.target.value) }))} 
                                             />
