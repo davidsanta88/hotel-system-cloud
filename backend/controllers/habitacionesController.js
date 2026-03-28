@@ -71,13 +71,20 @@ exports.getMapaVisual = async (req, res) => {
             // Buscar registro activo
             const registroActivo = registrosActivos.find(r => r.habitacion.toString() === idHab);
             
-            // Buscar si tiene reserva para HOY
+            // Buscar si tiene reserva ACTIVA para HOY (desde entrada hasta salida exclusiva)
             const reservaHoy = reservasFuturas.find(r => {
                 const entrada = new Date(r.fecha_entrada);
                 const salida = new Date(r.fecha_salida);
                 entrada.setHours(0,0,0,0);
-                salida.setHours(23,59,59,999);
-                return hab._id.equals(r.habitacion) && hoy >= entrada && hoy <= salida;
+                salida.setHours(0,0,0,0); // Normalizar a medianoche para comparación limpia
+                
+                const tEntrada = entrada.getTime();
+                const tSalida = salida.getTime();
+                const tHoy = hoy.getTime();
+                
+                // Una habitación está reservada hoy si hoy >= entrada Y hoy < salida
+                // (El día de salida la habitación ya está disponible para otro)
+                return hab._id.equals(r.habitacion) && tHoy >= tEntrada && tHoy < tSalida;
             });
 
             // Filtrar reservas futuras (excluyendo la de hoy si ya está ocupada o reservada)
