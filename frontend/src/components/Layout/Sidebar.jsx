@@ -45,6 +45,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             title: 'Recepción y Operaciones',
             items: [
                 { name: 'Dashboard Inicio', path: '/dashboard', icon: <LayoutDashboard size={20} />, code: 'dashboard' },
+                { name: 'Mapa de Habitaciones', path: '/mapa-habitaciones', icon: <Hotel size={20} />, code: 'registros' },
                 { name: 'Registro Huéspedes', path: '/registros', icon: <CalendarCheck size={20} />, code: 'registros' },
                 { name: 'Tienda / POS', path: '/tienda', icon: <ShoppingStore size={20} />, code: 'tienda' },
                 { name: 'Productos Tienda', path: '/inventario', icon: <Package size={20} />, code: 'inventario' },

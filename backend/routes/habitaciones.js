@@ -11,6 +11,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.get('/', verifyToken, habitacionesController.getHabitaciones);
+router.get('/mapa-visual', verifyToken, habitacionesController.getMapaVisual);
 router.post('/', [verifyToken, isAdmin], habitacionesController.createHabitacion);
 router.put('/:id', [verifyToken, isAdmin], habitacionesController.updateHabitacion);
 router.delete('/:id', [verifyToken, isAdmin], habitacionesController.deleteHabitacion);

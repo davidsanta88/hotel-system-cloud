@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
@@ -8,6 +9,7 @@ import useTableData from '../hooks/useTableData';
 import Pagination from '../components/common/Pagination';
 
 const Registros = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [registros, setRegistros] = useState([]);
     const [habitaciones, setHabitaciones] = useState([]);
     const [clientes, setClientes] = useState([]);
@@ -62,6 +64,33 @@ const Registros = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        // Handle query params for pre-selecting room from Visual Map
+        const roomToSelect = searchParams.get('habitacionId');
+        const isNew = searchParams.get('nueva');
+        
+        if (isNew === 'true' && roomToSelect && habitaciones.length > 0) {
+            const fechaIn = format(new Date(), 'yyyy-MM-dd');
+            const fechaOut = format(new Date(Date.now() + 86400000), 'yyyy-MM-dd');
+            
+            setFormData(prev => ({ 
+                ...prev, 
+                habitacion_id: roomToSelect,
+                fecha_ingreso: fechaIn,
+                fecha_salida: fechaOut
+            }));
+            
+            calculateTotal(roomToSelect, fechaIn, fechaOut, 0); // 0 initial guests
+            setShowModal(true);
+            
+            // Clean params after reading
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.delete('nueva');
+            newSearchParams.delete('habitacionId');
+            setSearchParams(newSearchParams);
+        }
+    }, [habitaciones, searchParams]);
 
     const fetchData = async () => {
         try {
