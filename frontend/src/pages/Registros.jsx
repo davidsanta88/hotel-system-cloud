@@ -459,82 +459,95 @@ const Registros = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Huésped</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hab.</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fechas</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Alojamiento</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Abonado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Saldo</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {registros.map((res) => (
-                                    <tr key={res.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-gray-900 uppercase">{res.nombre_cliente}</div>
-                                            {res.telefono_cliente && (
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <div className="text-xs text-blue-600 flex items-center gap-1">
-                                                        <Phone size={10} /> {res.telefono_cliente}
+                                {registros.map((res) => {
+                                    const saldo = (res.total || 0) - (res.valor_pagado || 0);
+                                    return (
+                                        <tr key={res.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-bold text-gray-900 uppercase">{res.nombre_cliente}</div>
+                                                {res.telefono_cliente && (
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <div className="text-xs text-blue-600 flex items-center gap-1">
+                                                            <Phone size={10} /> {res.telefono_cliente}
+                                                        </div>
+                                                        <a 
+                                                            href={`https://wa.me/${res.telefono_cliente.replace(/\D/g, '')}`} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="text-green-500 hover:text-green-600 transition-colors"
+                                                            title="Contactar por WhatsApp"
+                                                        >
+                                                            <MessageCircle size={14} />
+                                                        </a>
                                                     </div>
-                                                    <a 
-                                                        href={`https://wa.me/${res.telefono_cliente.replace(/\D/g, '')}`} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="text-green-500 hover:text-green-600 transition-colors"
-                                                        title="Contactar por WhatsApp"
-                                                    >
-                                                        <MessageCircle size={14} />
-                                                    </a>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{res.numero_habitacion}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {format(new Date(res.fecha_ingreso), 'dd/MM/yyyy')} - {format(new Date(res.fecha_salida), 'dd/MM/yyyy')}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="font-bold text-gray-700 text-sm">${formatCurrency(res.total)}</div>
+                                                <div className="text-[9px] text-gray-400 font-bold uppercase">{res.tipo_registro_nombre || 'Formal'}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="font-bold text-emerald-600 text-sm">${formatCurrency(res.valor_pagado)}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className={`font-black text-sm ${saldo > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                                    ${formatCurrency(saldo)}
                                                 </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{res.numero_habitacion}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {format(new Date(res.fecha_ingreso), 'dd/MM/yyyy')} - {format(new Date(res.fecha_salida), 'dd/MM/yyyy')}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <div className="font-medium text-gray-900">${formatCurrency(res.total)}</div>
-                                            <div className="text-[10px] text-gray-400 font-bold uppercase">{res.tipo_registro_nombre || 'Formal'}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                ${res.estado === 'activa' ? 'bg-green-100 text-green-800' : 
-                                                  res.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                                                  res.estado === 'completada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
-                                                {res.estado}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button onClick={() => handleViewDetails(res.id)} className="text-gray-500 hover:text-gray-900 mx-1" title="Ver Detalles">
-                                                <Eye size={18} />
-                                            </button>
-                                            {res.estado === 'activa' && (
-                                                <button onClick={() => { handleViewDetails(res.id); setTimeout(() => setShowAbonoForm(true), 100); }} className="text-emerald-600 hover:text-emerald-900 mx-1" title="Registrar Pago / Abono">
-                                                    <CreditCard size={18} />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase
+                                                    ${res.estado === 'activa' ? 'bg-green-100 text-green-800' : 
+                                                      res.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                                                      res.estado === 'completada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                    {res.estado}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button onClick={() => handleViewDetails(res.id)} className="text-gray-500 hover:text-gray-900 mx-1" title="Ver Detalles">
+                                                    <Eye size={18} />
                                                 </button>
-                                            )}
-                                            {res.estado === 'pendiente' && (
-                                                <>
-                                                    <button onClick={() => updateStatus(res.id, 'activa')} className="text-green-600 hover:text-green-900 mx-1" title="Check-in">
-                                                        <CheckCircle size={18} />
+                                                {res.estado === 'activa' && (
+                                                    <button onClick={() => { handleViewDetails(res.id); setTimeout(() => setShowAbonoForm(true), 100); }} className="text-emerald-600 hover:text-emerald-900 mx-1" title="Registrar Pago / Abono">
+                                                        <CreditCard size={18} />
                                                     </button>
-                                                    <button onClick={() => updateStatus(res.id, 'cancelada')} className="text-red-600 hover:text-red-900 mx-1" title="Cancelar">
-                                                        <XCircle size={18} />
+                                                )}
+                                                {res.estado === 'pendiente' && (
+                                                    <>
+                                                        <button onClick={() => updateStatus(res.id, 'activa')} className="text-green-600 hover:text-green-900 mx-1" title="Check-in">
+                                                            <CheckCircle size={18} />
+                                                        </button>
+                                                        <button onClick={() => updateStatus(res.id, 'cancelada')} className="text-red-600 hover:text-red-900 mx-1" title="Cancelar">
+                                                            <XCircle size={18} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {res.estado === 'activa' && (
+                                                    <button onClick={() => handleCheckout(res.id)} className="text-blue-600 hover:text-blue-900 mx-1 font-bold text-[10px] uppercase border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 transition-colors" title="Realizar Check-out">
+                                                        SALIDA
                                                     </button>
-                                                </>
-                                            )}
-                                            {res.estado === 'activa' && (
-                                                <button onClick={() => handleCheckout(res.id)} className="text-blue-600 hover:text-blue-900 mx-1 font-bold text-xs uppercase" title="Realizar Check-out">
-                                                    Check-out
+                                                )}
+                                                <button onClick={() => handleDelete(res.id)} className="text-red-300 hover:text-red-600 mx-1" title="Eliminar Registro">
+                                                    <Trash2 size={18} />
                                                 </button>
-                                            )}
-                                            <button onClick={() => handleDelete(res.id)} className="text-red-400 hover:text-red-600 mx-1" title="Eliminar Registro">
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                                 {registros.length === 0 && (
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-8 text-center text-gray-400">
+                                        <td colSpan="8" className="px-6 py-8 text-center text-gray-400">
                                             No hay registros.
                                         </td>
                                     </tr>
