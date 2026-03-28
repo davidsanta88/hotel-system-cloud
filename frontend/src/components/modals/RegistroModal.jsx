@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, cleanNumericValue } from '../../utils/format';
 
-const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
+const RegistroModal = ({ isOpen, onClose, initialHabitacionId, initialReserva, onSuccess }) => {
     const [habitaciones, setHabitaciones] = useState([]);
     const [clientes, setClientes] = useState([]);
     const [municipios, setMunicipios] = useState([]);
@@ -42,7 +42,8 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
         medio_pago_id: '',
         valor_cobrado: '0.00',
         notas: '',
-        tipo_registro_id: ''
+        tipo_registro_id: '',
+        reserva_id: ''
     });
 
     const [calculatedTotal, setCalculatedTotal] = useState(0);
@@ -70,6 +71,61 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
         }
     }, [initialHabitacionId]);
 
+    // EFECTO PARA CARGAR DATOS DE RESERVA
+    useEffect(() => {
+        if (isOpen && initialReserva) {
+            console.log('[DEBUG] Cargando datos de reserva:', initialReserva);
+            
+            // 1. Determinar habitación (usar la de Reserva o la seleccionada en mapa)
+            let resHabId = '';
+            if (initialHabitacionId) {
+                resHabId = initialHabitacionId;
+            } else if (initialReserva.habitaciones && initialReserva.habitaciones.length > 0) {
+                const first = initialReserva.habitaciones[0];
+                resHabId = first.habitacion?._id || first.habitacion;
+            } else if (initialReserva.habitacion) {
+                resHabId = initialReserva.habitacion?._id || initialReserva.habitacion;
+            }
+
+            // 2. Poblar formulario
+            setFormData(prev => ({
+                ...prev,
+                habitacion_id: resHabId,
+                fecha_ingreso: moment.utc(initialReserva.fecha_entrada).format('YYYY-MM-DD'),
+                fecha_salida: moment.utc(initialReserva.fecha_salida).format('YYYY-MM-DD'),
+                total: initialReserva.valor_total || 0,
+                valor_cobrado: initialReserva.valor_abonado || 0,
+                notas: initialReserva.observaciones || '',
+                reserva_id: initialReserva.id || initialReserva._id || initialReserva.reserva_id
+            }));
+            
+            // Marcar como editado para que calculateTotal no sobrescriba el abono de la reserva
+            setIsTotalEdited(true);
+
+            // 3. Poblar lista de huéspedes con el cliente titular
+            if (initialReserva.cliente) {
+                const cli = initialReserva.cliente;
+                const newGuest = {
+                    id: cli.id || cli._id,
+                    nombre: cli.nombre || initialReserva.cliente_nombre,
+                    documento: cli.documento || initialReserva.identificacion,
+                    tipo_documento: cli.tipo_documento || 'CC',
+                    telefono: cli.telefono || '',
+                    email: cli.email || '',
+                    municipio_origen_id: cli.municipio_origen_id || ''
+                };
+                setHuespedesList([newGuest]);
+                
+                // También establecer el cliente seleccionado para la UI
+                setSelectedCliente({
+                    id: cli.id || cli._id,
+                    nombre: cli.nombre || initialReserva.cliente_nombre,
+                    documento: cli.documento || initialReserva.identificacion
+                });
+            }
+        }
+    }, [isOpen, initialReserva, initialHabitacionId]);
+
     // Recalculate total when relevant fields change
     useEffect(() => {
         if (habitaciones.length > 0 && formData.habitacion_id && formData.fecha_ingreso && formData.fecha_salida) {
@@ -93,10 +149,10 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
             setMediosPago(resMedios.data);
             setTiposRegistro(resTipos.data);
             
-            // Si hay un ID inicial y tipos de registro, preseleccionar el primero si hay solo uno
+            // Si hay un ID inicial y tipos de registro, preseleccionar NORMAL por defecto
             if (resTipos.data.length > 0) {
-                const formal = resTipos.data.find(t => t.nombre.toLowerCase().includes('formal')) || resTipos.data[0];
-                setFormData(prev => ({ ...prev, tipo_registro_id: formal.id }));
+                const normal = resTipos.data.find(t => t.nombre.toUpperCase().includes('NORMAL')) || resTipos.data[0];
+                setFormData(prev => ({ ...prev, tipo_registro_id: normal.id }));
             }
 
             // AUTO-SELECCIONAR EFECTIVO POR DEFECTO
@@ -213,10 +269,11 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, onSuccess }) => {
                 valor_cobrado: parseFloat(formData.valor_cobrado) || 0,
                 cliente_id: processedHuespedesIds[0],
                 huespedes: processedHuespedesIds,
-                observaciones: formData.notas
+                observaciones: formData.notas,
+                reserva_id: formData.reserva_id // Explícitamente incluido
             };
             
-            console.log('[DEBUG] Enviando Registro:', dataToSave);
+            console.log('[DEBUG-CHECKIN] Payload enviado:', dataToSave);
             await api.post('/registros', dataToSave);
             
             Swal.close();

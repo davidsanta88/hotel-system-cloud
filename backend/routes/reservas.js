@@ -7,6 +7,7 @@ const { verifyToken } = require('../middleware/auth');
 router.use(verifyToken);
 
 router.get('/', reservasController.getAllReservas);
+router.get('/:id', reservasController.getReservaById);
 router.post('/', reservasController.createReserva);
 router.put('/:id', reservasController.updateReserva);
 router.patch('/:id/estado', reservasController.updateReservaStatus);

@@ -7,10 +7,12 @@ import moment from 'moment';
 import 'moment/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Select from 'react-select';
-import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign, Map } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, List, Search, Save, X, Trash2, CheckCircle, AlertCircle, Edit2, MessageSquare, Eye, DollarSign, Map, LogIn, Users } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
+import RegistroModal from '../components/modals/RegistroModal';
+import Pagination from '../components/common/Pagination';
 
 moment.locale('es');
 const localizer = momentLocalizer(moment);
@@ -19,7 +21,7 @@ const Reservas = () => {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
     const { canView, canEdit, canDelete } = usePermissions('reservas');
-    const [view, setView] = useState('calendar'); // 'calendar' or 'list'
+    const [view, setView] = useState('list'); // 'calendar' or 'list'
     const [reservas, setReservas] = useState([]);
     const [clientes, setClientes] = useState([]);
     const [habitaciones, setHabitaciones] = useState([]);
@@ -33,6 +35,13 @@ const Reservas = () => {
     const [abonoForm, setAbonoForm] = useState({ monto: '', medio_pago: '', notas: '' });
     const [showAbonoForm, setShowAbonoForm] = useState(false);
     const [abonoLoading, setAbonoLoading] = useState(false);
+    const [showRegistroModal, setShowRegistroModal] = useState(false);
+    const [selectedHabitacionId, setSelectedHabitacionId] = useState(null);
+    
+    // Estados para búsqueda y paginación
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     
     // Form state
     const [formData, setFormData] = useState({
@@ -131,6 +140,27 @@ const Reservas = () => {
             setLoading(false);
         }
     };
+
+    // Reiniciar página si cambia el término de búsqueda
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    const filteredReservas = useMemo(() => {
+        return reservas.filter(r => {
+            const searchLower = searchTerm.toLowerCase();
+            const cliente = (r.cliente_nombre || '').toLowerCase();
+            const doc = (r.identificacion || r.documento || '').toLowerCase();
+            return cliente.includes(searchLower) || doc.includes(searchLower);
+        });
+    }, [reservas, searchTerm]);
+
+    const paginatedReservas = useMemo(() => {
+        return filteredReservas.slice(
+            (currentPage - 1) * itemsPerPage,
+            currentPage * itemsPerPage
+        );
+    }, [filteredReservas, currentPage, itemsPerPage]);
 
     const calendarEvents = useMemo(() => {
         return reservas.map(r => {
@@ -273,6 +303,17 @@ const Reservas = () => {
         }
     };
 
+    const handleCheckin = async (reserva) => {
+        // En lugar de llamar al API directamente, abrimos el modal pre-llenado
+        setSelectedReserva(reserva);
+        const habId = (reserva.habitaciones && reserva.habitaciones.length > 0) 
+            ? (reserva.habitaciones[0].habitacion_id || reserva.habitaciones[0].habitacion?._id || reserva.habitaciones[0].habitacion)
+            : (reserva.habitacion?._id || reserva.habitacion);
+        
+        setSelectedHabitacionId(habId);
+        setShowRegistroModal(true);
+    };
+
     const handleSave = async (e) => {
         e.preventDefault();
         
@@ -408,20 +449,29 @@ const Reservas = () => {
 
                     <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-200">
                         <button 
-                            onClick={() => setView('calendar')}
-                            className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all font-bold text-sm ${view === 'calendar' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            <CalendarIcon size={18} />
-                            Calendario
-                        </button>
-                        <button 
                             onClick={() => setView('list')}
                             className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all font-bold text-sm ${view === 'list' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-gray-100'}`}
                         >
                             <List size={18} />
                             Listado
                         </button>
+                        <button 
+                            onClick={() => setView('calendar')}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all font-bold text-sm ${view === 'calendar' ? 'bg-white text-blue-600 shadow-sm border border-gray-100' : 'text-gray-500 hover:bg-gray-100'}`}
+                        >
+                            <CalendarIcon size={18} />
+                            Calendario
+                        </button>
                     </div>
+
+                    <button 
+                        onClick={() => navigate('/registros')}
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg ml-2"
+                    >
+                        <Users size={20} />
+                        <span>Lista de Registros</span>
+                    </button>
+
                     {canEdit && (
                         <button 
                             onClick={() => setShowModal(true)}
@@ -464,123 +514,171 @@ const Reservas = () => {
                         }}
                     />
                 </div>
-            ) : (
+            ) : view === 'list' ? (
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-500 text-xs font-black uppercase tracking-wider border-b border-gray-100">
-                                <th className="p-4">Cliente</th>
-                                <th className="p-4">Habitaciones</th>
-                                <th className="p-4">Fechas</th>
-                                <th className="p-4">Personas</th>
-                                <th className="p-4">Financiero</th>
-                                <th className="p-4">Estado</th>
-                                <th className="p-4 text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {reservas.map(r => (
-                                <tr key={r.id} className="hover:bg-blue-50/30 transition-colors">
-                                    <td className="p-4">
-                                        <div className="font-bold text-gray-800">{r.cliente_nombre || (r.cliente && typeof r.cliente === 'object' ? r.cliente.nombre : '') || r.cliente || 'Desconocido'}</div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs text-gray-500 font-medium">{r.identificacion || r.documento}</span>
-                                            {r.telefono && (
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded leading-none">{r.telefono}</span>
-                                                    <a 
-                                                        href={`https://wa.me/${r.telefono.replace(/\s+/g, '')}`} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                        className="text-green-600 hover:text-green-800 transition-colors"
-                                                        title="Escribir al WhatsApp"
-                                                    >
-                                                        <MessageSquare size={12} />
-                                                    </a>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-wrap gap-1">
-                                            {(r.habitaciones || []).map(h => (
-                                                <span key={h.habitacion_id || h._id || Math.random()} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold">
-                                                    Hab {h.numero || (h.habitacion ? h.habitacion.numero : '?')}
-                                                </span>
-                                            ))}
-                                            {(!r.habitaciones || r.habitaciones.length === 0) && r.habitacion && (
-                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold">
-                                                    Hab {r.habitacion.numero || '?'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="text-xs font-bold text-gray-700">
-                                            {moment.utc(r.fecha_entrada).format('DD MMM')} - {moment.utc(r.fecha_salida).format('DD MMM')}
-                                        </div>
-                                        <div className="text-[10px] text-gray-400 font-medium">
-                                            {moment.utc(r.fecha_salida).diff(moment.utc(r.fecha_entrada), 'days')} noches
-                                        </div>
-                                    </td>
-                                    <td className="p-4 font-bold text-gray-600">{r.numero_personas}</td>
-                                    <td className="p-4">
-                                        <div className="text-xs font-black text-gray-800">$ {formatCurrency(r.valor_total)}</div>
-                                        <div className="text-[10px] text-emerald-600 font-bold">Abono: $ {formatCurrency(r.valor_abonado)}</div>
-                                        {r.valor_total - r.valor_abonado > 0 && (
-                                            <div className="text-[10px] text-red-500 font-bold">Debe: $ {formatCurrency(r.valor_total - r.valor_abonado)}</div>
-                                        )}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                                            r.estado === 'Confirmada' ? 'bg-blue-100 text-blue-700' :
-                                            r.estado === 'Cancelada' ? 'bg-red-100 text-red-700' :
-                                            'bg-emerald-100 text-emerald-700'
-                                        }`}>
-                                            {r.estado}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button 
-                                                onClick={() => handleViewDetail(r)}
-                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                                title="Ver Detalle y Abonos"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                            {canEdit && r.estado !== 'Concluida' && (
-                                                <button 
-                                                    onClick={() => handleEdit(r)}
-                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Editar Reserva"
-                                                >
-                                                    <Edit2 size={18} />
-                                                </button>
-                                            )}
-                                            {canDelete && (
-                                                <button 
-                                                    onClick={() => {
-                                                        if (r.estado === 'Cancelada') {
-                                                            handleDeleteReserva(r.id);
-                                                        } else {
-                                                            updateStatus(r.id, 'Cancelada');
-                                                        }
-                                                    }}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title={r.estado === 'Cancelada' ? "Eliminar Permanentes" : "Cancelar Reserva"}
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
+                    {/* Barra de Búsqueda para Listado */}
+                    <div className="p-4 border-b border-gray-100 bg-gray-50/30">
+                        <div className="relative w-full max-w-sm">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input 
+                                type="text"
+                                placeholder="Buscar reserva por nombre o documento..."
+                                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold focus:border-blue-500 transition-all outline-none"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-gray-50/50">
+                                <tr className="text-[10px] font-black uppercase text-gray-400 tracking-widest border-b border-gray-50">
+                                    <th className="p-4">Cliente</th>
+                                    <th className="p-4">Habitaciones</th>
+                                    <th className="p-4">Fechas</th>
+                                    <th className="p-4">Personas</th>
+                                    <th className="p-4">Financiero</th>
+                                    <th className="p-4">Estado</th>
+                                    <th className="p-4 text-right">Acciones</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {paginatedReservas.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="7" className="p-20 text-center">
+                                            <div className="flex flex-col items-center">
+                                                <AlertCircle className="text-gray-200 mb-2" size={48} />
+                                                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No se encontraron reservas</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedReservas.map(r => (
+                                        <tr key={r.id} className="hover:bg-blue-50/30 transition-colors">
+                                            <td className="p-4">
+                                                <div className="font-bold text-gray-800">{r.cliente_nombre || (r.cliente && typeof r.cliente === 'object' ? r.cliente.nombre : '') || r.cliente || 'Desconocido'}</div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs text-gray-500 font-medium">{r.identificacion || r.documento}</span>
+                                                    {r.telefono && (
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded leading-none">{r.telefono}</span>
+                                                            <a 
+                                                                href={`https://wa.me/${r.telefono.replace(/\s+/g, '')}`} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="text-green-600 hover:text-green-800 transition-colors"
+                                                                title="Escribir al WhatsApp"
+                                                            >
+                                                                <MessageSquare size={12} />
+                                                            </a>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {(r.habitaciones || []).map(h => (
+                                                        <span key={h.habitacion_id || h._id || Math.random()} className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold">
+                                                            Hab {h.numero || (h.habitacion ? h.habitacion.numero : '?')}
+                                                        </span>
+                                                    ))}
+                                                    {(!r.habitaciones || r.habitaciones.length === 0) && r.habitacion && (
+                                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold">
+                                                            Hab {r.habitacion.numero || '?'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="text-xs font-bold text-gray-700">
+                                                    {moment.utc(r.fecha_entrada).format('DD MMM')} - {moment.utc(r.fecha_salida).format('DD MMM')}
+                                                </div>
+                                                <div className="text-[10px] text-gray-400 font-medium">
+                                                    {moment.utc(r.fecha_salida).diff(moment.utc(r.fecha_entrada), 'days')} noches
+                                                </div>
+                                            </td>
+                                            <td className="p-4 font-bold text-gray-600">{r.numero_personas}</td>
+                                            <td className="p-4">
+                                                <div className="text-xs font-black text-gray-800">$ {formatCurrency(r.valor_total)}</div>
+                                                <div className="text-[10px] text-emerald-600 font-bold">Abono: $ {formatCurrency(r.valor_abonado)}</div>
+                                                {r.valor_total - r.valor_abonado > 0 && (
+                                                    <div className="text-[10px] text-red-500 font-bold">Debe: $ {formatCurrency(r.valor_total - r.valor_abonado)}</div>
+                                                )}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                    r.estado === 'Confirmada' ? 'bg-blue-100 text-blue-700' :
+                                                    r.estado === 'Cancelada' ? 'bg-red-100 text-red-700' :
+                                                    r.estado === 'Concluida' ? 'bg-purple-100 text-purple-700' :
+                                                    'bg-emerald-100 text-emerald-700'
+                                                }`}>
+                                                    {r.estado === 'Concluida' ? 'REGISTRADA' : r.estado}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    {r.estado === 'Confirmada' && moment.utc(r.fecha_entrada).isSameOrBefore(moment(), 'day') && (
+                                                        <button 
+                                                            onClick={() => handleCheckin(r)}
+                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                            title="Registrar Ingreso (Check-in)"
+                                                        >
+                                                            <LogIn size={18} />
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handleViewDetail(r)}
+                                                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                        title="Ver Detalle y Abonos"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                    {canEdit && r.estado !== 'Concluida' && (
+                                                        <button 
+                                                            onClick={() => handleEdit(r)}
+                                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Editar Reserva"
+                                                        >
+                                                            <Edit2 size={18} />
+                                                        </button>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (r.estado === 'Cancelada') {
+                                                                    handleDeleteReserva(r.id);
+                                                                } else {
+                                                                    updateStatus(r.id, 'Cancelada');
+                                                                }
+                                                            }}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title={r.estado === 'Cancelada' ? "Eliminar Permanentes" : "Cancelar Reserva"}
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <Pagination 
+                        currentPage={currentPage}
+                        totalItems={filteredReservas.length}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                        onItemsPerPageChange={(val) => {
+                            setItemsPerPage(val);
+                            setCurrentPage(1);
+                        }}
+                    />
                 </div>
-            )}
+            ) : null}
 
             {/* Modal de Nueva Reserva */}
             {showModal && (
@@ -818,6 +916,14 @@ const Reservas = () => {
                                 <p className="text-sm text-gray-500 font-medium">{selectedReserva.cliente_nombre}</p>
                             </div>
                             <div className="flex items-center gap-3">
+                                {canEdit && selectedReserva.estado === 'Confirmada' && moment.utc(selectedReserva.fecha_entrada).isSameOrBefore(moment(), 'day') && (
+                                    <button
+                                        onClick={() => handleCheckin(selectedReserva)}
+                                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-bold text-xs shadow-md shadow-emerald-500/20"
+                                    >
+                                        <LogIn size={14} /> Realizar Check-in
+                                    </button>
+                                )}
                                 {canEdit && selectedReserva.estado !== 'Cancelada' && selectedReserva.estado !== 'Concluida' && (
                                     <button
                                         onClick={() => handleEdit(selectedReserva)}
@@ -972,6 +1078,21 @@ const Reservas = () => {
                     </div>
                 </div>
             )}
+
+            <RegistroModal 
+                isOpen={showRegistroModal} 
+                onClose={() => {
+                    setShowRegistroModal(false);
+                    setSelectedReserva(null);
+                    setSelectedHabitacionId(null);
+                }}
+                initialHabitacionId={selectedHabitacionId}
+                initialReserva={selectedReserva}
+                onSuccess={() => {
+                    fetchData();
+                    setShowDetailModal(false);
+                }}
+            />
         </div>
     );
 };

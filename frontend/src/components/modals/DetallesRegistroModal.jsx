@@ -233,7 +233,19 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                 }
 
                 Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                await api.put(`/registros/checkout/${registroId}`);
+                
+                // Pedir notas de salida
+                const { value: notasSalida } = await Swal.fire({
+                    title: 'Notas de Salida',
+                    input: 'textarea',
+                    inputPlaceholder: 'Observaciones del check-out (opcional)...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Finalizar',
+                    cancelButtonText: 'Omitir',
+                    confirmButtonColor: '#3b82f6'
+                });
+
+                await api.put(`/registros/checkout/${registroId}`, { notasSalida: notasSalida || '' });
                 Swal.fire('Éxito', 'Check-out realizado. Habitación lista para aseo.', 'success');
                 if (onSuccess) onSuccess();
                 onClose();
@@ -507,7 +519,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                             </div>
 
                                             <div className="pt-3">
-                                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Notas</label>
+                                                <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Notas / Observaciones</label>
                                                 {isEditing ? (
                                                     <textarea 
                                                         name="notas" 
@@ -524,6 +536,17 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {details?.notasSalida && (
+                                                <div className="pt-3 border-t border-red-100 mt-2">
+                                                    <label className="block text-[8px] font-black text-red-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                                        <LogOut size={10} /> Notas de Salida (Check-out)
+                                                    </label>
+                                                    <div className="bg-red-50/50 p-4 rounded-2xl border border-red-100 italic font-black text-red-900 text-xs shadow-sm">
+                                                        {details.notasSalida}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

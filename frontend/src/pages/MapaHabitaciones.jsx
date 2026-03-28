@@ -37,6 +37,7 @@ const MapaHabitaciones = () => {
     const [selectedHabitacionId, setSelectedHabitacionId] = useState(null);
     const [selectedRegistroId, setSelectedRegistroId] = useState(null);
     const [initialEditMode, setInitialEditMode] = useState(false);
+    const [selectedReserva, setSelectedReserva] = useState(null);
     const navigate = useNavigate();
 
     const fetchMapa = async () => {
@@ -143,10 +144,49 @@ const MapaHabitaciones = () => {
         } else if (hab.estadoVisual === 'disponible') {
             setSelectedHabitacionId(hab.id);
             setShowRegistroModal(true);
+        } else if (hab.estadoVisual === 'reservada') {
+            const huesped = hab.detalleEstado?.huesped || 'Cliente';
+            
+            Swal.fire({
+                title: 'Habitación Reservada',
+                html: `Esta habitación tiene una reserva activa para hoy a nombre de: <b>${huesped}</b>.<br/><br/>
+                       ¿Desea registrar el ingreso ahora o dirigirse al listado de reservas?`,
+                icon: 'info',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: '#059669',
+                denyButtonColor: '#3b82f6',
+                confirmButtonText: 'Registrar Ingreso',
+                denyButtonText: 'Ir a Reservas',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Confirmación adicional para evitar errores
+                    Swal.fire({
+                        title: 'Confirmar Ingreso',
+                        text: `¿Está seguro de registrar la reserva a nombre del huésped ${huesped}?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#059669',
+                        confirmButtonText: 'Sí, registrar',
+                        cancelButtonText: 'No, esperar'
+                    }).then((nestedResult) => {
+                        const resId = hab.detalleEstado?.id_reserva || hab.detalleEstado?.reserva_id || hab.id_reserva;
+                        if (nestedResult.isConfirmed) {
+                            if (resId) {
+                                handleCheckinFromReserva(hab, resId);
+                            } else {
+                                Swal.fire('Error', 'No se encontró el ID de la reserva en los datos del mapa. Por favor reinicie el servidor o use el listado de reservas.', 'error');
+                            }
+                        }
+                    });
+                } else if (result.isDenied) {
+                    navigate('/reservas');
+                }
+            });
         } else {
-            // Bloqueo de seguridad solicitado por el usuario
+            // Bloqueo de seguridad solicitado por el usuario para otros estados
             let mensaje = '';
-            if (hab.estadoVisual === 'reservada') mensaje = 'Esta habitación ya tiene una reserva activa para hoy. No puede alquilarse de forma directa.';
             if (hab.estadoVisual === 'por_asear') mensaje = 'La habitación debe estar Limpia antes de poder registrar un nuevo ingreso.';
             
             Swal.fire({
@@ -156,6 +196,39 @@ const MapaHabitaciones = () => {
                 confirmButtonColor: '#10b981',
                 confirmButtonText: 'Entendido'
             });
+        }
+    };
+
+    const handleCheckinFromReserva = async (hab, resId) => {
+        const idToUse = resId || hab.detalleEstado?.id_reserva || hab.id_reserva;
+        
+        if (!idToUse) {
+            Swal.fire('Error', 'No se encontró el ID de la reserva.', 'error');
+            return;
+        }
+
+        try {
+            Swal.fire({ 
+                title: 'Cargando datos...', 
+                html: 'Preparando formulario de registro',
+                allowOutsideClick: false, 
+                didOpen: () => Swal.showLoading() 
+            });
+            
+            console.log(`[DEBUG-CHECKIN] Buscando reserva ID: ${idToUse} para habitación: ${hab.numero}`);
+            const res = await api.get(`/reservas/${idToUse}`);
+            
+            setSelectedHabitacionId(hab.id);
+            setSelectedReserva(res.data);
+            setShowRegistroModal(true);
+            Swal.close();
+        } catch (error) {
+            console.error('Error fetching reservation:', error);
+            const status = error.response?.status;
+            let msg = 'No se pudieron obtener los detalles de la reserva.';
+            if (status === 404) msg = 'La reserva no existe en el servidor. Por favor verifique el listado de reservas.';
+            
+            Swal.fire('Error', msg, 'error');
         }
     };
 
@@ -181,7 +254,21 @@ const MapaHabitaciones = () => {
 
         if (result.isConfirmed) {
             try {
-                await api.put(`/registros/checkout/${registroId}`);
+                // Preguntar por notas de salida
+                const { value: notasSalida } = await Swal.fire({
+                    title: 'Notas de Salida',
+                    input: 'textarea',
+                    inputPlaceholder: 'Escriba observaciones del check-out (opcional)...',
+                    inputAttributes: {
+                        'aria-label': 'Notas de salida'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Finalizar Check-out',
+                    cancelButtonText: 'Omitir notas',
+                    confirmButtonColor: '#3b82f6',
+                });
+
+                await api.put(`/registros/checkout/${registroId}`, { notasSalida: notasSalida || '' });
                 Swal.fire('Éxito', 'Check-out realizado', 'success');
                 fetchMapa();
             } catch (error) {
@@ -460,15 +547,15 @@ const MapaHabitaciones = () => {
 
             {/* Modal de Registro Integrado */}
             <RegistroModal 
-                isOpen={showRegistroModal}
+                isOpen={showRegistroModal} 
                 onClose={() => {
                     setShowRegistroModal(false);
+                    setSelectedReserva(null);
                     setSelectedHabitacionId(null);
                 }}
                 initialHabitacionId={selectedHabitacionId}
-                onSuccess={() => {
-                    fetchMapa();
-                }}
+                initialReserva={selectedReserva}
+                onSuccess={fetchMapa}
             />
 
             <DetallesRegistroModal 

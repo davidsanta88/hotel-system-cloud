@@ -151,6 +151,7 @@ exports.getMapaVisual = async (req, res) => {
                     }
                 } else if (reservaHoy) {
                     detalleEstado = {
+                        id_reserva: reservaHoy._id,
                         huesped: reservaHoy.cliente ? reservaHoy.cliente.nombre : 'Reserva',
                         entrada: reservaHoy.fecha_entrada,
                         salida: reservaHoy.fecha_salida,

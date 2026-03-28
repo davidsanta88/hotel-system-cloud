@@ -17,6 +17,7 @@ const registroSchema = new mongoose.Schema({
     huespedes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Cliente' }],
     vendedores: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
     observaciones: String,
+    notasSalida: String,
     usuarioCreacion: String,
     fechaCreacion: { type: Date, default: Date.now }
 });

@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, Search, MessageSquare } from 'lucide-react';
 import Select from 'react-select';
 import Swal from 'sweetalert2';
 import { usePermissions } from '../hooks/usePermissions';
+import Pagination from '../components/common/Pagination';
 
 const Clientes = () => {
     const { user } = useContext(AuthContext);
@@ -24,10 +25,19 @@ const Clientes = () => {
         observaciones: ''
     });
     const [isEditing, setIsEditing] = useState(false);
+    
+    // Estados para paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         fetchClientes();
     }, []);
+
+    // Reiniciar a la primera página si cambia la búsqueda
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const fetchClientes = async () => {
         try {
@@ -110,6 +120,12 @@ const Clientes = () => {
         c.documento.includes(searchTerm)
     );
 
+    // Lógica para paginar los clientes filtrados
+    const paginatedClientes = filteredClientes.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     // Opciones para el buscador de municipios
     const municipioOptions = municipios
         .filter(m => m.visualizar)
@@ -188,14 +204,14 @@ const Clientes = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredClientes.length === 0 ? (
+                            {paginatedClientes.length === 0 ? (
                                 <tr>
                                     <td colSpan="8" className="p-4 text-center text-gray-500">
                                         No se encontraron clientes.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredClientes.map(cliente => (
+                                paginatedClientes.map(cliente => (
                                     <tr key={cliente.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                         <td className="p-4 font-medium text-gray-600 font-mono text-sm">{cliente.tipo_documento}</td>
                                         <td className="p-4 font-medium text-gray-800">{cliente.documento}</td>
@@ -263,6 +279,17 @@ const Clientes = () => {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination 
+                    currentPage={currentPage}
+                    totalItems={filteredClientes.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    onItemsPerPageChange={(val) => {
+                        setItemsPerPage(val);
+                        setCurrentPage(1);
+                    }}
+                />
             </div>
 
             {/* Modal para Crear/Editar */}

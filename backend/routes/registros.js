@@ -8,6 +8,7 @@ router.get('/', verifyToken, registrosController.getRegistros);
 router.get('/activos', verifyToken, registrosController.getActiveRegistros);
 router.get('/:id', verifyToken, registrosController.getRegistroById);
 router.post('/', verifyToken, registrosController.createRegistro);
+router.post('/checkin-reserva/:id', verifyToken, registrosController.checkinFromReserva);
 router.put('/checkout/:id', verifyToken, registrosController.checkout);
 router.put('/anular/:id', verifyToken, registrosController.anular);
 router.put('/:id', verifyToken, registrosController.updateRegistro);

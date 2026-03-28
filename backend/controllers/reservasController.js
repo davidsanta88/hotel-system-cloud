@@ -217,3 +217,41 @@ exports.deleteReserva = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.getReservaById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const r = await Reserva.findById(id)
+            .populate('cliente')
+            .populate('habitacion')
+            .populate('habitaciones.habitacion');
+        
+        if (!r) return res.status(404).json({ message: 'Reserva no encontrada' });
+
+        const obj = r.toObject({ virtuals: true });
+        
+        // Formateo idéntico al de getReservas para consistencia
+        if ((!obj.habitaciones || obj.habitaciones.length === 0) && obj.habitacion) {
+            obj.habitaciones = [{
+                habitacion: obj.habitacion,
+                numero: obj.habitacion?.numero || 'N/A',
+                precio_acordado: obj.habitacion?.precio_1 || 0
+            }];
+        }
+        if (obj.habitaciones && Array.isArray(obj.habitaciones)) {
+            obj.habitaciones = obj.habitaciones.map(h => ({
+                ...h,
+                numero: h.numero || h.habitacion?.numero || 'N/A'
+            }));
+        }
+        if (!obj.fecha_entrada && obj.fechaInicio) obj.fecha_entrada = obj.fechaInicio;
+        if (!obj.fecha_salida && obj.fechaFin) obj.fecha_salida = obj.fechaFin;
+        if (!obj.cliente_nombre || obj.cliente_nombre === 'Desconocido') {
+            obj.cliente_nombre = obj.cliente?.nombre || 'Desconocido';
+        }
+
+        res.json(obj);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

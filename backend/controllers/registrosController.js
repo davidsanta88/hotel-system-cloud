@@ -1,6 +1,9 @@
 const Registro = require('../models/Registro');
 const Habitacion = require('../models/Habitacion');
 const Cliente = require('../models/Cliente');
+const Reserva = require('../models/Reserva');
+const MedioPago = require('../models/MedioPago');
+const EstadoHabitacion = require('../models/EstadoHabitacion');
 
 exports.getRegistros = async (req, res) => {
     try {
@@ -99,9 +102,16 @@ const cleanNumber = (val) => {
 
 exports.createRegistro = async (req, res) => {
     try {
-        const { habitacion_id, fecha_ingreso, fecha_salida, huespedes, total, observaciones, notas, medio_pago_id, valor_cobrado, tipo_registro_id } = req.body;
+        const { 
+            habitacion_id, fecha_ingreso, fecha_salida, huespedes, total, 
+            observaciones, notas, medio_pago_id, valor_cobrado, tipo_registro_id, 
+            reserva_id, reservaId, id_reserva 
+        } = req.body;
+
+        // 1. Extraer reserva_id robustamente (body o alias)
+        const finalReservaId = reserva_id || reservaId || id_reserva;
         
-        console.log(`[CREATE REGISTRO] Raw Total: ${total} | Raw Abono: ${valor_cobrado}`);
+        console.log(`[CREATE REGISTRO] Raw Total: ${total} | Raw Abono: ${valor_cobrado} | ReservaID: ${finalReservaId}`);
 
         if (!huespedes || huespedes.length === 0) {
             return res.status(400).json({ message: 'Se requiere al menos un huésped' });
@@ -109,15 +119,11 @@ exports.createRegistro = async (req, res) => {
 
         const huesped_ids = [];
         for (const h of huespedes) {
-            // Handle if h is already an ID (string) or an object with an ID
             const guestId = (typeof h === 'string') ? h : (h.id || h._id);
-            
             if (guestId) {
                 huesped_ids.push(guestId);
             } else if (typeof h === 'object' && h.documento) {
-                // ...existing logic for new client creation...
                 let existingCliente = await Cliente.findOne({ documento: h.documento });
-
                 if (existingCliente) {
                     huesped_ids.push(existingCliente._id);
                 } else {
@@ -141,8 +147,6 @@ exports.createRegistro = async (req, res) => {
         const totalNum = cleanNumber(total);
         const abonoInicial = cleanNumber(valor_cobrado);
 
-        console.log(`[CREATE REGISTRO] Parsed Total: ${totalNum} | Parsed Abono: ${abonoInicial}`);
-
         const newReg = new Registro({
             habitacion: habitacion_id,
             cliente: titular_id,
@@ -159,28 +163,39 @@ exports.createRegistro = async (req, res) => {
 
         // 5. Registrar el primer pago (Abono inicial) si existe
         if (abonoInicial > 0) {
-            const MedioPago = require('../models/MedioPago');
             const medio = await MedioPago.findById(medio_pago_id);
-            
             newReg.pagos = [{
                 monto: abonoInicial,
                 medio: medio ? medio.nombre : 'Efectivo',
                 usuario_nombre: req.userName || 'Sistema',
-                notas: 'Abono inicial en check-in',
+                notas: finalReservaId ? 'Traslado de abono de reserva' : 'Abono inicial en check-in',
                 fecha: Date.now()
             }];
         }
 
         await newReg.save();
         
-        // 2. Marcar habitación como ocupada (USANDO ObjectId)
-        const EstadoHabitacion = require('../models/EstadoHabitacion');
+        // 2. Marcar habitación como ocupada
         const estadoOcupada = await EstadoHabitacion.findOne({ nombre: /ocupada/i });
         if (estadoOcupada) {
             await Habitacion.findByIdAndUpdate(habitacion_id, { 
                 estado: estadoOcupada._id,
                 estadoLimpieza: 'En Uso'
             });
+        }
+
+        // 3. Marcar reserva como concluida (REGISTRADA)
+        if (finalReservaId) {
+            try {
+                const resUpdate = await Reserva.findByIdAndUpdate(finalReservaId, { estado: 'Concluida' }, { new: true });
+                if (resUpdate) {
+                    console.log(`[CHECKIN SUCCESS] Reserva ${finalReservaId} marcada como CONCLUIDA.`);
+                } else {
+                    console.warn(`[CHECKIN WARNING] No se encontró reserva para actualizar con ID: ${finalReservaId}`);
+                }
+            } catch (errRes) {
+                console.error(`[CHECKIN ERROR] Error actualizando reserva ${finalReservaId}:`, errRes);
+            }
         }
 
         res.status(201).json({ message: 'Registro creado', registro: newReg });
@@ -193,12 +208,16 @@ exports.createRegistro = async (req, res) => {
 exports.checkout = async (req, res) => {
     try {
         const { id } = req.params;
+        const { notasSalida } = req.body;
         const registro = await Registro.findById(id);
         if (!registro) return res.status(404).json({ message: 'Registro no encontrado' });
 
         // 1. Finalizar registro
         registro.estado = 'finalizado';
         registro.fechaSalida = Date.now();
+        if (notasSalida) {
+            registro.notasSalida = notasSalida;
+        }
         await registro.save();
 
         // 2. Liberar habitación (Marcar como disponible pero SUCIA para que pase a azul)
@@ -274,6 +293,103 @@ exports.deleteRegistro = async (req, res) => {
         await Registro.findByIdAndDelete(id);
         res.json({ message: 'Registro eliminado con éxito' });
     } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.checkinFromReserva = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reserva = await Reserva.findById(id).populate('habitaciones.habitacion');
+        
+        if (!reserva) {
+            return res.status(404).json({ message: 'Reserva no encontrada' });
+        }
+
+        if (reserva.estado === 'Concluida') {
+            return res.status(400).json({ message: 'Esta reserva ya ha sido procesada (Check-in ya realizado)' });
+        }
+
+        // 1. Obtener estados de habitación
+        const EstadoHabitacion = require('../models/EstadoHabitacion');
+        const estadoOcupada = await EstadoHabitacion.findOne({ nombre: /ocupada/i });
+
+        const creados = [];
+        
+        // 2. Determinar habitaciones a procesar
+        let habsParaProcesar = [];
+        if (reserva.habitaciones && reserva.habitaciones.length > 0) {
+            habsParaProcesar = reserva.habitaciones;
+        } else if (reserva.habitacion) {
+            habsParaProcesar = [{
+                habitacion: reserva.habitacion,
+                precio_acordado: reserva.valor_total
+            }];
+        }
+
+        if (habsParaProcesar.length === 0) {
+            return res.status(400).json({ message: 'La reserva no tiene habitaciones asignadas' });
+        }
+
+        // 3. Crear Registros
+        for (let i = 0; i < habsParaProcesar.length; i++) {
+            const h = habsParaProcesar[i];
+            const habId = h.habitacion._id || h.habitacion;
+            
+            const newReg = new Registro({
+                habitacion: habId,
+                cliente: reserva.cliente,
+                fechaEntrada: reserva.fecha_entrada || new Date(),
+                fechaSalida: reserva.fecha_salida,
+                total: h.precio_acordado || (reserva.valor_total / habsParaProcesar.length),
+                observaciones: `[CHECK-IN AUTOMÁTICO] Reserva #${reserva._id}. ${reserva.observaciones || ''}`,
+                estado: 'activo',
+                usuarioCreacion: req.userName || 'Sistema'
+            });
+
+            // Transferir abonos si es el primer registro
+            if (i === 0 && reserva.abonos && reserva.abonos.length > 0) {
+                newReg.pagos = reserva.abonos.map(a => ({
+                    monto: a.monto,
+                    medio: a.medio_pago || 'Reserva',
+                    notas: `Abono de Reserva: ${a.notas || ''}`,
+                    usuario_nombre: a.usuario_nombre || 'Sistema',
+                    fecha: a.fecha || Date.now()
+                }));
+            } else if (i === 0 && reserva.valor_abonado > 0 && (!reserva.abonos || reserva.abonos.length === 0)) {
+                // Fallback si hay valor_abonado pero no array de abonos
+                newReg.pagos = [{
+                    monto: reserva.valor_abonado,
+                    medio: 'Reserva (Saldo)',
+                    notas: 'Traslado de abono de reserva',
+                    usuario_nombre: 'Sistema',
+                    fecha: Date.now()
+                }];
+            }
+
+            await newReg.save();
+            creados.push(newReg);
+
+            // 4. Actualizar estado de habitación a OCUPADA y EN USO
+            if (estadoOcupada) {
+                await Habitacion.findByIdAndUpdate(habId, { 
+                    estado: estadoOcupada._id,
+                    estadoLimpieza: 'En Uso'
+                });
+            }
+        }
+
+        // 5. Finalizar Reserva
+        reserva.estado = 'Concluida';
+        await reserva.save();
+
+        res.status(201).json({ 
+            message: 'Check-in realizado con éxito', 
+            registros: creados 
+        });
+
+    } catch (err) {
+        console.error('[CHECKIN FROM RESERVA ERROR]', err);
         res.status(500).json({ message: err.message });
     }
 };
