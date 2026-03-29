@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe } from 'lucide-react';
+import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote } from 'lucide-react';
 
 const HotelConfig = () => {
     const [config, setConfig] = useState({
@@ -12,7 +12,8 @@ const HotelConfig = () => {
         correo: '',
         sitioWeb: '',
         politica: '',
-        datosBancarios: ''
+        datosBancarios: '',
+        lema: ''
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -171,6 +172,25 @@ const HotelConfig = () => {
                                 required
                             />
                         </div>
+                    </div>
+
+                    {/* Lema del Hotel */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
+                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Lema / Eslogan del Hotel</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <Quote size={18} />
+                            </div>
+                            <input
+                                type="text"
+                                name="lema"
+                                value={config.lema}
+                                onChange={handleChange}
+                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
+                                placeholder="Ej: Un oasis de paz y tradición"
+                            />
+                        </div>
+                        <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Este mensaje aparecerá como despedida en el pie de página de los vouchers.</p>
                     </div>
 
                     {/* Página Web */}

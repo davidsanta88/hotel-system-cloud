@@ -21,7 +21,7 @@ exports.getConfig = async (req, res) => {
 // Actualizar la configuración
 exports.updateConfig = async (req, res) => {
     try {
-        const { nombre, nit, direccion, telefono, correo, politica, sitioWeb, datosBancarios } = req.body;
+        const { nombre, nit, direccion, telefono, correo, politica, sitioWeb, datosBancarios, lema } = req.body;
         
         let config = await HotelConfig.findOne();
         
@@ -36,6 +36,7 @@ exports.updateConfig = async (req, res) => {
             config.politica = politica || config.politica;
             config.sitioWeb = sitioWeb || config.sitioWeb;
             config.datosBancarios = datosBancarios || config.datosBancarios;
+            config.lema = lema || config.lema;
             config.updatedAt = Date.now();
         }
         

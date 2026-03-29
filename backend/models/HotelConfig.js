@@ -39,6 +39,10 @@ const HotelConfigSchema = new mongoose.Schema({
         type: String,
         default: 'Banco: XXXXXX | Cuenta: Ahorros # XXXXXXXXX | Nequi: XXXXXXXXXX'
     },
+    lema: {
+        type: String,
+        default: '¡Gracias por su preferencia!'
+    },
     updatedAt: {
         type: Date,
         default: Date.now

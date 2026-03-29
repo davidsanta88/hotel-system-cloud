@@ -54,6 +54,7 @@ export const generateVoucher = async (data) => {
             correo: 'reservas@hotelbalconplaza.com',
             sitioWeb: 'www.hotelbalconplaza.com',
             datosBancarios: 'Banco: XXXXXX | Cuenta: Ahorros # XXXXXXXXX | Nequi: XXXXXXXXXX',
+            lema: '¡Gracias por su preferencia!',
             politica: 'Este documento es un comprobante informativo. Los consumos adicionales se cobrarán al check-out.'
         };
 
@@ -228,7 +229,7 @@ export const generateVoucher = async (data) => {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9.5);
         doc.setTextColor(30, 41, 59);
-        doc.text('¡Gracias por su preferencia!', pageWidth / 2, footerY, { align: 'center' });
+        doc.text(hotelInfo.lema || '¡Gracias por su preferencia!', pageWidth / 2, footerY, { align: 'center' });
 
         // 8. Método de descarga robusto
         const safeName = `Voucher_${data.cliente_nombre.replace(/[^a-z0-9]/gi, '_').substring(0, 20)}.pdf`;
