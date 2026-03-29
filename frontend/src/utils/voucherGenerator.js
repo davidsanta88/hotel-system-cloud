@@ -102,7 +102,7 @@ export const generateVoucher = async (data) => {
         doc.setFontSize(12); // Reducido de 14
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(37, 99, 235);
-        const titleText = data.tipo === 'reserva' ? 'COMPROBANTE DE RESERVA' : 'RECIBO DE ESTANCIA';
+        const titleText = data.tipo === 'reserva' ? 'COMPROBANTE DE RESERVA' : 'RECIBO DE HOSPEDAJE';
         doc.text(titleText, margin, startInfoY);
  
         // 3. Información del Cliente
