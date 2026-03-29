@@ -174,62 +174,6 @@ const HotelConfig = () => {
                         </div>
                     </div>
 
-                    {/* Lema del Hotel */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
-                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Lema / Eslogan del Hotel</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                <Quote size={18} />
-                            </div>
-                            <input
-                                type="text"
-                                name="lema"
-                                value={config.lema}
-                                onChange={handleChange}
-                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
-                                placeholder="Ej: Un oasis de paz y tradición"
-                            />
-                        </div>
-                        <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Este mensaje aparecerá como despedida en el pie de página de los vouchers.</p>
-                    </div>
-
-                    {/* Página Web */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
-                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Página Web Oficial</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                <Globe size={18} />
-                            </div>
-                            <input
-                                type="text"
-                                name="sitioWeb"
-                                value={config.sitioWeb}
-                                onChange={handleChange}
-                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
-                                placeholder="www.tu-hotel.com"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Datos Bancarios */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
-                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Información de Pagos / Cuentas Bancarias</label>
-                        <div className="relative">
-                            <div className="absolute top-3 left-3 flex items-center pointer-events-none text-slate-400">
-                                <CreditCard size={18} />
-                            </div>
-                            <textarea
-                                name="datosBancarios"
-                                value={config.datosBancarios}
-                                onChange={handleChange}
-                                rows={3}
-                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
-                                placeholder="Ej: Bancolombia Ahorros 123-456789-01 | Nequi 300 000 0000"
-                            />
-                        </div>
-                        <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Información útil para que el cliente realice transferencias.</p>
-                    </div>
-
                     {/* Política del Hotel */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
                         <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Política General (Legal)</label>
@@ -248,6 +192,25 @@ const HotelConfig = () => {
                             />
                         </div>
                         <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Este texto aparecerá en el pie de página de los vouchers PDF.</p>
+                    </div>
+
+                    {/* Lema del Hotel */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
+                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Lema / Eslogan del Hotel</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <Quote size={18} />
+                            </div>
+                            <input
+                                type="text"
+                                name="lema"
+                                value={config.lema}
+                                onChange={handleChange}
+                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
+                                placeholder="Ej: Un oasis de paz y tradición"
+                            />
+                        </div>
+                        <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Este mensaje aparecerá como despedida en el pie de página de los vouchers.</p>
                     </div>
                 </div>
 
