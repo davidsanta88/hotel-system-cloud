@@ -51,16 +51,19 @@ export const generateVoucher = async (data) => {
             direccion: 'Calle Real # 12-34, Santa Fe de Antioquia',
             telefono: '(604) 000-0000',
             correo: 'reservas@hotelbalconplaza.com',
+            sitioWeb: 'www.hotelbalconplaza.com',
+            datosBancarios: 'Banco: XXXXXX | Cuenta: Ahorros # XXXXXXXXX | Nequi: XXXXXXXXXX',
             politica: 'Este documento es un comprobante informativo. Los consumos adicionales se cobrarán al check-out.'
         };
 
         try {
             const configRes = await api.get('/hotel-config');
             if (configRes.data) {
+                console.log("[PDF-DEBUG] Datos del hotel cargados:", configRes.data);
                 hotelInfo = { ...hotelInfo, ...configRes.data };
             }
         } catch (configErr) {
-            console.warn("No se pudo cargar la configuración dinámica, usando valores por defecto.");
+            console.warn("[PDF-DEBUG] No se pudo cargar la configuración dinámica, usando valores por defecto.", configErr);
         }
 
         // 1. Cabecera (Header) con Logo

@@ -21,12 +21,12 @@ exports.getConfig = async (req, res) => {
 // Actualizar la configuración
 exports.updateConfig = async (req, res) => {
     try {
-        const { nombre, nit, direccion, telefono, correo, politica } = req.body;
+        const { nombre, nit, direccion, telefono, correo, politica, sitioWeb, datosBancarios } = req.body;
         
         let config = await HotelConfig.findOne();
         
         if (!config) {
-            config = new HotelConfig({ nombre, nit, direccion, telefono, correo, politica });
+            config = new HotelConfig({ nombre, nit, direccion, telefono, correo, politica, sitioWeb, datosBancarios });
         } else {
             config.nombre = nombre || config.nombre;
             config.nit = nit || config.nit;
@@ -34,6 +34,8 @@ exports.updateConfig = async (req, res) => {
             config.telefono = telefono || config.telefono;
             config.correo = correo || config.correo;
             config.politica = politica || config.politica;
+            config.sitioWeb = sitioWeb || config.sitioWeb;
+            config.datosBancarios = datosBancarios || config.datosBancarios;
             config.updatedAt = Date.now();
         }
         
