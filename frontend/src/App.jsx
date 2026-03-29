@@ -31,6 +31,7 @@ import CheckinPublico from './pages/CheckinPublico';
 import CheckinAdmin from './pages/CheckinAdmin';
 import Estadisticas from './pages/Estadisticas';
 import MapaHabitaciones from './pages/MapaHabitaciones';
+import HotelConfig from './pages/HotelConfig';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -91,6 +92,7 @@ const AppRoutes = () => {
                 <Route path="mantenimiento" element={<PrivateRoute><Mantenimiento /></PrivateRoute>} />
                 <Route path="checkin-digital" element={<PrivateRoute><CheckinAdmin /></PrivateRoute>} />
                 <Route path="estadisticas" element={<PrivateRoute><Estadisticas /></PrivateRoute>} />
+                <Route path="config" element={<PrivateRoute code="configuracion"><HotelConfig /></PrivateRoute>} />
             </Route>
             <Route path="/checkin" element={<CheckinPublico />} />
         </Routes>

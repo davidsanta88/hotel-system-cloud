@@ -82,7 +82,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Cat. Gastos/Ingresos', path: '/categorias-gastos', icon: <Package size={20} />, code: 'categorias_gastos' },
                 { name: 'Tipos de Registro', path: '/tipos-registro', icon: <ClipboardList size={20} />, code: 'tipos_registro' },
                 { name: 'Personal (Usuarios)', path: '/usuarios', icon: <UserCog size={20} />, code: 'usuarios' },
-                { name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
+                {name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
+                { name: 'Información Hotel', path: '/config', icon: <Building2 size={20} />, code: 'configuracion' },
                 { name: 'Notificaciones', path: '/notificaciones', icon: <Bell size={20} />, code: 'notificaciones' }
             ]
         }

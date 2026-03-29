@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
-import { Map, Plus, CheckCircle, XCircle, Search, Eye, Edit, Trash2, Phone, MessageCircle, Info, CreditCard, DollarSign } from 'lucide-react';
+import { Map, Plus, CheckCircle, XCircle, Search, Eye, Edit, Trash2, Phone, MessageCircle, Info, CreditCard, DollarSign, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RegistroModal from '../components/modals/RegistroModal';
 import DetallesRegistroModal from '../components/modals/DetallesRegistroModal';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
 import Pagination from '../components/common/Pagination';
+import { generateVoucher } from '../utils/voucherGenerator';
 
 const Registros = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -442,6 +443,28 @@ const Registros = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <button onClick={() => handleViewDetails(res.id, false)} className="text-gray-500 hover:text-gray-900 mx-1" title="Ver Detalles">
                                                     <Eye size={18} />
+                                                </button>
+                                                <button 
+                                                    onClick={async () => {
+                                                        await generateVoucher({
+                                                            cliente_nombre: res.nombre_cliente || res.cliente?.nombre || 'Huésped',
+                                                            identificacion: res.documento_cliente || res.cliente?.documento || 'N/A',
+                                                            telefono: res.telefono_cliente || res.cliente?.telefono || 'N/A',
+                                                            fecha_entrada: res.fecha_ingreso,
+                                                            fecha_salida: res.fecha_salida,
+                                                            habitaciones: [{
+                                                                numero: res.numero_habitacion,
+                                                                precio: res.total / Math.max(1, Math.ceil((new Date(res.fecha_salida) - new Date(res.fecha_ingreso)) / (1000 * 60 * 60 * 24)))
+                                                            }],
+                                                            valor_total: res.total,
+                                                            valor_abonado: res.valor_pagado,
+                                                            tipo: 'registro'
+                                                        });
+                                                    }} 
+                                                    className="text-slate-400 hover:text-slate-700 mx-1" 
+                                                    title="Imprimir Voucher PDF"
+                                                >
+                                                    <Printer size={18} />
                                                 </button>
                                                 {res.estado === 'activa' && (
                                                     <button onClick={() => handleViewDetails(res.id, true)} className="text-emerald-600 hover:text-emerald-900 mx-1" title="Registrar Pago / Abono">

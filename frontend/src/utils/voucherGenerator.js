@@ -44,6 +44,25 @@ export const generateVoucher = async (data) => {
         const margin = 20;
         const pageWidth = doc.internal.pageSize.getWidth();
         
+        // 0. Obtener configuración dinámica del hotel
+        let hotelInfo = {
+            nombre: 'HOTEL BALCÓN PLAZA',
+            nit: '900.000.000-1',
+            direccion: 'Calle Real # 12-34, Santa Fe de Antioquia',
+            telefono: '(604) 000-0000',
+            correo: 'reservas@hotelbalconplaza.com',
+            politica: 'Este documento es un comprobante informativo. Los consumos adicionales se cobrarán al check-out.'
+        };
+
+        try {
+            const configRes = await api.get('/hotel-config');
+            if (configRes.data) {
+                hotelInfo = { ...hotelInfo, ...configRes.data };
+            }
+        } catch (configErr) {
+            console.warn("No se pudo cargar la configuración dinámica, usando valores por defecto.");
+        }
+
         // 1. Cabecera (Header) con Logo
         let headerY = 30;
         try {
@@ -61,13 +80,13 @@ export const generateVoucher = async (data) => {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(20);
         doc.setTextColor(30, 41, 59); // color-slate-800
-        doc.text('HOTEL BALCÓN PLAZA', pageWidth / 2, headerY, { align: 'center' });
+        doc.text(hotelInfo.nombre.toUpperCase(), pageWidth / 2, headerY, { align: 'center' });
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139); // color-slate-500
-        doc.text('NIT: 900.000.000-1 | TEL: (604) 000-0000', pageWidth / 2, headerY + 7, { align: 'center' });
-        doc.text('Calle Real # 12-34, Santa Fe de Antioquia', pageWidth / 2, headerY + 12, { align: 'center' });
+        doc.text(`NIT: ${hotelInfo.nit} | TEL: ${hotelInfo.telefono}`, pageWidth / 2, headerY + 7, { align: 'center' });
+        doc.text(hotelInfo.direccion, pageWidth / 2, headerY + 12, { align: 'center' });
 
         doc.setDrawColor(226, 232, 240); // color-slate-200
         doc.line(margin, headerY + 20, pageWidth - margin, headerY + 20);
@@ -149,8 +168,8 @@ export const generateVoucher = async (data) => {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(148, 163, 184); // slate-400
-        doc.text('Este documento es un comprobante informativo. Generado automáticamente por el Sistema Balcón Plaza.', margin, 282);
-        doc.text('¡Gracias por su preferencia!', pageWidth / 2, 288, { align: 'center' });
+        doc.text(hotelInfo.politica, margin, 282, { maxWidth: pageWidth - (margin * 2) });
+        doc.text('¡Gracias por su preferencia!', pageWidth / 2, 289, { align: 'center' });
 
         // 8. Método de descarga robusto
         const safeName = `Voucher_${data.cliente_nombre.replace(/[^a-z0-9]/gi, '_').substring(0, 20)}.pdf`;

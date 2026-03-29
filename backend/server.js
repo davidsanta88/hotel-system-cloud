@@ -100,6 +100,7 @@ app.use('/api/reservas', require('./routes/reservas'));
 app.use('/api/notificaciones', require('./routes/notificaciones'));
 app.use('/api/mantenimiento', require('./routes/mantenimiento'));
 app.use('/api/estadisticas', require('./routes/estadisticas'));
+app.use('/api/hotel-config', require('./routes/hotelConfig'));
 
 // Global Error Handler for JSON responses
 app.use((err, req, res, next) => {
