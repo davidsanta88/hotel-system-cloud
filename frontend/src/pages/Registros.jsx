@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { format } from 'date-fns';
-import { Map, Plus, CheckCircle, XCircle, Search, Eye, Edit, Trash2, Phone, MessageCircle, Info, CreditCard, DollarSign, Printer } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { format, subMonths, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+import { Map, Plus, CheckCircle, XCircle, Search, Eye, Edit, Trash2, Phone, MessageCircle, Info, CreditCard, DollarSign, Printer, Download, FileSpreadsheet, FileText, Calendar } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import RegistroModal from '../components/modals/RegistroModal';
 import DetallesRegistroModal from '../components/modals/DetallesRegistroModal';
 import { formatCurrency, cleanNumericValue } from '../utils/format';
@@ -70,6 +72,8 @@ const Registros = () => {
 
     // Estados para búsqueda, filtrado y paginación
     const [searchTerm, setSearchTerm] = useState('');
+    const [fechaInicio, setFechaInicio] = useState(format(subMonths(new Date(), 1), 'yyyy-MM-dd'));
+    const [fechaFin, setFechaFin] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [columnFilters, setColumnFilters] = useState({
         huesped: '',
         habitacion: '',
@@ -82,6 +86,94 @@ const Registros = () => {
     const handleFilterChange = (column, value) => {
         setColumnFilters(prev => ({ ...prev, [column]: value }));
         setCurrentPage(1);
+    };
+
+    // Lógica de Filtrado Combinada (Búsqueda General + Filtros por Columna + Rango de Fechas)
+    const filteredRegistros = useMemo(() => {
+        return registros.filter(res => {
+            // 1. Rango de Fechas (sobre fecha_ingreso)
+            const fIngreso = parseISO(res.fecha_ingreso);
+            const start = startOfDay(parseISO(fechaInicio));
+            const end = endOfDay(parseISO(fechaFin));
+            const matchesDates = isWithinInterval(fIngreso, { start, end });
+            if (!matchesDates) return false;
+
+            // 2. Búsqueda General
+            const searchStr = searchTerm.toLowerCase();
+            const matchesSearch = !searchTerm || 
+                res.nombre_cliente?.toLowerCase().includes(searchStr) ||
+                res.numero_habitacion?.toString().includes(searchStr) ||
+                res.documento_cliente?.toLowerCase().includes(searchStr);
+            if (!matchesSearch) return false;
+
+            // 3. Filtros por Columna
+            const matchesHuesped = !columnFilters.huesped || res.nombre_cliente?.toLowerCase().includes(columnFilters.huesped.toLowerCase());
+            const matchesHabitacion = !columnFilters.habitacion || res.numero_habitacion?.toString().includes(columnFilters.habitacion);
+            const matchesFechas = !columnFilters.fechas || format(new Date(res.fecha_ingreso), 'dd/MM/yyyy').includes(columnFilters.fechas);
+            const matchesEstado = !columnFilters.estado || res.estado?.toLowerCase().includes(columnFilters.estado.toLowerCase());
+
+            return matchesHuesped && matchesHabitacion && matchesFechas && matchesEstado;
+        });
+    }, [registros, searchTerm, columnFilters, fechaInicio, fechaFin]);
+
+    const paginatedRegistros = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredRegistros.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredRegistros, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(filteredRegistros.length / itemsPerPage);
+
+    // Funciones de Exportación
+    const handleExportExcel = () => {
+        const dataToExport = filteredRegistros.map(res => ({
+            'Huésped': res.nombre_cliente,
+            'Documento': res.documento_cliente,
+            'Teléfono': res.telefono_cliente || 'N/A',
+            'Habitación': res.numero_habitacion,
+            'Entrada': format(new Date(res.fecha_ingreso), 'dd/MM/yyyy'),
+            'Salida': format(new Date(res.fecha_salida), 'dd/MM/yyyy'),
+            'Tipo': res.tipo_registro_nombre || 'Formal',
+            'Valor Estancia': res.total,
+            'Total Pagado': res.valor_pagado,
+            'Saldo': res.total - res.valor_pagado,
+            'Estado': res.estado.toUpperCase()
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Registros");
+        XLSX.writeFile(workbook, `Reporte_Registros_${fechaInicio}_al_${fechaFin}.xlsx`);
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        const tableColumn = ["Huésped", "Hab", "Entrada", "Salida", "Total", "Pagado", "Estado"];
+        const tableRows = filteredRegistros.map(res => [
+            res.nombre_cliente,
+            res.numero_habitacion,
+            format(new Date(res.fecha_ingreso), 'dd/MM/yyyy'),
+            format(new Date(res.fecha_salida), 'dd/MM/yyyy'),
+            `$${formatCurrency(res.total)}`,
+            `$${formatCurrency(res.valor_pagado)}`,
+            res.estado.toUpperCase()
+        ]);
+
+        doc.setFontSize(18);
+        doc.text("Reporte de Registro de Huéspedes", 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Rango: ${fechaInicio} al ${fechaFin}`, 14, 30);
+        doc.text(`Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 35);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [30, 41, 59] },
+        });
+
+        doc.save(`Reporte_Huespedes_${fechaInicio}_al_${fechaFin}.pdf`);
     };
 
     useEffect(() => {
@@ -112,43 +204,6 @@ const Registros = () => {
             setLoading(false);
         }
     };
-
-    // Filtrado y Paginación Local
-    const filteredRegistros = React.useMemo(() => {
-        return registros.filter(res => {
-            const searchLower = searchTerm.toLowerCase();
-            const cliente = (res.nombre_cliente || '').toLowerCase();
-            const habitacion = (res.numero_habitacion || '').toString();
-            
-            // Búsqueda global
-            const matchesGlobal = searchTerm === '' || 
-                cliente.includes(searchLower) || 
-                habitacion.includes(searchLower);
-
-            // Filtros por columna
-            const matchesHuesped = columnFilters.huesped === '' || 
-                cliente.includes(columnFilters.huesped.toLowerCase());
-                
-            const matchesHab = columnFilters.habitacion === '' || 
-                habitacion.includes(columnFilters.habitacion);
-                
-            const matchesFechas = columnFilters.fechas === '' || 
-                format(new Date(res.fecha_ingreso), 'dd/MM/yyyy').includes(columnFilters.fechas) ||
-                format(new Date(res.fecha_salida), 'dd/MM/yyyy').includes(columnFilters.fechas);
-                
-            const matchesEstado = columnFilters.estado === '' || 
-                (res.estado || '').toLowerCase().includes(columnFilters.estado.toLowerCase());
-
-            return matchesGlobal && matchesHuesped && matchesHab && matchesFechas && matchesEstado;
-        });
-    }, [registros, searchTerm, columnFilters]);
-
-    const paginatedRegistros = React.useMemo(() => {
-        return filteredRegistros.slice(
-            (currentPage - 1) * itemsPerPage,
-            currentPage * itemsPerPage
-        );
-    }, [filteredRegistros, currentPage, itemsPerPage]);
 
     const handleAutoEdit = (id) => {
         handleViewDetails(id, true);
@@ -296,37 +351,76 @@ const Registros = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-800 tracking-tight">Registro de Huéspedes</h1>
-                        <p className="text-gray-500 font-medium">Gestione los ingresos y el alojamiento diario</p>
-                    </div>
-                    
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Registro de Huéspedes</h1>
+                    <p className="text-slate-500 font-medium">Gestione los ingresos y el alojamiento diario</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
                     <button 
-                        onClick={() => navigate('/mapa-habitaciones')}
-                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-slate-200"
+                        onClick={() => navigate('/habitaciones/mapa')}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
                     >
-                        <Map size={20} />
-                        <span>Ir a Mapa de Habitaciones</span>
+                        <Map size={18} /> Ir a Mapa de Habitaciones
                     </button>
                 </div>
             </div>
 
-            {/* Barra de Búsqueda Global */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="relative max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Buscar por nombre de huésped o habitación..."
-                        className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-xs font-bold focus:ring-1 focus:ring-blue-400 outline-none placeholder:text-slate-300"
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setCurrentPage(1);
-                        }}
-                    />
+            {/* Barra de Filtros y Herramientas */}
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row items-center justify-between gap-6 transition-all hover:shadow-md">
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                    <div className="relative group w-full md:w-96">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                            <Search size={18} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre de huésped o habitación..."
+                            className="block w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-inner"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                        <div className="flex items-center gap-2 px-3 border-r border-slate-200">
+                            <Calendar size={14} className="text-slate-400" />
+                            <input 
+                                type="date" 
+                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0"
+                                value={fechaInicio}
+                                onChange={(e) => setFechaInicio(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 px-3">
+                            <input 
+                                type="date" 
+                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0"
+                                value={fechaFin}
+                                onChange={(e) => setFechaFin(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button 
+                        onClick={handleExportExcel}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-2xl font-black text-xs hover:bg-emerald-100 transition-all border border-emerald-100"
+                        title="Exportar a Excel"
+                    >
+                        <FileSpreadsheet size={16} /> Excel
+                    </button>
+                    <button 
+                        onClick={handleExportPDF}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-2xl font-black text-xs hover:bg-blue-100 transition-all border border-blue-100"
+                        title="Exportar a PDF"
+                    >
+                        <FileText size={16} /> PDF
+                    </button>
                 </div>
             </div>
 
