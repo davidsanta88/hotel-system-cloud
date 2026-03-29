@@ -206,26 +206,43 @@ export const generateVoucher = async (data) => {
             footerY += 4;
         }
  
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(71, 85, 105); 
-        doc.setFontSize(7.5); // Aumentado ligeramente para legibilidad
-        
+        doc.setFontSize(7.5); // Consistente con el resto
         const politicaText = (hotelInfo.politica || '').trim();
-        // Dividimos por párrafos para darles espacio
-        const paragraphs = politicaText.split('\n');
+        const paragraphs = politicaText.split('\n').filter(p => p.trim());
         
-        paragraphs.forEach(para => {
-            if (!para.trim()) return;
-            const lines = doc.splitTextToSize(para.trim(), pageWidth - (margin * 2));
-            
-            // Verificamos si necesitamos página nueva para este párrafo
-            checkPageBreak(lines.length * 3.5 + 2);
-            
-            doc.text(lines, margin, footerY);
-            footerY += (lines.length * 3.5) + 2; // Espacio entre párrafos
+        // Mapeamos los párrafos a filas para autoTable
+        // Buscamos el primer dos puntos ':' para separar el título del contenido
+        const policyRows = paragraphs.map(p => {
+            const colonIndex = p.indexOf(':');
+            if (colonIndex !== -1) {
+                return [p.substring(0, colonIndex + 1), p.substring(colonIndex + 1).trim()];
+            }
+            return ['', p]; // Si no tiene dos puntos, lo dejamos todo en la segunda columna
         });
-        
-        footerY += 4;
+
+        autoTable(doc, {
+            startY: footerY,
+            body: policyRows,
+            theme: 'plain',
+            styles: { 
+                fontSize: 7.5, 
+                cellPadding: 0.5,
+                textColor: [71, 85, 105],
+                font: 'helvetica',
+                valign: 'top',
+                overflow: 'linebreak'
+            },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 40 }, // Título en negrita
+                1: { fontStyle: 'italic', cellWidth: 'auto' } // Contenido en cursiva
+            },
+            margin: { left: margin, right: margin },
+            didDrawPage: (data) => {
+                footerY = data.cursor.y;
+            }
+        });
+
+        footerY = doc.lastAutoTable.finalY + 8;
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9.5);
         doc.setTextColor(30, 41, 59);
