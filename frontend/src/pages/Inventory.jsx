@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
-import { Package, History, AlertTriangle, Plus, Trash2, Edit, PackagePlus } from 'lucide-react';
+import { Package, History, AlertTriangle, Plus, Trash2, Edit, PackagePlus, Search, FileSpreadsheet, FileText, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { formatCurrency, cleanNumericValue, getImageUrl } from '../utils/format';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -128,31 +131,62 @@ const Inventory = () => {
         }
     };
 
-    const exportToCSV = () => {
-        const headers = ["Producto", "Categoría", "Precio Compra", "Precio Venta", "Margen", "Stock", "Estado"];
-        const rows = filteredProducts.map(p => [
+    // Lógica de Filtrado con useMemo
+    const filteredProducts = useMemo(() => {
+        return productos.filter(p => {
+            const searchStr = `${p.nombre} ${p.categoria}`.toLowerCase();
+            return searchStr.includes(searchTerm.toLowerCase());
+        });
+    }, [productos, searchTerm]);
+
+    // Funciones de Exportación
+    const handleExportExcel = () => {
+        const dataToExport = filteredProducts.map(p => ({
+            'Producto': p.nombre,
+            'Categoría': p.categoria,
+            'Descripción': p.descripcion || '',
+            'Costo': p.precio_compra,
+            'Precio Venta': p.precio,
+            'Margen ($)': p.margen,
+            'Margen (%)': `${Math.round((p.margen / (p.precio || 1)) * 100)}%`,
+            'Stock Actual': p.stock,
+            'Stock Mínimo': p.stock_minimo,
+            'Estado': p.activo ? 'ACTIVO' : 'INACTIVO'
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+        XLSX.writeFile(workbook, `Inventario_Productos_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        const tableColumn = ["Producto", "Categoría", "Venta", "Stock", "Estado"];
+        const tableRows = filteredProducts.map(p => [
             p.nombre,
             p.categoria,
-            p.precio_compra,
-            p.precio,
-            p.margen,
+            `$${formatCurrency(p.precio)}`,
             p.stock,
-            p.activo ? "Activo" : "Inactivo"
+            p.activo ? 'ACTIVO' : 'INACTIVO'
         ]);
 
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8
-        csvContent += headers.join(",") + "\n";
-        rows.forEach(row => {
-            csvContent += row.join(",") + "\n";
+        doc.setFontSize(18);
+        doc.text("Inventario de Productos", 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Total Productos: ${filteredProducts.length}`, 14, 30);
+        doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 35);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'grid',
+            headStyles: { fillColor: [15, 23, 42] },
         });
 
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `productos_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        doc.save(`Inventario_${new Date().getTime()}.pdf`);
     };
 
     const handleSubmit = async (e) => {
@@ -273,70 +307,76 @@ const Inventory = () => {
         setShowModal(true);
     };
 
-    const filteredProducts = productos.filter(p => {
-        const searchStr = `${p.nombre} ${p.categoria}`.toLowerCase();
-        return searchStr.includes(searchTerm.toLowerCase());
-    });
+    // Eliminado filtrado local duplicado, ahora usa filteredProducts con useMemo
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Registro de Productos</h1>
-                    <p className="text-gray-500">Gestione los productos, stock y alertas de la tienda</p>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Catálogo de Productos</h1>
+                    <p className="text-slate-500 font-medium">Gestione el inventario y stock de la tienda</p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 items-center w-full md:w-auto">
-                    {view === 'products' && (
-                        <div className="relative w-full sm:w-64">
-                            <input 
-                                type="text" 
-                                placeholder="Buscar producto..." 
-                                className="input-field pl-4 pr-10 py-2 w-full text-sm"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    )}
-                    <div className="flex bg-gray-100 p-1 rounded-xl w-fit shrink-0">
-                        <button onClick={() => setView('products')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'products' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}>Productos</button>
-                        <button onClick={() => setView('movements')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'movements' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}>Movimientos</button>
-                        <button onClick={() => setView('alerts')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${view === 'alerts' ? 'bg-white shadow text-primary-600' : 'text-gray-500 hover:text-gray-700'}`}>Alertas Stock</button>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    {view === 'products' && (
-                        <button onClick={exportToCSV} className="btn-secondary flex items-center space-x-2">
-                            <span>CSV / Excel</span>
-                        </button>
-                    )}
+                
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     {canEdit && view === 'products' && (
                         <button onClick={() => { 
                             setEditingProduct(null); 
-                            setFormData({
-                                nombre:'', 
-                                categoria:'', 
-                                precio_compra: '',
-                                precio:'', 
-                                margen: '',
-                                stock:'', 
-                                stock_minimo:'', 
-                                descripcion:'',
-                                tipo_inventario: 'venta'
-                            }); 
+                            setFormData({nombre:'', categoria:'', precio_compra: '', precio:'', margen: '', stock:'', stock_minimo:'', descripcion:'', tipo_inventario: 'venta'}); 
                             setSelectedFile(null);
                             setShowModal(true); 
-                        }} className="btn-primary flex items-center space-x-2">
-                            <Plus size={20} />
-                            <span>Nuevo</span>
+                        }} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                            <Plus size={18} /> Nuevo Producto
+                        </button>
+                    )}
+                    {canEdit && view === 'movements' && (
+                        <button onClick={() => setShowMovementModal(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                            <PackagePlus size={18} /> Nuevo Movimiento
                         </button>
                     )}
                 </div>
-                {canEdit && view === 'movements' && (
-                    <button onClick={() => setShowMovementModal(true)} className="btn-primary flex items-center space-x-2">
-                        <PackagePlus size={20} />
-                        <span>Nuevo Movimiento</span>
-                    </button>
-                )}
+            </div>
+
+            {/* Barra de Filtros y Herramientas */}
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6 flex flex-col lg:flex-row items-center justify-between gap-6 transition-all hover:shadow-md">
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+                    <div className="relative group w-full md:w-80">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                            <Search size={18} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Buscar producto o categoría..."
+                            className="block w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-inner"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex bg-slate-100 p-1 rounded-2xl w-full md:w-auto">
+                        <button onClick={() => setView('products')} className={`flex-1 md:px-4 py-2 rounded-xl text-xs font-black transition-all ${view === 'products' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>PRODUCTOS</button>
+                        <button onClick={() => setView('movements')} className={`flex-1 md:px-4 py-2 rounded-xl text-xs font-black transition-all ${view === 'movements' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>MOVIMIENTOS</button>
+                        <button onClick={() => setView('alerts')} className={`flex-1 md:px-4 py-2 rounded-xl text-xs font-black transition-all ${view === 'alerts' ? 'bg-white shadow-sm text-red-600' : 'text-slate-500 hover:text-slate-700'}`}>ALERTAS</button>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full lg:w-auto">
+                    {view === 'products' && (
+                        <>
+                            <button 
+                                onClick={handleExportExcel}
+                                className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-2xl font-black text-xs hover:bg-emerald-100 transition-all border border-emerald-100"
+                            >
+                                <FileSpreadsheet size={16} /> Excel
+                            </button>
+                            <button 
+                                onClick={handleExportPDF}
+                                className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-2xl font-black text-xs hover:bg-blue-100 transition-all border border-blue-100"
+                            >
+                                <FileText size={16} /> PDF
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
             {view === 'products' || view === 'alerts' ? (

@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { Plus, Edit2, Trash2, Search, MessageSquare } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, MessageSquare, FileSpreadsheet, FileText, UserPlus, Phone, Mail, MapPin } from 'lucide-react';
 import Select from 'react-select';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { usePermissions } from '../hooks/usePermissions';
 import Pagination from '../components/common/Pagination';
+import { formatCurrency } from '../utils/format';
 
 const Clientes = () => {
     const { user } = useContext(AuthContext);
@@ -128,33 +132,83 @@ const Clientes = () => {
         setCurrentPage(1);
     };
 
-    const filteredClientes = clientes.filter(c => {
-        // Búsqueda global
-        const matchesGlobal = searchTerm === '' || 
-            c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            c.documento.includes(searchTerm);
-        
-        // Filtros por columna
-        const matchesDocumento = columnFilters.documento === '' || 
-            c.documento.toLowerCase().includes(columnFilters.documento.toLowerCase());
+    // Lógica de Filtrado Local con useMemo
+    const filteredClientes = useMemo(() => {
+        return clientes.filter(c => {
+            // 1. Búsqueda global
+            const searchStr = searchTerm.toLowerCase();
+            const matchesGlobal = searchTerm === '' || 
+                c.nombre?.toLowerCase().includes(searchStr) || 
+                c.documento?.toLowerCase().includes(searchStr);
             
-        const matchesNombre = columnFilters.nombre === '' || 
-            c.nombre.toLowerCase().includes(columnFilters.nombre.toLowerCase());
-            
-        const matchesTelefono = columnFilters.telefono === '' || 
-            (c.telefono || '').toLowerCase().includes(columnFilters.telefono.toLowerCase());
-            
-        const matchesMunicipio = columnFilters.municipio === '' || 
-            (c.municipio_origen_nombre || '').toLowerCase().includes(columnFilters.municipio.toLowerCase());
+            // 2. Filtros por columna
+            const matchesDocumento = columnFilters.documento === '' || 
+                c.documento?.toLowerCase().includes(columnFilters.documento.toLowerCase());
+                
+            const matchesNombre = columnFilters.nombre === '' || 
+                c.nombre?.toLowerCase().includes(columnFilters.nombre.toLowerCase());
+                
+            const matchesTelefono = columnFilters.telefono === '' || 
+                (c.telefono || '').toLowerCase().includes(columnFilters.telefono.toLowerCase());
+                
+            const matchesMunicipio = columnFilters.municipio === '' || 
+                (c.municipio_origen_nombre || '').toLowerCase().includes(columnFilters.municipio.toLowerCase());
 
-        return matchesGlobal && matchesDocumento && matchesNombre && matchesTelefono && matchesMunicipio;
-    });
+            return matchesGlobal && matchesDocumento && matchesNombre && matchesTelefono && matchesMunicipio;
+        });
+    }, [clientes, searchTerm, columnFilters]);
 
-    // Lógica para paginar los clientes filtrados
-    const paginatedClientes = filteredClientes.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+    const paginatedClientes = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredClientes.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredClientes, currentPage, itemsPerPage]);
+
+    // Funciones de Exportación
+    const handleExportExcel = () => {
+        const dataToExport = filteredClientes.map(c => ({
+            'Nombre': c.nombre?.toUpperCase(),
+            'Identificación': c.documento,
+            'Tipo Doc': c.tipo_documento || 'CC',
+            'Teléfono': c.telefono || 'N/A',
+            'Email': c.email || 'N/A',
+            'Ciudad/Municipio': c.municipio_origen_nombre || 'N/A',
+            'Observaciones': c.observaciones || ''
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
+        XLSX.writeFile(workbook, `Reporte_Clientes_${new Date().toISOString().split('T')[0]}.xlsx`);
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        const tableColumn = ["Nombre", "Documento", "Teléfono", "Ciudad", "Email"];
+        const tableRows = filteredClientes.map(c => [
+            c.nombre?.toUpperCase(),
+            c.documento,
+            c.telefono || 'N/A',
+            c.municipio_origen_nombre || 'N/A',
+            c.email || 'N/A'
+        ]);
+
+        doc.setFontSize(18);
+        doc.text("Directorio de Clientes", 14, 22);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Total Clientes: ${filteredClientes.length}`, 14, 30);
+        doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 35);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [71, 85, 105] },
+        });
+
+        doc.save(`Reporte_Clientes_${new Date().getTime()}.pdf`);
+    };
 
     // Opciones para el buscador de municipios
     const municipioOptions = municipios
@@ -195,12 +249,17 @@ const Clientes = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-800">Gestión de Clientes</h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Directorio de Clientes</h1>
+                    <p className="text-slate-500 font-medium">Administre la base de datos de sus huéspedes</p>
+                </div>
                 {canEdit && (
-                    <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2">
-                        <Plus size={20} />
-                        Nuevo Cliente
+                    <button 
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                    >
+                        <UserPlus size={18} /> Nuevo Cliente
                     </button>
                 )}
             </div>
