@@ -19,6 +19,7 @@ const Gastos = () => {
     const [fechaFin, setFechaFin] = useState(new Date().toISOString().split('T')[0]);
     const [categoriaFilter, setCategoriaFilter] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [mediosPago, setMediosPago] = useState([]);
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -29,6 +30,7 @@ const Gastos = () => {
         fecha_gasto: new Date().toISOString().split('T')[0],
         notas: '',
         tipo: 'Gasto',
+        medioPago: 'EFECTIVO',
         imagen: null
     });
 
@@ -36,6 +38,11 @@ const Gastos = () => {
         // Cargar categorias activas
         api.get('/categorias-gastos').then(res => {
             setCategorias(res.data.filter(c => c.activo));
+        }).catch(() => {});
+
+        // Cargar medios de pago
+        api.get('/medios-pago').then(res => {
+            setMediosPago(res.data);
         }).catch(() => {});
         
         fetchGastos();
@@ -61,6 +68,7 @@ const Gastos = () => {
                 monto: parseFloat(g.monto) || 0,
                 fecha_gasto: g.fecha || g.fecha_gasto,
                 notas: g.observaciones || g.notas || '',
+                medioPago: g.medioPago || 'EFECTIVO',
                 imagen_url: g.imagen_url || g.comprobante_url || '',
                 UsuarioCreacion: g.usuario?.nombre || 'Sist.'
             }));
@@ -88,6 +96,7 @@ const Gastos = () => {
                 fecha_gasto: item.fecha_gasto ? item.fecha_gasto.split('T')[0] : new Date().toISOString().split('T')[0],
                 notas: item.notas || '',
                 tipo: item.tipo || 'Gasto',
+                medioPago: item.medioPago || 'EFECTIVO',
                 imagen: null,
                 imagen_url: item.imagen_url
             });
@@ -99,6 +108,7 @@ const Gastos = () => {
                 fecha_gasto: new Date().toISOString().split('T')[0],
                 notas: '',
                 tipo: 'Gasto',
+                medioPago: 'EFECTIVO',
                 imagen: null
             });
         }
@@ -115,6 +125,7 @@ const Gastos = () => {
             formData.append('fecha_gasto', current.fecha_gasto);
             formData.append('tipo', current.tipo);
             if (current.notas) formData.append('notas', current.notas);
+            if (current.medioPago) formData.append('medioPago', current.medioPago);
             if (current.imagen) formData.append('imagen', current.imagen);
 
             if (current.id) {
@@ -430,6 +441,23 @@ const Gastos = () => {
                                     value={current.notas}
                                     onChange={e => setCurrent({...current, notas: e.target.value})}
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-1">Caja / Medio de Pago *</label>
+                                <select
+                                    required
+                                    className="input-field font-medium text-gray-700"
+                                    value={current.medioPago}
+                                    onChange={e => setCurrent({...current, medioPago: e.target.value})}
+                                >
+                                    <option value="EFECTIVO">EFECTIVO (CAJA)</option>
+                                    <option value="NEQUI">NEQUI</option>
+                                    <option value="TRANSFERENCIA BANCOLOMBIA">TRANSFERENCIA BANCOLOMBIA</option>
+                                    {mediosPago.filter(m => !['EFECTIVO', 'NEQUI', 'TRANSFERENCIA BANCOLOMBIA'].includes(m.nombre.toUpperCase())).map(m => (
+                                        <option key={m.id} value={m.nombre.toUpperCase()}>{m.nombre.toUpperCase()}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div>

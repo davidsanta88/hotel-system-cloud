@@ -3,6 +3,8 @@ const Registro = require('../models/Registro');
 const Gasto = require('../models/Gasto');
 const Habitacion = require('../models/Habitacion');
 const Producto = require('../models/Producto');
+const Reserva = require('../models/Reserva');
+const Usuario = require('../models/Usuario');
 
 exports.getReporteVentas = async (req, res) => {
     try {
@@ -328,3 +330,143 @@ exports.getIngresosHospedaje = async (req, res) => {
     }
 };
 
+exports.getCuadreCaja = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const startDate = inicio ? new Date(inicio) : new Date();
+        if (!inicio) startDate.setHours(0,0,0,0);
+        
+        const endDate = fin ? new Date(fin + 'T23:59:59') : new Date();
+        if (!fin) endDate.setHours(23,59,59,999);
+
+        // 1. Pagos de Registros (Hospedajes)
+        const pagosRegistros = await Registro.find({
+            "pagos.fecha": { $gte: startDate, $lte: endDate }
+        }).populate('cliente', 'nombre').populate('habitacion', 'numero');
+
+        let transacciones = [];
+
+        pagosRegistros.forEach(reg => {
+            reg.pagos.forEach(pago => {
+                if (pago.fecha >= startDate && pago.fecha <= endDate) {
+                    transacciones.push({
+                        fecha: pago.fecha,
+                        tipo: 'HOSPEDAJE',
+                        descripcion: `Pago Hab ${reg.habitacion?.numero || 'S/N'} - ${reg.cliente?.nombre || 'Huésped'}`,
+                        usuario: pago.usuario_nombre || reg.usuarioCreacion,
+                        medioPago: (pago.medio || 'EFECTIVO').toUpperCase(),
+                        monto: pago.monto,
+                        id_ref: reg._id
+                    });
+                }
+            });
+        });
+
+        // 2. Abonos de Reservas
+        const abonosReservas = await Reserva.find({
+            "abonos.fecha": { $gte: startDate, $lte: endDate }
+        }).populate('cliente', 'nombre');
+
+        abonosReservas.forEach(reserva => {
+            reserva.abonos.forEach(abono => {
+                if (abono.fecha >= startDate && abono.fecha <= endDate) {
+                    transacciones.push({
+                        fecha: abono.fecha,
+                        tipo: 'RESERVA',
+                        descripcion: `Abono Reserva - ${reserva.cliente?.nombre || 'Cliente'}`,
+                        usuario: abono.usuario_nombre || reserva.usuarioCreacion,
+                        medioPago: (abono.medio_pago || 'EFECTIVO').toUpperCase(),
+                        monto: abono.monto,
+                        id_ref: reserva._id
+                    });
+                }
+            });
+        });
+
+        // 3. Ventas de Productos
+        const ventas = await Venta.find({
+            fecha: { $gte: startDate, $lte: endDate }
+        }).populate('empleado', 'nombre');
+
+        ventas.forEach(venta => {
+            transacciones.push({
+                fecha: venta.fecha,
+                tipo: 'VENTA',
+                descripcion: `Venta de productos`,
+                usuario: venta.empleado?.nombre || venta.usuarioCreacion,
+                medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
+                monto: venta.total,
+                id_ref: venta._id
+            });
+        });
+
+        // 4. Gastos e Ingresos manuales
+        const gastos = await Gasto.find({
+            fecha: { $gte: startDate, $lte: endDate }
+        }).populate('categoria').populate('usuario', 'nombre');
+
+        gastos.forEach(gasto => {
+            const esIngreso = gasto.categoria?.tipo === 'Ingreso';
+            transacciones.push({
+                fecha: gasto.fecha,
+                tipo: esIngreso ? 'INGRESO MANUAL' : 'GASTO',
+                descripcion: gasto.descripcion,
+                usuario: gasto.usuario?.nombre || 'Sistema',
+                medioPago: (gasto.medioPago || 'EFECTIVO').toUpperCase(),
+                monto: esIngreso ? gasto.monto : -gasto.monto,
+                id_ref: gasto._id
+            });
+        });
+
+        // Estandarizar nombres de medios de pago según pedido del usuario
+        transacciones = transacciones.map(t => {
+            let medio = t.medioPago;
+            if (medio.includes('BANCOLOMBIA')) medio = 'TRANSFERENCIA BANCOLOMBIA';
+            if (medio.includes('NEQUI')) medio = 'NEQUI';
+            if (medio.includes('EFECTIVO') || medio === 'CASH') medio = 'EFECTIVO';
+            return { ...t, medioPago: medio };
+        });
+
+        // Ordenar por fecha desc
+        transacciones.sort((a, b) => b.fecha - a.fecha);
+
+        // Calcular Resumen
+        const resumen = {
+            total_nequi: 0,
+            total_bancolombia: 0,
+            total_efectivo: 0,
+            total_otros: 0,
+            ingresos_totales: 0,
+            egresos_totales: 0,
+            balance_final: 0
+        };
+
+        transacciones.forEach(t => {
+            if (t.monto > 0) {
+                resumen.ingresos_totales += t.monto;
+                if (t.medioPago === 'NEQUI') resumen.total_nequi += t.monto;
+                else if (t.medioPago === 'TRANSFERENCIA BANCOLOMBIA') resumen.total_bancolombia += t.monto;
+                else if (t.medioPago === 'EFECTIVO') resumen.total_efectivo += t.monto;
+                else resumen.total_otros += t.monto;
+            } else {
+                resumen.egresos_totales += Math.abs(t.monto);
+                // Los gastos restan del efectivo por defecto si no se especifica? 
+                // En realidad dependen del medio de pago del gasto.
+                if (t.medioPago === 'NEQUI') resumen.total_nequi += t.monto;
+                else if (t.medioPago === 'TRANSFERENCIA BANCOLOMBIA') resumen.total_bancolombia += t.monto;
+                else if (t.medioPago === 'EFECTIVO') resumen.total_efectivo += t.monto;
+                else resumen.total_otros += t.monto;
+            }
+        });
+
+        resumen.balance_final = resumen.ingresos_totales - resumen.egresos_totales;
+
+        res.json({
+            filtros: { inicio: startDate, fin: endDate },
+            transacciones,
+            resumen
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

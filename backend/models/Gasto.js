@@ -6,6 +6,8 @@ const gastoSchema = new mongoose.Schema({
     categoria: { type: mongoose.Schema.Types.ObjectId, ref: 'CategoriaGasto' },
     fecha: { type: Date, default: Date.now },
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
+    medioPago: String, // Nequi, Transferencia Bancolombia, Efectivo
+    observaciones: String,
     periodo: String, // Por ejemplo "2024-03"
     comprobante_url: String
 });

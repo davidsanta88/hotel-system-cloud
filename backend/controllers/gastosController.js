@@ -39,7 +39,7 @@ const gastosController = {
 
     createGasto: async (req, res) => {
         try {
-            const { concepto, categoria_id, monto, notas, fecha_gasto } = req.body;
+            const { concepto, categoria_id, monto, notas, fecha_gasto, medioPago } = req.body;
             
             let comprobante_url = null;
             if (req.file) {
@@ -55,6 +55,7 @@ const gastosController = {
                 observaciones: notas,
                 fecha: fecha_gasto || Date.now(),
                 usuario: req.userId,
+                medioPago: medioPago || 'EFECTIVO',
                 comprobante_url
             });
             await newGasto.save();
@@ -74,6 +75,7 @@ const gastosController = {
             if (updateData.notas) updateData.observaciones = updateData.notas;
             if (updateData.fecha_gasto) updateData.fecha = updateData.fecha_gasto;
             if (updateData.categoria_id) updateData.categoria = updateData.categoria_id;
+            // medioPago remains in updateData if provided
 
             if (req.file) {
                 const result = await streamUpload(req.file.buffer);

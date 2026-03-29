@@ -32,6 +32,7 @@ import CheckinAdmin from './pages/CheckinAdmin';
 import Estadisticas from './pages/Estadisticas';
 import MapaHabitaciones from './pages/MapaHabitaciones';
 import HotelConfig from './pages/HotelConfig';
+import CuadreCaja from './pages/CuadreCaja';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -80,6 +81,7 @@ const AppRoutes = () => {
                 <Route path="gastos" element={<PrivateRoute code="gastos"><Gastos /></PrivateRoute>} />
                 <Route path="reservas" element={<PrivateRoute code="reservas"><Reservas /></PrivateRoute>} />
                 <Route path="reportes" element={<PrivateRoute code="reportes"><Reports /></PrivateRoute>} />
+                <Route path="cuadre-caja" element={<PrivateRoute code="reportes"><CuadreCaja /></PrivateRoute>} />
                 <Route path="tienda" element={<PrivateRoute code="tienda"><Store /></PrivateRoute>} />
                 <Route path="inventario" element={<PrivateRoute code="inventario"><Inventory /></PrivateRoute>} />
                 <Route path="usuarios" element={<PrivateRoute code="usuarios"><Usuarios /></PrivateRoute>} />

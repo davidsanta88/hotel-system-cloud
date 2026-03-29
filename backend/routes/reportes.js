@@ -11,5 +11,6 @@ router.get('/ingresos-manuales', verifyToken, isAdmin, reportesController.getIng
 router.get('/gastos-categoria', verifyToken, isAdmin, reportesController.getGastosPorCategoria);
 router.get('/ventas-mensuales', verifyToken, isAdmin, reportesController.getVentasMensuales);
 router.get('/ingresos-hospedaje', verifyToken, isAdmin, reportesController.getIngresosHospedaje);
+router.get('/cuadre-caja', verifyToken, isAdmin, reportesController.getCuadreCaja);
 
 module.exports = router;
