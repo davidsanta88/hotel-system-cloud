@@ -106,26 +106,40 @@ export const generateVoucher = async (data) => {
         doc.text(titleText, margin, startInfoY);
  
         // 3. Información del Cliente
-        doc.setFontSize(9); // Reducido de 10
+        doc.setFontSize(9);
         doc.setTextColor(71, 85, 105);
+        doc.setFont('helvetica', 'bold');
         doc.text('DATOS DEL HUÉSPED', margin, startInfoY + 8);
-        doc.setFont('helvetica', 'normal');
+        
         const nombreCliente = (data.cliente_nombre || data.cliente?.nombre || 'Huésped').toUpperCase();
         const idCliente = data.identificacion || data.cliente?.documento || 'N/A';
         const telCliente = data.telefono || data.cliente?.telefono || 'N/A';
 
-        doc.text(`Nombre: ${nombreCliente}`, margin, startInfoY + 14);
-        doc.text(`Identificación: ${idCliente}`, margin, startInfoY + 19);
-        doc.text(`Teléfono: ${telCliente}`, margin, startInfoY + 24);
+        // Estilo mixto: Tag en Negrita, Valor en Normal
+        const renderLabeledValue = (label, value, x, y) => {
+            doc.setFont('helvetica', 'bold');
+            doc.text(label, x, y);
+            const labelWidth = doc.getTextWidth(label + ' ');
+            doc.setFont('helvetica', 'normal');
+            doc.text(value, x + labelWidth, y);
+        };
 
-        // 4. Información de la Estancia - ACTUALIZADO
+        renderLabeledValue('Nombre:', nombreCliente, margin, startInfoY + 14);
+        renderLabeledValue('Identificación:', idCliente, margin, startInfoY + 19);
+        renderLabeledValue('Teléfono:', telCliente, margin, startInfoY + 24);
+
+        // 4. Información de la Estancia
+        const estanciaX = pageWidth / 2 + 10;
         doc.setFont('helvetica', 'bold');
-        doc.text('DETALLES DEL HOSPEDAJE', pageWidth / 2 + 10, startInfoY + 10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Check-in: ${moment.utc(data.fecha_entrada).format('DD/MM/YYYY')}`, pageWidth / 2 + 10, startInfoY + 17);
-        doc.text(`Check-out: ${moment.utc(data.fecha_salida).format('DD/MM/YYYY')}`, pageWidth / 2 + 10, startInfoY + 22);
+        doc.text('DETALLES DEL HOSPEDAJE', estanciaX, startInfoY + 8);
+        
+        const checkInStr = moment.utc(data.fecha_entrada).format('DD/MM/YYYY');
+        const checkOutStr = moment.utc(data.fecha_salida).format('DD/MM/YYYY');
         const noches = Math.max(1, moment.utc(data.fecha_salida).diff(moment.utc(data.fecha_entrada), 'days'));
-        doc.text(`Duración: ${noches} Noches`, pageWidth / 2 + 10, startInfoY + 27);
+
+        renderLabeledValue('Check-in:', checkInStr, estanciaX, startInfoY + 14);
+        renderLabeledValue('Check-out:', checkOutStr, estanciaX, startInfoY + 19);
+        renderLabeledValue('Duración:', `${noches} Noches`, estanciaX, startInfoY + 24);
 
         // 5. Tabla de Habitaciones
         const headers = [['HAB.', 'PRECIO POR NOCHE', 'SUBTOTAL']];
