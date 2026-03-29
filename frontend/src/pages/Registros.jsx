@@ -168,7 +168,7 @@ const Registros = () => {
         const totalEstancia = filteredRegistros.reduce((acc, res) => acc + (res.total || 0), 0);
         const totalPagado = filteredRegistros.reduce((acc, res) => acc + (res.valor_pagado || 0), 0);
 
-        const tableColumn = ["Huésped", "Hab", "Entrada", "Salida", "Total", "Pagado", "Estado"];
+        const tableColumn = ["Huésped", "Hab", "Entrada", "Salida", "Total", "Pagado", "Saldo", "Estado"];
         const tableRows = filteredRegistros.map(res => [
             res.nombre_cliente,
             res.numero_habitacion,
@@ -176,7 +176,8 @@ const Registros = () => {
             format(new Date(res.fecha_salida), 'dd/MM/yyyy'),
             `$${formatCurrency(res.total)}`,
             `$${formatCurrency(res.valor_pagado)}`,
-            res.estado.toUpperCase()
+            `$${formatCurrency((res.total || 0) - (res.valor_pagado || 0))}`,
+            res.status?.toUpperCase() || res.estado?.toUpperCase() || ''
         ]);
 
         doc.setFontSize(18);
@@ -197,6 +198,7 @@ const Registros = () => {
                 "",
                 `$${formatCurrency(totalEstancia)}`,
                 `$${formatCurrency(totalPagado)}`,
+                `$${formatCurrency(totalEstancia - totalPagado)}`,
                 ""
             ]],
             theme: 'striped',
