@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { Plus, Edit2, Trash2, Search, MessageSquare, FileSpreadsheet, FileText, UserPlus, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, MessageSquare, FileSpreadsheet, FileText, UserPlus, Phone, Mail, MapPin, Calendar, Filter } from 'lucide-react';
 import Select from 'react-select';
 import Swal from 'sweetalert2';
+import { format, subMonths, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -18,6 +19,9 @@ const Clientes = () => {
     const [municipios, setMunicipios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [fechaInicio, setFechaInicio] = useState(format(subMonths(new Date(), 1), 'yyyy-MM-dd'));
+    const [fechaFin, setFechaFin] = useState(format(new Date(), 'yyyy-MM-dd'));
+    
     const [showModal, setShowModal] = useState(false);
     const [currentCliente, setCurrentCliente] = useState({
         nombre: '',
@@ -135,11 +139,20 @@ const Clientes = () => {
     // Lógica de Filtrado Local con useMemo
     const filteredClientes = useMemo(() => {
         return clientes.filter(c => {
+            // 0. Rango de Fechas (sobre fechaCreacion)
+            // Usamos fechaCreacion o fallback a la fecha actual si no existe
+            const fCreacion = parseISO(c.fechaCreacion || new Date().toISOString());
+            const start = startOfDay(parseISO(fechaInicio));
+            const end = endOfDay(parseISO(fechaFin));
+            const matchesDates = isWithinInterval(fCreacion, { start, end });
+            if (!matchesDates) return false;
+
             // 1. Búsqueda global
             const searchStr = searchTerm.toLowerCase();
             const matchesGlobal = searchTerm === '' || 
                 c.nombre?.toLowerCase().includes(searchStr) || 
                 c.documento?.toLowerCase().includes(searchStr);
+            if (!matchesGlobal) return false;
             
             // 2. Filtros por columna
             const matchesDocumento = columnFilters.documento === '' || 
@@ -154,9 +167,9 @@ const Clientes = () => {
             const matchesMunicipio = columnFilters.municipio === '' || 
                 (c.municipio_origen_nombre || '').toLowerCase().includes(columnFilters.municipio.toLowerCase());
 
-            return matchesGlobal && matchesDocumento && matchesNombre && matchesTelefono && matchesMunicipio;
+            return matchesDocumento && matchesNombre && matchesTelefono && matchesMunicipio;
         });
-    }, [clientes, searchTerm, columnFilters]);
+    }, [clientes, searchTerm, columnFilters, fechaInicio, fechaFin]);
 
     const paginatedClientes = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -264,20 +277,48 @@ const Clientes = () => {
                 )}
             </div>
 
-            <div className="card">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <div className="relative w-64">
+            {/* Barra de Filtros y Herramientas */}
+            <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                    <div className="relative group w-full md:w-80">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                            <Search size={18} />
+                        </div>
                         <input
                             type="text"
-                            placeholder="Buscar por nombre o documento..."
-                            className="input-field pl-10"
+                            placeholder="Buscar por nombre o identificación..."
+                            className="block w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-inner"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                        <div className="flex items-center gap-2 px-3 border-r border-slate-200">
+                            <Calendar size={14} className="text-slate-400" />
+                            <input 
+                                type="date" 
+                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0"
+                                value={fechaInicio}
+                                onChange={(e) => setFechaInicio(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 px-3">
+                            <input 
+                                type="date" 
+                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0"
+                                value={fechaFin}
+                                onChange={(e) => setFechaFin(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
-                
+
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                </div>
+            </div>
+
+            <div className="card">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-slate-50 border-b border-slate-100">
