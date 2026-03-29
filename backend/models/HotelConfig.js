@@ -26,6 +26,10 @@ const HotelConfigSchema = new mongoose.Schema({
         required: true,
         default: 'reservas@hotelbalconplaza.com'
     },
+    sitioWeb: {
+        type: String,
+        default: 'www.hotelbalconplaza.com'
+    },
     politica: {
         type: String,
         required: true,

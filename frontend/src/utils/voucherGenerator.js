@@ -86,7 +86,7 @@ export const generateVoucher = async (data) => {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100, 116, 139); // color-slate-500
         doc.text(`NIT: ${hotelInfo.nit} | TEL: ${hotelInfo.telefono}`, pageWidth / 2, headerY + 7, { align: 'center' });
-        doc.text(hotelInfo.direccion, pageWidth / 2, headerY + 12, { align: 'center' });
+        doc.text(`${hotelInfo.direccion} | ${hotelInfo.sitioWeb}`, pageWidth / 2, headerY + 12, { align: 'center' });
 
         doc.setDrawColor(226, 232, 240); // color-slate-200
         doc.line(margin, headerY + 20, pageWidth - margin, headerY + 20);
