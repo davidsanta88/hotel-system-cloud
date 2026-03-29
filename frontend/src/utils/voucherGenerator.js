@@ -110,9 +110,13 @@ export const generateVoucher = async (data) => {
         doc.setTextColor(71, 85, 105);
         doc.text('DATOS DEL HUÉSPED', margin, startInfoY + 8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nombre: ${data.cliente_nombre.toUpperCase()}`, margin, startInfoY + 14);
-        doc.text(`Identificación: ${data.identificacion || 'N/A'}`, margin, startInfoY + 19);
-        doc.text(`Teléfono: ${data.telefono || 'N/A'}`, margin, startInfoY + 24);
+        const nombreCliente = (data.cliente_nombre || data.cliente?.nombre || 'Huésped').toUpperCase();
+        const idCliente = data.identificacion || data.cliente?.documento || 'N/A';
+        const telCliente = data.telefono || data.cliente?.telefono || 'N/A';
+
+        doc.text(`Nombre: ${nombreCliente}`, margin, startInfoY + 14);
+        doc.text(`Identificación: ${idCliente}`, margin, startInfoY + 19);
+        doc.text(`Teléfono: ${telCliente}`, margin, startInfoY + 24);
 
         // 4. Información de la Estancia - ACTUALIZADO
         doc.setFont('helvetica', 'bold');
