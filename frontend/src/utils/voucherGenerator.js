@@ -145,7 +145,7 @@ export const generateVoucher = async (data) => {
         const finalY = doc.lastAutoTable.finalY + 15;
         const summaryX = pageWidth - margin - 60;
 
-        doc.setFontSize(10);
+        doc.setFontSize(9); // Sincronizado con datos del huésped
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
         doc.text('VALOR TOTAL:', summaryX, finalY);
@@ -165,7 +165,7 @@ export const generateVoucher = async (data) => {
             doc.setTextColor(16, 185, 129); // Verde
         }
         doc.text('SALDO PENDIENTE:', summaryX, finalY + 14);
-        doc.setFontSize(12);
+        doc.setFontSize(9); // Sincronizado con datos del huésped
         doc.text(`$ ${formatCurrency(saldo)}`, pageWidth - margin, finalY + 14, { align: 'right' });
 
         // 7. Pie de página (Footer) - EXTREMADAMENTE COMPACTO
@@ -192,10 +192,10 @@ export const generateVoucher = async (data) => {
         
         footerY += 4;
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.5); // Aumentado de 7.5
+        doc.setFontSize(9); // Sincronizado con datos del huésped
         const bankLines = doc.splitTextToSize((hotelInfo.datosBancarios || '').replace(/\n\s*\n/g, '\n'), pageWidth - (margin * 2));
         doc.text(bankLines, margin, footerY);
-        footerY += (bankLines.length * 4) + 4;
+        footerY += (bankLines.length * 4.5) + 4;
  
         // Sección de Políticas - PEGADO AL TEXTO
         const hasPoliticaHeader = (hotelInfo.politica || '').toUpperCase().includes('TÉRMINOS');
