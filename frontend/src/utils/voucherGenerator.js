@@ -67,54 +67,55 @@ export const generateVoucher = async (data) => {
             console.warn("[PDF-DEBUG] No se pudo cargar la configuración dinámica, usando valores por defecto.", configErr);
         }
 
-        // 1. Cabecera (Header) con Logo
-        let headerY = 30;
+        // 1. Cabecera (Header) con Logo - MUY COMPACTA
+        let headerY = 10; // Empezamos más arriba
         try {
             // Cargar el logo desde la carpeta pública
             const logoBase64 = await loadImage('/logo.jpg');
-            const logoWidth = 40;
-            const logoHeight = 25; 
-            doc.addImage(logoBase64, 'JPEG', (pageWidth / 2) - (logoWidth / 2), 15, logoWidth, logoHeight);
-            headerY = 48; // Bajar el texto si hay logo
+            const logoWidth = 30; // Reducido de 40
+            const logoHeight = 18; // Reducido de 25
+            doc.addImage(logoBase64, 'JPEG', (pageWidth / 2) - (logoWidth / 2), 10, logoWidth, logoHeight);
+            headerY = 32; // Posición ajustada
         } catch (error) {
             console.warn("Logo warning:", error.message);
-            headerY = 25;
+            headerY = 15;
         }
-
+ 
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.setTextColor(30, 41, 59); // color-slate-800
+        doc.setFontSize(16); // Reducido de 20
+        doc.setTextColor(30, 41, 59);
         doc.text(hotelInfo.nombre.toUpperCase(), pageWidth / 2, headerY, { align: 'center' });
-
-        doc.setFontSize(10);
+ 
+        doc.setFontSize(8.5); // Reducido de 10
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 116, 139); // color-slate-500
-        doc.text(`NIT: ${hotelInfo.nit} | TEL: ${hotelInfo.telefono}`, pageWidth / 2, headerY + 7, { align: 'center' });
-        doc.text(`${hotelInfo.direccion} | ${hotelInfo.sitioWeb}`, pageWidth / 2, headerY + 12, { align: 'center' });
+        doc.setTextColor(100, 116, 139);
+        doc.text(`NIT: ${hotelInfo.nit} | TEL: ${hotelInfo.telefono}`, pageWidth / 2, headerY + 5, { align: 'center' });
+        doc.text(`${hotelInfo.direccion}`, pageWidth / 2, headerY + 9, { align: 'center' });
+        doc.text(`${hotelInfo.sitioWeb}`, pageWidth / 2, headerY + 13, { align: 'center' });
+ 
+        doc.setDrawColor(226, 232, 240);
+        doc.line(margin, headerY + 18, pageWidth - margin, headerY + 18);
 
-        doc.setDrawColor(226, 232, 240); // color-slate-200
-        doc.line(margin, headerY + 20, pageWidth - margin, headerY + 20);
-
-        // 2. Título del Documento
-        const startInfoY = headerY + 35;
-        doc.setFontSize(14);
+        // 2. Título del Documento - MÁS CERCA
+        const startInfoY = headerY + 28; // Reducido de 35
+        doc.setFontSize(12); // Reducido de 14
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(37, 99, 235); // color-blue-600
+        doc.setTextColor(37, 99, 235);
         const titleText = data.tipo === 'reserva' ? 'COMPROBANTE DE RESERVA' : 'RECIBO DE ESTANCIA';
         doc.text(titleText, margin, startInfoY);
-
+ 
         // 3. Información del Cliente
-        doc.setFontSize(10);
-        doc.setTextColor(71, 85, 105); // color-slate-600
-        doc.text('DATOS DEL HUÉSPED', margin, startInfoY + 10);
+        doc.setFontSize(9); // Reducido de 10
+        doc.setTextColor(71, 85, 105);
+        doc.text('DATOS DEL HUÉSPED', margin, startInfoY + 8);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Nombre: ${data.cliente_nombre.toUpperCase()}`, margin, startInfoY + 17);
-        doc.text(`Identificación: ${data.identificacion || 'N/A'}`, margin, startInfoY + 22);
-        doc.text(`Teléfono: ${data.telefono || 'N/A'}`, margin, startInfoY + 27);
+        doc.text(`Nombre: ${data.cliente_nombre.toUpperCase()}`, margin, startInfoY + 14);
+        doc.text(`Identificación: ${data.identificacion || 'N/A'}`, margin, startInfoY + 19);
+        doc.text(`Teléfono: ${data.telefono || 'N/A'}`, margin, startInfoY + 24);
 
-        // 4. Información de la Estancia
+        // 4. Información de la Estancia - ACTUALIZADO
         doc.setFont('helvetica', 'bold');
-        doc.text('DETALLES DE ESTANCIA', pageWidth / 2 + 10, startInfoY + 10);
+        doc.text('DETALLES DEL HOSPEDAJE', pageWidth / 2 + 10, startInfoY + 10);
         doc.setFont('helvetica', 'normal');
         doc.text(`Check-in: ${moment.utc(data.fecha_entrada).format('DD/MM/YYYY')}`, pageWidth / 2 + 10, startInfoY + 17);
         doc.text(`Check-out: ${moment.utc(data.fecha_salida).format('DD/MM/YYYY')}`, pageWidth / 2 + 10, startInfoY + 22);
@@ -130,12 +131,12 @@ export const generateVoucher = async (data) => {
         ]);
 
         autoTable(doc, {
-            startY: startInfoY + 40,
+            startY: startInfoY + 32, // Más arriba
             head: headers,
             body: body,
             theme: 'grid',
             headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
-            styles: { fontSize: 9, cellPadding: 3 },
+            styles: { fontSize: 8, cellPadding: 2 }, // Reducido
             margin: { left: margin, right: margin }
         });
 
@@ -166,46 +167,53 @@ export const generateVoucher = async (data) => {
         doc.setFontSize(12);
         doc.text(`$ ${formatCurrency(saldo)}`, pageWidth - margin, finalY + 14, { align: 'right' });
 
-        // 7. Pie de página (Footer) Dinámico
-        // Empezamos un poco más abajo del resumen financiero o al final de la página si es muy largo
-        let footerY = Math.max(finalY + 30, 240); 
+        // 7. Pie de página (Footer) - EXTREMADAMENTE COMPACTO
+        let footerY = doc.lastAutoTable.finalY + 8; // Pegado a la tabla
         
-        // Si el pie de página se sale de la hoja, podríamos añadir una página nueva, 
-        // pero para vouchers cortos usualmente cabe. Ajustamos para que no se pegue al borde.
-        if (footerY > 260) footerY = 250;
-
+        const checkPageBreak = (neededHeight) => {
+            const pageHeight = doc.internal.pageSize.getHeight();
+            if (footerY + neededHeight > pageHeight - 10) {
+                doc.addPage();
+                footerY = 15;
+                return true;
+            }
+            return false;
+        };
+ 
         doc.setDrawColor(226, 232, 240);
         doc.line(margin, footerY, pageWidth - margin, footerY);
         
-        footerY += 8;
-        doc.setFontSize(9);
+        footerY += 5;
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(51, 65, 85); // slate-700
+        doc.setTextColor(51, 65, 85); 
         doc.text('DATOS PARA TRANSFERENCIA:', margin, footerY);
         
-        footerY += 5;
+        footerY += 4;
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        const bankLines = doc.splitTextToSize(hotelInfo.datosBancarios || '', pageWidth - (margin * 2));
-        doc.text(bankLines, margin, footerY);
-        
-        // Calcular espacio ocupado por datos bancarios
-        footerY += (bankLines.length * 4) + 4;
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.text('TÉRMINOS Y CONDICIONES DEL SERVICIO:', margin, footerY);
-
-        footerY += 5;
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(148, 163, 184); // slate-400
         doc.setFontSize(7.5);
+        const bankLines = doc.splitTextToSize((hotelInfo.datosBancarios || '').replace(/\n\s*\n/g, '\n'), pageWidth - (margin * 2));
+        doc.text(bankLines, margin, footerY);
+        footerY += (bankLines.length * 3.5) + 4;
+ 
+        // Sección de Políticas - PEGADO AL TEXTO
+        const hasPoliticaHeader = (hotelInfo.politica || '').toUpperCase().includes('TÉRMINOS');
+        if (!hasPoliticaHeader) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.text('TÉRMINOS Y CONDICIONES:', margin, footerY);
+            footerY += 4;
+        }
+ 
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(71, 85, 105); 
+        doc.setFontSize(7);
         const politicaLines = doc.splitTextToSize(hotelInfo.politica || '', pageWidth - (margin * 2));
         doc.text(politicaLines, margin, footerY);
         
-        footerY += (politicaLines.length * 3.5) + 8;
+        footerY += (politicaLines.length * 3) + 5;
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setTextColor(30, 41, 59);
         doc.text('¡Gracias por su preferencia!', pageWidth / 2, footerY, { align: 'center' });
 
