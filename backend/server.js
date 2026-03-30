@@ -101,7 +101,6 @@ app.use('/api/notificaciones', require('./routes/notificaciones'));
 app.use('/api/mantenimiento', require('./routes/mantenimiento'));
 app.use('/api/estadisticas', require('./routes/estadisticas'));
 app.use('/api/hotel-config', require('./routes/hotelConfig'));
-app.use('/api/config-notificacion', require('./routes/configNotificacion'));
 app.use('/api/cierres-caja', require('./routes/cierresCaja'));
 
 // Global Error Handler for JSON responses

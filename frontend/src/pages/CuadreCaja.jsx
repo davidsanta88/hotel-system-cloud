@@ -170,6 +170,20 @@ const CuadreCaja = () => {
         }
     };
 
+    const handleFilterLastClosure = () => {
+        if (cierres && cierres.length > 0) {
+            const ultimo = cierres[0];
+            const updatedFiltros = {
+                inicio: ultimo.fecha,
+                fin: new Date().toISOString()
+            };
+            setFiltros(updatedFiltros);
+            fetchCuadre(updatedFiltros.inicio, updatedFiltros.fin);
+        } else {
+            Swal.fire('Información', 'No se encontraron cierres previos para filtrar.', 'info');
+        }
+    };
+
     const handleExportExcel = () => {
         const reportData = data.transacciones.map(t => ({
             'Fecha': new Date(t.fecha).toLocaleDateString(),
@@ -358,11 +372,47 @@ const CuadreCaja = () => {
                             />
                         </div>
                     </div>
-                    <button type="submit" className="btn-primary flex items-center gap-2 h-10 px-6 font-bold shadow-lg shadow-primary-500/20 active:translate-y-0.5 transition-all">
+                    <div className="flex items-end gap-2 pr-2 border-r border-gray-100">
+                        <button 
+                            type="button"
+                            onClick={handleFilterLastClosure}
+                            className={`flex items-center gap-2 px-4 h-11 rounded-xl font-bold transition-all border ${
+                                filtros.inicio.includes(':') 
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm ring-1 ring-indigo-200' 
+                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                        >
+                            <Clock size={18} /> Desde Último Cierre
+                        </button>
+                    </div>
+
+                    <button type="submit" className="btn-primary flex items-center gap-2 h-11 px-6 font-bold shadow-lg shadow-primary-500/20 active:translate-y-0.5 transition-all">
                         <Filter size={18} /> Generar Reporte
                     </button>
                 </form>
             </div>
+
+            {filtros.inicio.includes(':') && (
+                <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center gap-4 text-indigo-700 shadow-sm animate-fade-in">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                        <Clock size={20} />
+                    </div>
+                    <div>
+                        <p className="text-xs font-black uppercase tracking-widest opacity-70">Filtro Inteligente Activo</p>
+                        <p className="font-bold">Calculando movimientos desde el último cierre: <span className="text-indigo-900">{new Date(filtros.inicio).toLocaleString()}</span></p>
+                    </div>
+                    <button 
+                        onClick={() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            setFiltros({ inicio: today, fin: today });
+                            fetchCuadre(today, today);
+                        }}
+                        className="ml-auto bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors shadow-md"
+                    >
+                        Quitar filtro
+                    </button>
+                </div>
+            )}
 
             {/* Resume Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -405,22 +455,31 @@ const CuadreCaja = () => {
             </div>
 
             {/* Specialized Wallets */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2 group hover:border-emerald-200 transition-colors">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                            <Banknote size={20} />
+                        </div>
+                        <span className="text-sm font-black text-gray-700 uppercase">Total Efectivo</span>
+                    </div>
+                    <p className="text-2xl font-black text-emerald-600">${formatCurrency(data.resumen.total_efectivo)}</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2 group hover:border-[#7030a0]/30 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#7030a0] flex items-center justify-center text-white shadow-lg shadow-purple-200">
                             <Wallet size={20} />
                         </div>
-                        <span className="text-sm font-black text-gray-700">NEQUI</span>
+                        <span className="text-sm font-black text-gray-700 uppercase">Total NEQUI</span>
                     </div>
                     <p className="text-2xl font-black text-[#7030a0]">${formatCurrency(data.resumen.total_nequi)}</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center space-y-2 group hover:border-[#004481]/30 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#004481] flex items-center justify-center text-white shadow-lg shadow-blue-200">
                             <CreditCard size={20} />
                         </div>
-                        <span className="text-sm font-black text-gray-700 uppercase">Transferencia Bancolombia</span>
+                        <span className="text-sm font-black text-gray-700 uppercase">BANCOLOMBIA</span>
                     </div>
                     <p className="text-2xl font-black text-[#004481]">${formatCurrency(data.resumen.total_bancolombia)}</p>
                 </div>
