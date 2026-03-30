@@ -47,7 +47,11 @@ const CuadreCaja = () => {
     const [editingId, setEditingId] = useState(null);
 
     const [filtros, setFiltros] = useState({
-        inicio: new Date().toISOString().split('T')[0],
+        inicio: (() => {
+            const d = new Date();
+            d.setDate(1);
+            return d.toISOString().split('T')[0];
+        })(),
         fin: new Date().toISOString().split('T')[0]
     });
 
