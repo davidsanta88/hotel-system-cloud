@@ -26,7 +26,8 @@ import {
     QrCode,
     Plus,
     TrendingUp,
-    Building2
+    Building2,
+    Wallet
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
