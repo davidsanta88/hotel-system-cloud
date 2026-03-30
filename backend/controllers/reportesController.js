@@ -422,7 +422,7 @@ exports.getCuadreCaja = async (req, res) => {
         // Estandarizar nombres de medios de pago según pedido del usuario
         transacciones = transacciones.map(t => {
             let medio = t.medioPago;
-            if (medio.includes('BANCOLOMBIA')) medio = 'TRANSFERENCIA BANCOLOMBIA';
+            if (medio.includes('BANCOLOMBIA') || medio === 'TRANSFERENCIA') medio = 'TRANSFERENCIA BANCOLOMBIA';
             if (medio.includes('NEQUI')) medio = 'NEQUI';
             if (medio.includes('EFECTIVO') || medio === 'CASH') medio = 'EFECTIVO';
             return { ...t, medioPago: medio };

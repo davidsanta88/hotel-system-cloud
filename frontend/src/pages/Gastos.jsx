@@ -468,7 +468,7 @@ const Gastos = () => {
                                 >
                                     <option value="EFECTIVO">EFECTIVO (CAJA)</option>
                                     <option value="NEQUI">NEQUI</option>
-                                    <option value="TRANSFERENCIA BANCOLOMBIA">TRANSFERENCIA BANCOLOMBIA</option>
+                                    <option value="TRANSFERENCIA BANCOLOMBIA">Trans. Bancolombia</option>
                                     {mediosPago.filter(m => !['EFECTIVO', 'NEQUI', 'TRANSFERENCIA BANCOLOMBIA'].includes(m.nombre.toUpperCase())).map(m => (
                                         <option key={m.id} value={m.nombre.toUpperCase()}>{m.nombre.toUpperCase()}</option>
                                     ))}

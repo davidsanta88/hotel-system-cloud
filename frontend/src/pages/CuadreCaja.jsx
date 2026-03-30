@@ -225,7 +225,7 @@ const CuadreCaja = () => {
         reportData.push({ 'Fecha': 'Ingresos Totales', 'Monto': data.resumen.ingresos_totales });
         reportData.push({ 'Fecha': 'Egresos Totales', 'Monto': data.resumen.egresos_totales });
         reportData.push({ 'Fecha': 'NEQUI', 'Monto': data.resumen.total_nequi });
-        reportData.push({ 'Fecha': 'BANCOLOMBIA', 'Monto': data.resumen.total_bancolombia });
+        reportData.push({ 'Fecha': 'Trans. Bancolombia', 'Monto': data.resumen.total_bancolombia });
         reportData.push({ 'Fecha': 'EFECTIVO', 'Monto': data.resumen.total_efectivo });
         reportData.push({ 'Fecha': 'BALANCE FINAL', 'Monto': data.resumen.balance_final });
 
@@ -282,7 +282,7 @@ const CuadreCaja = () => {
             body: [
                 ['EFECTIVO', `$${formatCurrency(data.resumen.total_efectivo)}`],
                 ['NEQUI', `$${formatCurrency(data.resumen.total_nequi)}`],
-                ['TRANSFERENCIA BANCOLOMBIA', `$${formatCurrency(data.resumen.total_bancolombia)}`]
+                ['Trans. Bancolombia', `$${formatCurrency(data.resumen.total_bancolombia)}`]
             ],
             theme: 'grid',
             headStyles: { fillColor: [71, 85, 105], halign: 'center' },
@@ -334,7 +334,7 @@ const CuadreCaja = () => {
     const getMedioBadge = (medio) => {
         const normalized = medio.toUpperCase();
         if (normalized === 'NEQUI') return <span className="flex items-center gap-1 text-[#7030a0] font-bold text-xs"><Wallet size={14} /> NEQUI</span>;
-        if (normalized.includes('BANCOLOMBIA')) return <span className="flex items-center gap-1 text-[#004481] font-bold text-xs"><CreditCard size={14} /> BANCOLOMBIA</span>;
+        if (normalized.includes('BANCOLOMBIA')) return <span className="flex items-center gap-1 text-[#004481] font-bold text-xs"><CreditCard size={14} /> Trans. Bancolombia</span>;
         if (normalized === 'EFECTIVO') return <span className="flex items-center gap-1 text-emerald-600 font-bold text-xs"><Banknote size={14} /> EFECTIVO</span>;
         return <span className="text-gray-500 font-bold text-xs uppercase">{medio}</span>;
     };
@@ -535,7 +535,7 @@ const CuadreCaja = () => {
                         <div className="w-10 h-10 rounded-full bg-[#004481] flex items-center justify-center text-white shadow-lg shadow-blue-200">
                             <CreditCard size={20} />
                         </div>
-                        <span className="text-sm font-black text-gray-700 uppercase">BANCOLOMBIA</span>
+                        <span className="text-sm font-black text-gray-700 uppercase">Trans. Bancolombia</span>
                     </div>
                     <p className="text-2xl font-black text-[#004481]">${formatCurrency(data.resumen.total_bancolombia)}</p>
                 </div>
