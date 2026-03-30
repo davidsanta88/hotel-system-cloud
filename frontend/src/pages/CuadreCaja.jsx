@@ -49,10 +49,17 @@ const CuadreCaja = () => {
     const [filtros, setFiltros] = useState({
         inicio: (() => {
             const d = new Date();
-            d.setDate(1);
-            return d.toISOString().split('T')[0];
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}-01`;
         })(),
-        fin: new Date().toISOString().split('T')[0]
+        fin: (() => {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        })()
     });
 
     useEffect(() => {

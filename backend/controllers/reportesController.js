@@ -12,8 +12,8 @@ exports.getReporteVentas = async (req, res) => {
         const filter = {};
         if (inicio || fin) {
             filter.fecha = {};
-            if (inicio) filter.fecha.$gte = new Date(inicio);
-            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+            if (inicio) filter.fecha.$gte = new Date(`${inicio}T00:00:00-05:00`);
+            if (fin) filter.fecha.$lte = new Date(`${fin}T23:59:59-05:00`);
         }
 
         const report = await Venta.aggregate([
@@ -165,8 +165,8 @@ exports.getGastosPorPeriodo = async (req, res) => {
         const filter = {};
         if (inicio || fin) {
             filter.fecha = {};
-            if (inicio) filter.fecha.$gte = new Date(inicio);
-            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+            if (inicio) filter.fecha.$gte = new Date(`${inicio}T00:00:00-05:00`);
+            if (fin) filter.fecha.$lte = new Date(`${fin}T23:59:59-05:00`);
         }
 
         const report = await Gasto.aggregate([
@@ -203,8 +203,8 @@ exports.getIngresosManualesPorPeriodo = async (req, res) => {
         const filter = {};
         if (inicio || fin) {
             filter.fecha = {};
-            if (inicio) filter.fecha.$gte = new Date(inicio);
-            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+            if (inicio) filter.fecha.$gte = new Date(`${inicio}T00:00:00-05:00`);
+            if (fin) filter.fecha.$lte = new Date(`${fin}T23:59:59-05:00`);
         }
 
         const report = await Gasto.aggregate([
@@ -241,8 +241,8 @@ exports.getGastosPorCategoria = async (req, res) => {
         const filter = {};
         if (inicio || fin) {
             filter.fecha = {};
-            if (inicio) filter.fecha.$gte = new Date(inicio);
-            if (fin) filter.fecha.$lte = new Date(fin + 'T23:59:59');
+            if (inicio) filter.fecha.$gte = new Date(`${inicio}T00:00:00-05:00`);
+            if (fin) filter.fecha.$lte = new Date(`${fin}T23:59:59-05:00`);
         }
 
         const report = await Gasto.aggregate([
@@ -308,8 +308,8 @@ exports.getIngresosHospedaje = async (req, res) => {
         const filter = {};
         if (inicio || fin) {
             filter["pagos.fecha"] = {};
-            if (inicio) filter["pagos.fecha"].$gte = new Date(inicio);
-            if (fin) filter["pagos.fecha"].$lte = new Date(fin + 'T23:59:59');
+            if (inicio) filter["pagos.fecha"].$gte = new Date(`${inicio}T00:00:00-05:00`);
+            if (fin) filter["pagos.fecha"].$lte = new Date(`${fin}T23:59:59-05:00`);
         }
 
         const report = await Registro.aggregate([
@@ -333,10 +333,11 @@ exports.getIngresosHospedaje = async (req, res) => {
 exports.getCuadreCaja = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        const startDate = inicio ? new Date(inicio) : new Date();
+        // Map string to exact local boundaries to prevent UTC mismatch
+        let startDate = inicio ? new Date(`${inicio}T00:00:00-05:00`) : new Date();
         if (!inicio) startDate.setHours(0,0,0,0);
         
-        const endDate = fin ? new Date(fin + 'T23:59:59') : new Date();
+        let endDate = fin ? new Date(`${fin}T23:59:59-05:00`) : new Date();
         if (!fin) endDate.setHours(23,59,59,999);
 
         // 1. Pagos de Registros (Hospedajes)
