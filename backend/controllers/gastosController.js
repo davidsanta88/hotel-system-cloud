@@ -48,12 +48,28 @@ const gastosController = {
                 console.log(`[CLOUDINARY] Expense image uploaded: ${comprobante_url}`);
             }
 
+            // Ensure fecha includes current time if it's a date-only string from frontend
+            let finalFecha = new Date();
+            if (fecha_gasto) {
+                const selectedDate = new Date(fecha_gasto + 'T00:00:00-05:00');
+                const now = new Date();
+                // Set the selected date but keep current hours/mins/secs
+                finalFecha = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate(),
+                    now.getHours(),
+                    now.getMinutes(),
+                    now.getSeconds()
+                );
+            }
+
             const newGasto = new Gasto({
                 descripcion: concepto,
                 categoria: categoria_id,
                 monto: parseFloat(monto) || 0,
                 observaciones: notas,
-                fecha: fecha_gasto || Date.now(),
+                fecha: finalFecha,
                 usuario: req.userId,
                 medioPago: medioPago || 'EFECTIVO',
                 comprobante_url
@@ -73,7 +89,18 @@ const gastosController = {
             // Mapeo de campos si vienen del frontend con nombres distintos
             if (updateData.concepto) updateData.descripcion = updateData.concepto;
             if (updateData.notas) updateData.observaciones = updateData.notas;
-            if (updateData.fecha_gasto) updateData.fecha = updateData.fecha_gasto;
+            if (updateData.fecha_gasto) {
+                const selectedDate = new Date(updateData.fecha_gasto + 'T00:00:00-05:00');
+                const now = new Date();
+                updateData.fecha = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate(),
+                    now.getHours(),
+                    now.getMinutes(),
+                    now.getSeconds()
+                );
+            }
             if (updateData.categoria_id) updateData.categoria = updateData.categoria_id;
             // medioPago remains in updateData if provided
 
