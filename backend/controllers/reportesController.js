@@ -340,9 +340,6 @@ exports.getCuadreCaja = async (req, res) => {
         let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : new Date();
         if (!fin) endDate.setHours(23,59,59,999);
 
-        console.log(`[DEBUG CUADRE] inicio=${inicio} | fin=${fin}`);
-        console.log(`[DEBUG CUADRE] Parsed startDate=${startDate.toISOString()} | endDate=${endDate.toISOString()}`);
-
         // 1. Pagos de Registros (Hospedajes)
         const pagosRegistros = await Registro.find({
             "pagos.fecha": { $gte: startDate, $lte: endDate }
@@ -408,8 +405,6 @@ exports.getCuadreCaja = async (req, res) => {
         const gastos = await Gasto.find({
             fecha: { $gte: startDate, $lte: endDate }
         }).populate('categoria').populate('usuario', 'nombre');
-
-        console.log(`[DEBUG CUADRE] Found: pagosRegistros=${pagosRegistros.length}, abonosReservas=${abonosReservas.length}, ventas=${ventas.length}, gastos=${gastos.length}`);
 
         gastos.forEach(gasto => {
             const esIngreso = gasto.categoria?.tipo === 'Ingreso';
