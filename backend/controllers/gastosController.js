@@ -22,8 +22,8 @@ const gastosController = {
             let filter = {};
             if (fechaInicio || fechaFin) {
                 filter.fecha = {};
-                if (fechaInicio) filter.fecha.$gte = new Date(fechaInicio);
-                if (fechaFin) filter.fecha.$lte = new Date(fechaFin);
+                if (fechaInicio) filter.fecha.$gte = fechaInicio.includes('T') ? new Date(fechaInicio) : new Date(`${fechaInicio}T00:00:00-05:00`);
+                if (fechaFin) filter.fecha.$lte = fechaFin.includes('T') ? new Date(fechaFin) : new Date(`${fechaFin}T23:59:59-05:00`);
             }
             if (categoria_id) filter.categoria = categoria_id;
 
@@ -51,17 +51,9 @@ const gastosController = {
             // Ensure fecha includes current time if it's a date-only string from frontend
             let finalFecha = new Date();
             if (fecha_gasto) {
-                const selectedDate = new Date(fecha_gasto + 'T00:00:00-05:00');
                 const now = new Date();
-                // Set the selected date but keep current hours/mins/secs
-                finalFecha = new Date(
-                    selectedDate.getFullYear(),
-                    selectedDate.getMonth(),
-                    selectedDate.getDate(),
-                    now.getHours(),
-                    now.getMinutes(),
-                    now.getSeconds()
-                );
+                const timeStr = now.toLocaleTimeString('en-GB', { hour12: false }); // "HH:MM:SS"
+                finalFecha = new Date(`${fecha_gasto}T${timeStr}-05:00`);
             }
 
             const newGasto = new Gasto({
@@ -90,16 +82,9 @@ const gastosController = {
             if (updateData.concepto) updateData.descripcion = updateData.concepto;
             if (updateData.notas) updateData.observaciones = updateData.notas;
             if (updateData.fecha_gasto) {
-                const selectedDate = new Date(updateData.fecha_gasto + 'T00:00:00-05:00');
                 const now = new Date();
-                updateData.fecha = new Date(
-                    selectedDate.getFullYear(),
-                    selectedDate.getMonth(),
-                    selectedDate.getDate(),
-                    now.getHours(),
-                    now.getMinutes(),
-                    now.getSeconds()
-                );
+                const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+                updateData.fecha = new Date(`${updateData.fecha_gasto}T${timeStr}-05:00`);
             }
             if (updateData.categoria_id) updateData.categoria = updateData.categoria_id;
             // medioPago remains in updateData if provided
