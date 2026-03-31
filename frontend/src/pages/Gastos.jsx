@@ -13,6 +13,7 @@ const Gastos = () => {
     const [gastos, setGastos] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     
     // Filtros
     const [filtros, setFiltros] = useState({
@@ -132,7 +133,10 @@ const Gastos = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        if (saving) return;
+
         try {
+            setSaving(true);
             const formData = new FormData();
             formData.append('concepto', current.concepto);
             formData.append('categoria_id', current.categoria_id);
@@ -158,6 +162,8 @@ const Gastos = () => {
             fetchGastos();
         } catch (error) {
             Swal.fire('Error', error.response?.data?.message || 'Error al guardar el movimiento', 'error');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -497,9 +503,10 @@ const Gastos = () => {
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className={`flex-1 btn-primary text-white shadow-xl py-3 text-lg transition-all ${current.tipo === 'Ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'}`}
+                                    disabled={saving}
+                                    className={`flex-1 btn-primary text-white shadow-xl py-3 text-lg transition-all ${saving ? 'opacity-70 cursor-not-allowed' : ''} ${current.tipo === 'Ingreso' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20' : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'}`}
                                 >
-                                    {current.tipo === 'Ingreso' ? 'Confirmar Ingreso' : 'Confirmar Egreso'}
+                                    {saving ? 'Procesando...' : (current.tipo === 'Ingreso' ? 'Confirmar Ingreso' : 'Confirmar Egreso')}
                                 </button>
                             </div>
                         </form>
