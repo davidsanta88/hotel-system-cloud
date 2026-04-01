@@ -7,9 +7,28 @@ const crypto = require('crypto');
 exports.trackVisit = async (req, res) => {
     try {
         const { path, userAgent } = req.body;
+        const ua = (userAgent || req.headers['user-agent'] || '').toLowerCase();
         
-        // Obtener IP del cliente (considerando proxies como Heroku o Cloudflare)
-        const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+        // 1. FILTRAR BOTS (Google, Facebook, etc.)
+        const bots = ['bot', 'crawler', 'spider', 'slurp', 'googlebot', 'bingbot', 'yandexbot', 'baiduspider', 'facebookexternalhit', 'twitterbot', 'linkedinbot', 'slackbot', 'embedly', 'quora', 'whatsapp', 'telegram'];
+        if (bots.some(bot => ua.includes(bot))) {
+            return res.status(200).json({ status: 'ok', msg: 'Bot ignored' });
+        }
+
+        // 2. DETECTAR IP REAL (Saltando proxies e IPv6 local)
+        let ip = req.headers['x-forwarded-for']?.split(',')[0] || 
+                 req.headers['cf-connecting-ip'] || // Cloudflare
+                 req.socket.remoteAddress;
+
+        // Limpiar prefijos de IPv6 si existen (::ffff:)
+        if (ip && ip.includes('::ffff:')) {
+            ip = ip.replace('::ffff:', '');
+        }
+
+        // Si es localhost, no trackeramos para no ensuciar con Ashburn (ubicación del servidor)
+        if (!ip || ip === '::1' || ip === '127.0.0.1') {
+            return res.status(200).json({ status: 'ok', msg: 'Localhost ignored' });
+        }
         
         // Crear un hash anónimo de la IP + Fecha (para permitir 1 registro por día sin guardar IPs reales)
         const dateStr = new Date().toISOString().slice(0, 10);
@@ -21,13 +40,10 @@ exports.trackVisit = async (req, res) => {
             return res.status(200).json({ status: 'ok', msg: 'Session already tracked' });
         }
 
-        // Consultar Geolocalización (ip-api.com - Gratuito hasta 45 req/min)
+        // 3. CONSULTAR GEOLOCALIZACIÓN
         let geoData = {};
         try {
-            // Limpiar IPv6 local si aparece
-            const ipToQuery = ip.includes('::') ? '' : ip; 
-            const url = `http://ip-api.com/json/${ipToQuery}?fields=status,message,country,countryCode,regionName,city`;
-            
+            const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city`;
             const response = await fetch(url);
             const data = await response.json();
             
@@ -45,7 +61,6 @@ exports.trackVisit = async (req, res) => {
 
         // Determinar tipo de dispositivo
         let device = 'desktop';
-        const ua = (userAgent || req.headers['user-agent'] || '').toLowerCase();
         if (/mobile|android|iphone|ipad|phone/i.test(ua)) device = 'mobile';
         else if (/tablet/i.test(ua)) device = 'tablet';
 
