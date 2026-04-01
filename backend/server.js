@@ -13,7 +13,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const app = express();
-app.set('trust proxy', 1); // Trust first proxy (Vercel, Heroku, Nginx)
+app.set('trust proxy', true); // Trust proxy (Vercel, Heroku, Nginx)
 
 // Conectar a MongoDB
 connectDB();

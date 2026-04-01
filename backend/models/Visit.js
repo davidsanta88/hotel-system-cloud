@@ -7,6 +7,8 @@ const visitSchema = new mongoose.Schema({
     country: String,
     countryCode: String,
     region: String,
+    lat: Number,
+    lon: Number,
     device: { type: String, enum: ['mobile', 'desktop', 'tablet', 'unknown'], default: 'unknown' },
     userAgent: String,
     path: { type: String, default: '/' }

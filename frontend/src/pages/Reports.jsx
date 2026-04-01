@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { format, subDays, startOfMonth, subMonths } from 'date-fns';
+import VisitorMap from '../components/VisitorMap';
 
 // Paleta de colores corporativos del hotel
 const COLORS = ['#0070bb', '#fdb913', '#00a651', '#ed1c24', '#662d91', '#00a3ff', '#e5a500', '#1c0f05'];
@@ -442,13 +443,24 @@ const Reports = () => {
                             <Globe className="text-blue-500" size={24} /> Tráfico de la Página Web
                         </h2>
                         
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Mapa de Visitas (Nuevo) */}
+                            <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
+                                <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                    <Globe size={16} className="text-blue-500" /> Distribución Geográfica
+                                </h3>
+                                <p className="text-xs text-gray-400 mb-6">Visualización de tráfico global y local</p>
+                                <div className="flex-1">
+                                    <VisitorMap markers={analyticsStats?.topCities || []} />
+                                </div>
+                            </div>
+
                             {/* Gráfico de Ciudades */}
                             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                                 <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2 text-sm uppercase tracking-wider">
                                     <MapPin size={16} className="text-blue-500" /> Ciudades más activas
                                 </h3>
-                                <p className="text-xs text-gray-400 mb-6">Ubicación de tus potenciales clientes</p>
+                                <p className="text-xs text-gray-400 mb-6">Ranking de ubicaciones</p>
                                 {analyticsStats?.topCities?.length > 0 ? (
                                     <ResponsiveContainer width="100%" height={220}>
                                         <BarChart data={analyticsStats.topCities} layout="vertical" margin={{ left: 20 }}>
@@ -462,6 +474,9 @@ const Reports = () => {
                                     <div className="py-20 text-center text-gray-300 italic text-sm">Esperando registros de visitas...</div>
                                 )}
                             </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
 
                             {/* KPIs y Dispositivos */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">

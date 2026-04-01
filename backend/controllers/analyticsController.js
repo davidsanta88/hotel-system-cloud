@@ -15,10 +15,10 @@ exports.trackVisit = async (req, res) => {
             return res.status(200).json({ status: 'ok', msg: 'Bot ignored' });
         }
 
-        // 2. DETECTAR IP REAL (Usando trust proxy habilitado en server.js)
-        let ip = req.ip || 
+        // 2. DETECTAR IP REAL (Priorizando encabezados de proxy)
+        let ip = req.headers['x-forwarded-for']?.split(',')[0] || 
                  req.headers['x-real-ip'] || 
-                 req.headers['x-forwarded-for']?.split(',')[0] || 
+                 req.ip || 
                  req.socket.remoteAddress;
 
         // Limpiar prefijos de IPv6 si existen (::ffff:)
@@ -46,7 +46,7 @@ exports.trackVisit = async (req, res) => {
         // 3. CONSULTAR GEOLOCALIZACIÓN
         let geoData = {};
         try {
-            const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city`;
+            const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city,lat,lon`;
             const response = await fetch(url);
             const data = await response.json();
             
@@ -55,7 +55,9 @@ exports.trackVisit = async (req, res) => {
                     city: data.city,
                     country: data.country,
                     countryCode: data.countryCode,
-                    region: data.regionName
+                    region: data.regionName,
+                    lat: data.lat,
+                    lon: data.lon
                 };
             }
         } catch (geoErr) {
@@ -70,9 +72,11 @@ exports.trackVisit = async (req, res) => {
         const newVisit = new Visit({
             sessionHash,
             city: geoData.city || 'Desconocida',
-            country: geoData.country || 'Colombia', // Default if local/fail
+            country: geoData.country || 'Colombia',
             countryCode: geoData.countryCode || 'CO',
             region: geoData.region || 'Desconocida',
+            lat: geoData.lat,
+            lon: geoData.lon,
             device,
             userAgent: userAgent || req.headers['user-agent'],
             path: path || '/'
@@ -124,11 +128,13 @@ exports.getStats = async (req, res) => {
                         { $ifNull: ["$countryCode", "??"] }
                     ]
                 }, 
-                valor: { $sum: 1 } 
+                valor: { $sum: 1 },
+                lat: { $first: "$lat" },
+                lon: { $first: "$lon" }
             } },
             { $sort: { valor: -1 } },
-            { $limit: 8 },
-            { $project: { nombre: "$_id", valor: 1, _id: 0 } }
+            { $limit: 12 },
+            { $project: { nombre: "$_id", valor: 1, lat: 1, lon: 1, _id: 0 } }
         ]);
 
         // 3. Top Países
