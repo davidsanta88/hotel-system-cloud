@@ -16,7 +16,8 @@ exports.trackVisit = async (req, res) => {
         }
 
         // 2. DETECTAR IP REAL (Saltando proxies e IPv6 local)
-        let ip = req.headers['x-forwarded-for']?.split(',')[0] || 
+        let ip = req.headers['x-real-ip'] || 
+                 req.headers['x-forwarded-for']?.split(',')[0] || 
                  req.headers['cf-connecting-ip'] || // Cloudflare
                  req.socket.remoteAddress;
 
@@ -24,6 +25,8 @@ exports.trackVisit = async (req, res) => {
         if (ip && ip.includes('::ffff:')) {
             ip = ip.replace('::ffff:', '');
         }
+
+        console.log(`[DEBUG TRACK] IP Detectada: ${ip} | User-Agent: ${ua.slice(0, 50)}...`);
 
         // Si es localhost, no trackeramos para no ensuciar con Ashburn (ubicación del servidor)
         if (!ip || ip === '::1' || ip === '127.0.0.1') {
@@ -34,11 +37,11 @@ exports.trackVisit = async (req, res) => {
         const dateStr = new Date().toISOString().slice(0, 10);
         const sessionHash = crypto.createHash('sha256').update(`${ip}-${dateStr}-${path}`).digest('hex');
 
-        // Verificar si ya existe este hash para hoy y para esta misma ruta
-        const existing = await Visit.findOne({ sessionHash });
-        if (existing) {
-            return res.status(200).json({ status: 'ok', msg: 'Session already tracked' });
-        }
+        // TEMPORALMENTE DESHABILITADO PARA PRUEBAS: Verificar si ya existe este hash para hoy y para esta misma ruta
+        // const existing = await Visit.findOne({ sessionHash });
+        // if (existing) {
+        //     return res.status(200).json({ status: 'ok', msg: 'Session already tracked' });
+        // }
 
         // 3. CONSULTAR GEOLOCALIZACIÓN
         let geoData = {};
@@ -113,7 +116,16 @@ exports.getStats = async (req, res) => {
         // 2. Top Ciudades
         const topCities = await Visit.aggregate([
             { $match: query },
-            { $group: { _id: "$city", valor: { $sum: 1 } } },
+            { $group: { 
+                _id: { 
+                    $concat: [
+                        { $ifNull: ["$city", "Desconocida"] },
+                        ", ",
+                        { $ifNull: ["$countryCode", "??"] }
+                    ]
+                }, 
+                valor: { $sum: 1 } 
+            } },
             { $sort: { valor: -1 } },
             { $limit: 8 },
             { $project: { nombre: "$_id", valor: 1, _id: 0 } }
