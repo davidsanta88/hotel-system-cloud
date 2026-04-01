@@ -17,7 +17,8 @@ import {
     Calendar,
     Home,
     Edit3,
-    Printer
+    Printer,
+    LogOut
 } from 'lucide-react';
 import { formatCurrency, cleanNumericValue } from '../../utils/format';
 import { generateVoucher } from '../../utils/voucherGenerator';

@@ -727,7 +727,7 @@ const Registros = () => {
                                     }}
                                     className="flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-all font-bold text-xs uppercase"
                                 >
-                                    <Edit size={16} />
+                                    <Edit2 size={16} />
                                     <span>Editar / Pagos</span>
                                 </button>
                                 <span className={`px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest

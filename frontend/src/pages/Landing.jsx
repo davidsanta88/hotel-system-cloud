@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Mail, MessageSquare, MapPin, Car, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Facebook, Instagram, Mail, MessageSquare, MapPin, Car, Clock, CheckCircle2, AlertCircle, Loader2, Share2 } from 'lucide-react';
 import api from '../services/api';
+import Swal from 'sweetalert2';
 
 const SLIDES = [
     {
@@ -97,6 +98,34 @@ const Landing = () => {
         const t = setInterval(() => setSlide(p => (p + 1) % SLIDES.length), 3000);
         return () => clearInterval(t);
     }, []);
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Hotel Balcón Plaza',
+                    text: 'Tu hogar en Belalcázar, Caldas. Conoce nuestras habitaciones y servicios.',
+                    url: window.location.href,
+                });
+            } catch (err) {
+                if (err.name !== 'AbortError') console.error('Error al compartir:', err);
+            }
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            Swal.fire({
+                title: '¡Enlace copiado!',
+                text: 'El enlace se ha copiado al portapapeles.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false,
+                background: '#1c0f05',
+                color: '#fff',
+                customClass: {
+                    popup: 'rounded-[1.5rem] border border-white/10'
+                }
+            });
+        }
+    };
 
     const handleSumbit = async (e) => {
         e.preventDefault();
@@ -218,6 +247,10 @@ const Landing = () => {
 
                     {/* Redes Sociales e Email */}
                     <div className="flex gap-2 pr-1">
+                        <button onClick={handleShare}
+                           className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110">
+                            <Share2 className="w-5 h-5 text-white" />
+                        </button>
                         <a href="https://www.facebook.com/share/1EUGiqa6xF/" target="_blank" rel="noreferrer" 
                            className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110">
                             <Facebook className="w-5 h-5 text-white" />
