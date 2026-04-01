@@ -19,19 +19,22 @@ exports.trackVisit = async (req, res) => {
         let ip = req.headers['x-forwarded-for']?.split(',')[0] || 
                  req.headers['x-real-ip'] || 
                  req.ip || 
-                 req.socket.remoteAddress;
+                 req.socket.remoteAddress ||
+                 '127.0.0.1';
 
         // Limpiar prefijos de IPv6 si existen (::ffff:)
-        if (ip && ip.includes('::ffff:')) {
+        if (ip.includes('::ffff:')) {
             ip = ip.replace('::ffff:', '');
         }
+        if (ip === '::1') ip = '127.0.0.1';
 
         console.log(`[DEBUG TRACK] IP Detectada: ${ip} | User-Agent: ${ua.slice(0, 40)}`);
 
-        // Si es localhost, no trackeramos para no ensuciar con Ashburn (ubicación del servidor)
-        if (!ip || ip === '::1' || ip === '127.0.0.1') {
-            return res.status(200).json({ status: 'ok', msg: 'Localhost ignored' });
-        }
+        // Identificar si la IP es local/privada (localhost, 192.168, 10.x, 172.16-31)
+        const isLocal = ip === '127.0.0.1' || 
+                        ip.startsWith('192.168.') || 
+                        ip.startsWith('10.') || 
+                        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip);
         
         // Crear un hash anónimo de la IP + Fecha (para permitir 1 registro por día sin guardar IPs reales)
         const dateStr = new Date().toISOString().slice(0, 10);
@@ -43,25 +46,41 @@ exports.trackVisit = async (req, res) => {
         //     return res.status(200).json({ status: 'ok', msg: 'Session already tracked' });
         // }
 
-        // 3. CONSULTAR GEOLOCALIZACIÓN
+        // CONSULTAR GEOLOCALIZACIÓN (Solo si no es local)
         let geoData = {};
-        try {
-            const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city,lat,lon`;
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                geoData = {
-                    city: data.city,
-                    country: data.country,
-                    countryCode: data.countryCode,
-                    region: data.regionName,
-                    lat: data.lat,
-                    lon: data.lon
-                };
+        if (!isLocal) {
+            try {
+                const url = `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,regionName,city,lat,lon`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log(`[DEBUG GEO] Geodata para ${ip}:`, data);
+                
+                if (data.status === 'success') {
+                    geoData = {
+                        city: data.city,
+                        country: data.country,
+                        countryCode: data.countryCode,
+                        region: data.regionName,
+                        lat: data.lat,
+                        lon: data.lon
+                    };
+                } else {
+                    console.warn(`[GEOLOCATION WARN] No se pudo geolocalizar ${ip}: ${data.message || 'Sin mensaje'}`);
+                }
+            } catch (geoErr) {
+                console.error('[GEOLOCATION ERROR]', geoErr.message);
             }
-        } catch (geoErr) {
-            console.error('[GEOLOCATION ERROR]', geoErr.message);
+        } else {
+            // Valores para tráfico local/interno
+            geoData = {
+                city: 'Localhost',
+                country: 'Red Interna',
+                countryCode: 'LOC',
+                region: 'Pruebas',
+                lat: 4.5709, // Centro de Colombia (opcional)
+                lon: -74.2973
+            };
         }
 
         // Determinar tipo de dispositivo
@@ -71,6 +90,7 @@ exports.trackVisit = async (req, res) => {
 
         const newVisit = new Visit({
             sessionHash,
+            ip, // Guardamos la IP real
             city: geoData.city || 'Desconocida',
             country: geoData.country || 'Colombia',
             countryCode: geoData.countryCode || 'CO',
@@ -159,14 +179,15 @@ exports.getStats = async (req, res) => {
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
-        const [todayCount, yesterdayCount] = await Promise.all([
+        const [todayCount, yesterdayCount, recentVisits] = await Promise.all([
             Visit.countDocuments({ timestamp: { $gte: new Date(todayStr) } }),
             Visit.countDocuments({ 
                 timestamp: { 
                     $gte: new Date(yesterdayStr), 
                     $lt: new Date(todayStr) 
                 } 
-            })
+            }),
+            Visit.find(query).sort({ timestamp: -1 }).limit(20).lean()
         ]);
 
         res.json({
@@ -174,6 +195,7 @@ exports.getStats = async (req, res) => {
             topCities,
             topCountries,
             devices,
+            recentVisits, // Lista para validación en tiempo real
             summary: {
                 today: todayCount,
                 yesterday: yesterdayCount,

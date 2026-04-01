@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const visitSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
-    sessionHash: { type: String, required: true }, // IP + Date hash to avoid duplicates
+    sessionHash: { type: String, required: true }, // Hash IP + Fecha para evitar duplicados en el contador
+    ip: String, // Guardar la IP real para validación y depuración
     city: String,
     country: String,
     countryCode: String,

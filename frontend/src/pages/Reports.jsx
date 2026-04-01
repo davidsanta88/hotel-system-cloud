@@ -7,7 +7,8 @@ import {
 import {
     TrendingUp, TrendingDown, DollarSign, ShoppingCart,
     Calendar, Lightbulb, BarChart3, PieChart as PieIcon,
-    RefreshCw, Package, Bed, Globe, Monitor, Smartphone, MapPin
+    RefreshCw, Package, Bed, Globe, Monitor, Smartphone, MapPin, 
+    Clock, User, ShieldCheck
 } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { format, subDays, startOfMonth, subMonths } from 'date-fns';
@@ -477,8 +478,7 @@ const Reports = () => {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-
-                            {/* KPIs y Dispositivos */}
+                            {/* Columna Izquierda: KPIs y Dispositivos */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
                                 {/* Visitas Hoy */}
                                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg overflow-hidden relative">
@@ -530,6 +530,80 @@ const Reports = () => {
                                             <div className="text-center py-4 text-gray-300 italic text-xs">Sin datos capturados</div>
                                         )}
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* TABLA DE VISITAS RECIENTES (NUEVA - PARA VALIDACIÓN DE IP/MUNICIPIO) */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold text-gray-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                            <Clock size={16} className="text-indigo-500" /> Registro de Visitas Recientes
+                                        </h3>
+                                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold tracking-tight">Validación en tiempo real de IP y procedencia</p>
+                                    </div>
+                                    <div className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase flex items-center gap-1">
+                                        <ShieldCheck size={12} /> Datos Verificados
+                                    </div>
+                                </div>
+                                <div className="max-h-[500px] overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200">
+                                    <table className="w-full text-left border-collapse sticky-header">
+                                        <thead className="bg-gray-50/80 sticky top-0 backdrop-blur-sm z-10 shadow-sm">
+                                            <tr>
+                                                <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Hora</th>
+                                                <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">IP Detectada</th>
+                                                <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Municipio / Ciudad</th>
+                                                <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Dispositivo</th>
+                                                <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">Ruta</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50 uppercase tracking-tight">
+                                            {analyticsStats?.recentVisits?.length > 0 ? analyticsStats.recentVisits.map((v, i) => {
+                                                const isLocal = v.city === 'Localhost' || v.ip === '127.0.0.1';
+                                                return (
+                                                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-gray-700">{v.timestamp ? format(new Date(v.timestamp), 'HH:mm:ss') : '--:--'}</span>
+                                                                <span className="text-[10px] text-gray-400">{v.timestamp ? format(new Date(v.timestamp), 'dd MMM') : '---'}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span className={`px-2 py-1 rounded-md text-[10px] font-mono font-bold border ${isLocal ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                                                {isLocal ? 'LOCALHOST' : (v.ip || '0.0.0.0')}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[8px] ${isLocal ? 'bg-amber-100 text-amber-600' : 'bg-blue-50 text-blue-500'}`}>
+                                                                    {v.countryCode || '??'}
+                                                                </div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-black text-gray-800">{v.city || 'Desconocida'}</span>
+                                                                    <span className="text-[10px] text-gray-400 font-medium">{v.region || '—'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold capitalize">
+                                                                {v.device === 'mobile' ? <Smartphone size={14} className="text-purple-400" /> : <Monitor size={14} className="text-blue-400" />}
+                                                                {v.device}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <span className="text-[11px] text-indigo-500 font-bold lowercase">{v.path}</span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }) : (
+                                                <tr>
+                                                    <td colSpan="5" className="px-6 py-10 text-center text-gray-300 italic text-sm">
+                                                        No hay visitas registradas recientemente
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
