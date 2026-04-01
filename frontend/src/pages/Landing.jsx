@@ -248,20 +248,20 @@ const Landing = () => {
                     {/* Redes Sociales e Email */}
                     <div className="flex gap-2 pr-1">
                         <button onClick={handleShare}
-                           className="bg-blue-500/20 hover:bg-blue-500/40 p-2.5 rounded-full border border-blue-500/30 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-blue-500/60 group/share">
-                            <Share2 className="w-5 h-5 text-blue-400 group-hover/share:text-blue-300 transition-colors" />
+                           className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110">
+                            <Share2 className="w-5 h-5 text-white" />
                         </button>
                         <a href="https://www.facebook.com/share/1EUGiqa6xF/" target="_blank" rel="noreferrer" 
-                           className="bg-blue-600/20 hover:bg-blue-600/40 p-2.5 rounded-full border border-blue-600/30 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-blue-600/60 group/fb">
-                            <Facebook className="w-5 h-5 text-blue-600 group-hover/fb:text-blue-500 transition-colors" />
+                           className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110">
+                            <Facebook className="w-5 h-5 text-white" />
                         </a>
                         <a href="https://www.instagram.com/hotelbalconplaza?igsh=MXE1NGF6OG81eDV3Ng==" target="_blank" rel="noreferrer" 
-                           className="bg-pink-500/20 hover:bg-pink-500/40 p-2.5 rounded-full border border-pink-500/30 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-pink-500/60 group/ig">
-                            <Instagram className="w-5 h-5 text-pink-500 group-hover/ig:text-pink-400 transition-colors" />
+                           className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110">
+                            <Instagram className="w-5 h-5 text-white" />
                         </a>
                         <a href="mailto:hotelbalconplaza60@gmail.com" 
-                           className="bg-red-500/20 hover:bg-red-500/40 p-2.5 rounded-full border border-red-500/30 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-red-500/60 group/mail">
-                            <Mail className="w-5 h-5 text-red-500 group-hover/mail:text-red-400 transition-colors" />
+                           className="bg-white/10 hover:bg-white/20 p-2.5 rounded-full border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110">
+                            <Mail className="w-5 h-5 text-white" />
                         </a>
                     </div>
                     {/* Acceso Admin Discreto */}
