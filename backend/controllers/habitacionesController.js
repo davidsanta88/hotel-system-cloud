@@ -22,7 +22,7 @@ const streamUpload = (buffer) => {
 
 exports.getHabitaciones = async (req, res) => {
     try {
-        const habitaciones = await Habitacion.find()
+        const habitaciones = await Habitacion.find().sort({ numero: 1 })
             .populate('tipo', 'nombre')
             .populate('estado', 'nombre');
         
@@ -52,7 +52,7 @@ exports.getMapaVisual = async (req, res) => {
         // 1. Obtener datos base
         console.log('[DEBUG] Consultando base de datos...');
         const [habitaciones, registrosActivos, todasReservas] = await Promise.all([
-            Habitacion.find().populate('tipo', 'nombre').populate('estado', 'nombre'),
+            Habitacion.find().sort({ numero: 1 }).populate('tipo', 'nombre').populate('estado', 'nombre'),
             Registro.find({ estado: 'activo' }).populate('cliente', 'nombre'),
             Reserva.find({
                 fecha_salida: { $gte: hoy },
@@ -202,6 +202,14 @@ exports.getMapaVisual = async (req, res) => {
         });
 
         const resultado = await Promise.all(resultadoPromesas);
+        
+        // Ordenar ESTRICTAMENTE por número como paso final absoluto
+        resultado.sort((a, b) => {
+            const numA = Number(a.numero) || 0;
+            const numB = Number(b.numero) || 0;
+            return numA - numB;
+        });
+
         res.json(resultado);
     } catch (err) {
         console.error('[MAPA ERROR GLOBAL]', err);

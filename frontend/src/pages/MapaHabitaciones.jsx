@@ -46,7 +46,13 @@ const MapaHabitaciones = () => {
             const { data } = await api.get('/habitaciones/mapa-visual');
             console.log('[CLIENT DEBUG] Datos recibidos:', data);
             if (Array.isArray(data)) {
-                setHabitaciones(data);
+                // Asegurar el orden numérico / natural en el frontend mas robusto
+                const sortedData = [...data].sort((a, b) => {
+                    const nA = String(a.numero).match(/\d+/) || [0];
+                    const nB = String(b.numero).match(/\d+/) || [0];
+                    return parseInt(nA[0]) - parseInt(nB[0]);
+                });
+                setHabitaciones(sortedData);
             } else {
                 console.error('[CLIENT ERROR] La API no devolvió un array:', data);
                 setHabitaciones([]);
