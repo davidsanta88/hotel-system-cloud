@@ -16,26 +16,41 @@ import {
     LayoutDashboard,
     PieChart as PieIcon
 } from 'lucide-react';
+import { format, subDays, startOfMonth } from 'date-fns';
+
+const PERIODOS = [
+    { label: 'Hoy', getDates: () => ({ inicio: format(new Date(), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+    { label: '7 días', getDates: () => ({ inicio: format(subDays(new Date(), 6), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+    { label: '30 días', getDates: () => ({ inicio: format(subDays(new Date(), 29), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+    { label: 'Este mes', getDates: () => ({ inicio: format(startOfMonth(new Date()), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+    { label: '90 días', getDates: () => ({ inicio: format(subDays(new Date(), 89), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+];
 
 const ComparativaHoteles = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [period, setPeriod] = useState('day'); // 'day' or 'month'
+    const [dates, setDates] = useState(PERIODOS[2].getDates()); // 30 días por defecto
+    const [periodoActivo, setPeriodoActivo] = useState(2);
 
     useEffect(() => {
         fetchComparativeData();
-    }, [period]);
+    }, [dates]);
 
     const fetchComparativeData = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/stats/comparative?period=${period}`);
+            const response = await api.get(`/stats/comparative?inicio=${dates.inicio}&fin=${dates.fin}`);
             setData(response.data);
         } catch (error) {
             console.error('Error fetching comparative stats:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const seleccionarPeriodo = (idx) => {
+        setPeriodoActivo(idx);
+        setDates(PERIODOS[idx].getDates());
     };
 
     if (loading) return (
@@ -50,15 +65,21 @@ const ComparativaHoteles = () => {
         ...(data?.colonial.map(c => c.label) || [])
     ])).sort((a, b) => {
         // Sort labels correctly (DD/MM or Month names)
-        if (period === 'month') {
-            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        
+        if (months.includes(a) && months.includes(b)) {
             return months.indexOf(a) - months.indexOf(b);
         }
+        
         // DD/MM sorting
-        const [da, ma] = a.split('/').map(Number);
-        const [db, mb] = b.split('/').map(Number);
-        if (ma !== mb) return ma - mb;
-        return da - db;
+        try {
+            const [da, ma] = a.split('/').map(Number);
+            const [db, mb] = b.split('/').map(Number);
+            if (ma !== mb) return ma - mb;
+            return da - db;
+        } catch (e) {
+            return a.localeCompare(b);
+        }
     });
 
     const chartData = allLabels.map(label => {
@@ -83,32 +104,44 @@ const ComparativaHoteles = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-                        <div className="p-3 bg-primary-100 rounded-3xl text-primary-600">
-                            <LayoutDashboard size={36} />
+            <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-primary-100 rounded-2xl text-primary-600">
+                                <LayoutDashboard size={28} />
+                            </div>
+                            Comparativa de Hoteles
+                        </h1>
+                        <p className="text-slate-400 text-sm font-medium mt-1 uppercase tracking-wider">Análisis entre Hotel Plaza y Hotel Colonial</p>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        {/* Períodos rápidos */}
+                        <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
+                            {PERIODOS.map((p, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => seleccionarPeriodo(i)}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${periodoActivo === i ? 'bg-primary-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
                         </div>
-                        Comparativa de Hoteles
-                    </h1>
-                    <p className="text-slate-500 font-medium mt-2">
-                        Análisis comparativo de rendimiento entre Hotel Balcón Plaza y Hotel Balcón Colonial.
-                    </p>
-                </div>
-                
-                <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
-                    <button 
-                        onClick={() => setPeriod('day')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${period === 'day' ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
-                    >
-                        Diario
-                    </button>
-                    <button 
-                        onClick={() => setPeriod('month')}
-                        className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${period === 'month' ? 'bg-primary-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}
-                    >
-                        Mensual
-                    </button>
+                        {/* Fechas personalizadas */}
+                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
+                            <Calendar size={14} className="text-slate-400" />
+                            <input type="date" className="bg-transparent text-[10px] font-bold border-none focus:ring-0 text-slate-700 p-0 w-24"
+                                value={dates.inicio} onChange={e => { setDates({ ...dates, inicio: e.target.value }); setPeriodoActivo(-1); }} />
+                            <span className="text-slate-300">→</span>
+                            <input type="date" className="bg-transparent text-[10px] font-bold border-none focus:ring-0 text-slate-700 p-0 w-24"
+                                value={dates.fin} onChange={e => { setDates({ ...dates, fin: e.target.value }); setPeriodoActivo(-1); }} />
+                            <button onClick={fetchComparativeData} className="text-primary-600 hover:text-primary-800 transition" title="Actualizar">
+                                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

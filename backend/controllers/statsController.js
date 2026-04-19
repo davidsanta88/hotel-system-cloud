@@ -29,17 +29,16 @@ const getColonialModels = async () => {
 
 exports.getComparativeStats = async (req, res) => {
     try {
-        const { period } = req.query; // 'day' o 'month'
-        const now = new Date();
+        const { inicio, fin } = req.query;
         
         // Plaza Stats (Current DB)
         const plazaData = await getStatsFromDB({
-            CierreCaja, Venta, Registro, Gasto
-        }, period);
+            Venta, Registro, Gasto
+        }, inicio, fin);
 
         // Colonial Stats
         const colonialModels = await getColonialModels();
-        const colonialData = await getStatsFromDB(colonialModels, period);
+        const colonialData = await getStatsFromDB(colonialModels, inicio, fin);
 
         res.json({
             plaza: plazaData,
@@ -51,25 +50,23 @@ exports.getComparativeStats = async (req, res) => {
     }
 };
 
-async function getStatsFromDB(models, period) {
+async function getStatsFromDB(models, startDateStr, endDateStr) {
     const { Venta, Registro, Gasto } = models;
     
-    const now = new Date();
-    let startDate;
-    
-    if (period === 'month') {
-        startDate = new Date(now.getFullYear(), 0, 1);
-    } else {
-        startDate = new Date();
-        startDate.setDate(startDate.getDate() - 15);
-    }
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Determinar si debemos agrupar por mes o por día basándonos en el rango
+    const diffDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    const useMonthly = diffDays > 60;
 
     // 1. Aggregation for Venta (Income)
     const ventaStats = await Venta.aggregate([
-        { $match: { fecha: { $gte: startDate } } },
+        { $match: { fecha: { $gte: startDate, $lte: endDate } } },
         {
             $group: {
-                _id: period === 'month' ? { $month: "$fecha" } : { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
+                _id: useMonthly ? { $month: "$fecha" } : { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
                 total: { $sum: "$total" }
             }
         }
@@ -78,10 +75,10 @@ async function getStatsFromDB(models, period) {
     // 2. Aggregation for Registro (Income from pagos)
     const registroStats = await Registro.aggregate([
         { $unwind: "$pagos" },
-        { $match: { "pagos.fecha": { $gte: startDate } } },
+        { $match: { "pagos.fecha": { $gte: startDate, $lte: endDate } } },
         {
             $group: {
-                _id: period === 'month' ? { $month: "$pagos.fecha" } : { $dateToString: { format: "%Y-%m-%d", date: "$pagos.fecha" } },
+                _id: useMonthly ? { $month: "$pagos.fecha" } : { $dateToString: { format: "%Y-%m-%d", date: "$pagos.fecha" } },
                 total: { $sum: "$pagos.monto" }
             }
         }
@@ -89,10 +86,10 @@ async function getStatsFromDB(models, period) {
 
     // 3. Aggregation for Gasto (Expenses)
     const gastoStats = await Gasto.aggregate([
-        { $match: { fecha: { $gte: startDate } } },
+        { $match: { fecha: { $gte: startDate, $lte: endDate } } },
         {
             $group: {
-                _id: period === 'month' ? { $month: "$fecha" } : { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
+                _id: useMonthly ? { $month: "$fecha" } : { $dateToString: { format: "%Y-%m-%d", date: "$fecha" } },
                 total: { $sum: "$monto" }
             }
         }
@@ -120,11 +117,17 @@ async function getStatsFromDB(models, period) {
     return sortedKeys.map(k => {
         const data = resultsMap.get(k);
         let label = k;
-        if (period === 'month') {
+        if (useMonthly) {
             const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             label = months[parseInt(k) - 1];
         } else {
-            label = k.split('-').slice(1).reverse().join('/'); // MM-DD to DD/MM
+            // Formatear fecha para mostrar (DD/MM)
+            try {
+                const [y, m, d] = k.split('-');
+                label = `${d}/${m}`;
+            } catch (e) {
+                label = k;
+            }
         }
         
         return {
