@@ -54,7 +54,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
                 { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' },
                 { name: 'Solicitudes Reserva', path: '/solicitudes', icon: <Bell size={20} />, code: 'solicitudes' },
-                { name: 'Mantenimiento', path: '/mantenimiento', icon: <Wrench size={20} />, code: 'mantenimiento' }
+                { name: 'Mantenimiento', path: '/mantenimiento', icon: <Wrench size={20} />, code: 'mantenimiento' },
+                { name: 'Aseo Diario', path: '/aseo', icon: <Brush size={20} />, code: 'mantenimiento' },
+                { name: 'Auditoría Limpieza', path: '/auditoria-limpieza', icon: <ShieldCheck size={20} />, code: 'configuracion' }
             ]
         },
         {

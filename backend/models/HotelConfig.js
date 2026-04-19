@@ -43,6 +43,10 @@ const HotelConfigSchema = new mongoose.Schema({
         type: String,
         default: '¡Gracias por su preferencia!'
     },
+    checklistAuditoria: {
+        type: [String],
+        default: ['Baños', 'Paredes', 'Vidrios', 'Balcones', 'Camas', 'Pisos', 'Iluminación']
+    },
     updatedAt: {
         type: Date,
         default: Date.now

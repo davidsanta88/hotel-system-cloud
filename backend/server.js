@@ -134,6 +134,7 @@ app.use('/api/mantenimiento', require('./routes/mantenimiento'));
 app.use('/api/estadisticas', require('./routes/estadisticas'));
 app.use('/api/hotel-config', require('./routes/hotelConfig'));
 app.use('/api/cierres-caja', require('./routes/cierresCaja'));
+app.use('/api/auditoria-limpieza', require('./routes/auditoriaLimpieza'));
 
 // Global Error Handler for JSON responses
 app.use((err, req, res, next) => {

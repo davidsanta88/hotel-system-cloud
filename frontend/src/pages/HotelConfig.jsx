@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote } from 'lucide-react';
+import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote, X } from 'lucide-react';
 
 const HotelConfig = () => {
     const [config, setConfig] = useState({
@@ -13,7 +13,8 @@ const HotelConfig = () => {
         sitioWeb: '',
         politica: '',
         datosBancarios: '',
-        lema: ''
+        lema: '',
+        checklistAuditoria: []
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -211,6 +212,61 @@ const HotelConfig = () => {
                             />
                         </div>
                         <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Este mensaje aparecerá como despedida en el pie de página de los vouchers.</p>
+                    </div>
+                </div>
+
+                {/* Checklist de Auditoría */}
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-md transition-all">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                <FileText className="text-blue-600" size={24} />
+                                Checklist de Auditoría
+                            </h3>
+                            <p className="text-xs text-slate-500 font-medium mt-1">Defina los ítems que se evaluarán en cada inspección de limpieza periódica.</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {config.checklistAuditoria?.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
+                                <div className="flex-1 relative">
+                                    <input
+                                        type="text"
+                                        value={item}
+                                        onChange={(e) => {
+                                            const newList = [...config.checklistAuditoria];
+                                            newList[index] = e.target.value;
+                                            setConfig(prev => ({ ...prev, checklistAuditoria: newList }));
+                                        }}
+                                        className="block w-full px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-700 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newList = config.checklistAuditoria.filter((_, i) => i !== index);
+                                        setConfig(prev => ({ ...prev, checklistAuditoria: newList }));
+                                    }}
+                                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        ))}
+                        
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setConfig(prev => ({ 
+                                    ...prev, 
+                                    checklistAuditoria: [...(prev.checklistAuditoria || []), ''] 
+                                }));
+                            }}
+                            className="w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-xs font-black uppercase hover:border-blue-400 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+                        >
+                            + Agregar ítem al checklist
+                        </button>
                     </div>
                 </div>
 
