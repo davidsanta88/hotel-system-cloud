@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote, X } from 'lucide-react';
+import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote, X, DollarSign } from 'lucide-react';
 
 const HotelConfig = () => {
     const [config, setConfig] = useState({
@@ -193,6 +193,25 @@ const HotelConfig = () => {
                             />
                         </div>
                         <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Este texto aparecerá en el pie de página de los vouchers PDF.</p>
+                    </div>
+
+                    {/* Datos Bancarios */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
+                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Datos Bancarios para Transferencias</label>
+                        <div className="relative">
+                            <div className="absolute top-3 left-3 flex items-center pointer-events-none text-slate-400">
+                                <DollarSign size={18} />
+                            </div>
+                            <textarea
+                                name="datosBancarios"
+                                value={config.datosBancarios}
+                                onChange={handleChange}
+                                rows={3}
+                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
+                                placeholder="Ej: Banco: Bancolombia | Cuenta Ahorros # 000... | Nequi: 300..."
+                            />
+                        </div>
+                        <p className="mt-2 text-[10px] text-slate-400 font-medium italic">* Estos datos aparecerán en las cotizaciones para facilitar el pago de reservas.</p>
                     </div>
 
                     {/* Lema del Hotel */}
