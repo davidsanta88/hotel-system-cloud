@@ -68,6 +68,37 @@ exports.createCotizacion = async (req, res) => {
     }
 };
 
+exports.updateCotizacion = async (req, res) => {
+    try {
+        const { cliente, correo, telefono, numeroPersonal, valorPersonalNormal, valorDescuento, detalles } = req.body;
+        
+        const subtotal = numeroPersonal * valorPersonalNormal;
+        const total = subtotal - valorDescuento;
+
+        const cotizacion = await Cotizacion.findByIdAndUpdate(
+            req.params.id,
+            { 
+                cliente, 
+                correo, 
+                telefono, 
+                numeroPersonal, 
+                valorPersonalNormal, 
+                valorDescuento, 
+                detalles,
+                subtotal,
+                total
+            },
+            { new: true }
+        );
+
+        if (!cotizacion) return res.status(404).json({ message: 'Cotización no encontrada' });
+        res.status(200).json(cotizacion);
+    } catch (error) {
+        console.error('Error al actualizar cotización:', error);
+        res.status(500).json({ message: 'Error al actualizar la cotización' });
+    }
+};
+
 exports.updateCotizacionStatus = async (req, res) => {
     try {
         const { estado } = req.body;

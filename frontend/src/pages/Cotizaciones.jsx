@@ -17,7 +17,8 @@ import {
     ArrowLeft,
     CheckCircle2,
     XCircle,
-    Clock
+    Clock,
+    Edit2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,6 +29,7 @@ const Cotizaciones = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [viewingCotizacion, setViewingCotizacion] = useState(null);
+    const [editingId, setEditingId] = useState(null);
     
     // Form state
     const [formData, setFormData] = useState({
@@ -72,15 +74,26 @@ const Cotizaciones = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await api.post('/cotizaciones', formData);
-            Swal.fire({
-                icon: 'success',
-                title: 'Cotización Creada',
-                text: `La cotización ${res.data.numeroCotizacion} se ha generado correctamente.`,
-                timer: 2000,
-                showConfirmButton: false
-            });
+            if (editingId) {
+                await api.put(`/cotizaciones/${editingId}`, formData);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cotización Actualizada',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                const res = await api.post('/cotizaciones', formData);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Cotización Creada',
+                    text: `La cotización ${res.data.numeroCotizacion} se ha generado correctamente.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
             setShowModal(false);
+            setEditingId(null);
             setFormData({
                 cliente: '',
                 correo: '',
@@ -95,6 +108,20 @@ const Cotizaciones = () => {
             console.error('Error saving cotización:', error);
             Swal.fire('Error', 'No se pudo guardar la cotización', 'error');
         }
+    };
+
+    const handleEdit = (cot) => {
+        setEditingId(cot._id);
+        setFormData({
+            cliente: cot.cliente,
+            correo: cot.correo || '',
+            telefono: cot.telefono || '',
+            numeroPersonal: cot.numeroPersonal,
+            valorPersonalNormal: cot.valorPersonalNormal,
+            valorDescuento: cot.valorDescuento,
+            detalles: cot.detalles || ''
+        });
+        setShowModal(true);
     };
 
     const handleStatusUpdate = async (id, newStatus) => {
@@ -377,6 +404,13 @@ const Cotizaciones = () => {
                                                     </button>
                                                 )}
                                                 <button 
+                                                    onClick={() => handleEdit(cot)}
+                                                    className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 size={18} />
+                                                </button>
+                                                <button 
                                                     onClick={() => setViewingCotizacion(cot)}
                                                     className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                                                     title="Ver/Imprimir"
@@ -408,12 +442,14 @@ const Cotizaciones = () => {
                         <div className="bg-slate-900 p-8 text-white flex justify-between items-center">
                             <div>
                                 <h2 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tight">
-                                    <Plus className="text-blue-500" size={24} />
-                                    Generar Cotización
+                                    {editingId ? <Edit2 className="text-blue-500" size={24} /> : <Plus className="text-blue-500" size={24} />}
+                                    {editingId ? 'Editar Cotización' : 'Generar Cotización'}
                                 </h2>
-                                <p className="text-slate-400 font-bold text-xs mt-1 uppercase tracking-widest">Complete los datos para la propuesta</p>
+                                <p className="text-slate-400 font-bold text-xs mt-1 uppercase tracking-widest">
+                                    {editingId ? 'Modifique los datos de la propuesta' : 'Complete los datos para la propuesta'}
+                                </p>
                             </div>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                            <button onClick={() => { setShowModal(false); setEditingId(null); }} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
                                 <Plus size={24} className="rotate-45" />
                             </button>
                         </div>
