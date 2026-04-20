@@ -277,7 +277,9 @@ const Cotizaciones = () => {
                                     </tr>
                                     <tr>
                                         <td colSpan="2"></td>
-                                        <td className="py-2 text-right text-rose-500 font-bold uppercase text-xs">Descuento Comercial</td>
+                                        <td className="py-2 text-right text-rose-500 font-bold uppercase text-xs">
+                                            Descuento Comercial ({viewingCotizacion.subtotal > 0 ? ((viewingCotizacion.valorDescuento / viewingCotizacion.subtotal) * 100).toFixed(1) : 0}%)
+                                        </td>
                                         <td className="py-2 text-right text-rose-600 font-black">-${viewingCotizacion.valorDescuento.toLocaleString()}</td>
                                     </tr>
                                     <tr className="border-t-2 border-slate-900">
@@ -585,6 +587,12 @@ const Cotizaciones = () => {
                                 {/* Total Preview */}
                                 <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex flex-col justify-center">
                                     <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 text-center">Resumen de Totales</span>
+                                    {formData.valorDescuento > 0 && (
+                                        <div className="flex justify-between items-baseline mb-1">
+                                            <span className="text-rose-400 font-bold text-[10px] uppercase">Descuento ({subtotal > 0 ? ((formData.valorDescuento / subtotal) * 100).toFixed(1) : 0}%):</span>
+                                            <span className="text-rose-500 font-bold text-xs">-${formData.valorDescuento.toLocaleString()}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-baseline">
                                         <span className="text-slate-500 font-bold text-xs uppercase">Total:</span>
                                         <span className="text-2xl font-black text-blue-600">${total.toLocaleString()}</span>
