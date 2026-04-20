@@ -194,105 +194,130 @@ const Cotizaciones = () => {
                 </button>
 
                 {/* COTIZACION PRINTABLE VIEW */}
-                <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 print:shadow-none print:border-none print:rounded-none">
-                    {/* Header Cotizacion */}
-                    <div className="bg-slate-900 text-white p-8 md:p-12 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="bg-white p-8 md:p-16 shadow-2xl border border-slate-100 print:shadow-none print:border-none print:p-0">
+                    {/* Header: Logo and Basic Hotel Info */}
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12 border-b-2 border-slate-900 pb-8">
+                        <div className="flex flex-col gap-4">
+                            <img src="/logo.jpg" alt="Logo Hotel" className="h-24 w-auto object-contain" />
                             <div>
-                                <h1 className="text-4xl font-black mb-2 tracking-tight">COTIZACIÓN</h1>
-                                <p className="text-blue-400 font-black tracking-widest uppercase text-sm">{viewingCotizacion.numeroCotizacion}</p>
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">{viewingCotizacion.hotelSnapshot.nombre}</h2>
+                                <p className="text-slate-500 font-bold text-sm tracking-widest uppercase">Nit: {viewingCotizacion.hotelSnapshot.nit}</p>
+                                <a href="https://www.hotelbalconplaza.com/" target="_blank" rel="noreferrer" className="text-blue-600 font-black text-xs hover:underline mt-1 block print:text-slate-800">
+                                    www.hotelbalconplaza.com
+                                </a>
                             </div>
-                            <div className="text-right">
-                                <h2 className="text-2xl font-black">{viewingCotizacion.hotelSnapshot.nombre}</h2>
-                                <p className="text-slate-400 text-sm font-medium">NIT: {viewingCotizacion.hotelSnapshot.nit}</p>
+                        </div>
+                        <div className="text-right flex flex-col justify-end h-full">
+                            <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl inline-block mb-4">
+                                <h1 className="text-3xl font-black tracking-tighter leading-none">COTIZACIÓN</h1>
+                                <p className="text-blue-400 font-black text-sm mt-1">{viewingCotizacion.numeroCotizacion}</p>
                             </div>
+                            <p className="text-slate-500 font-bold text-sm italic">
+                                Fecha de Emisión: {format(new Date(viewingCotizacion.fecha), "dd 'de' MMMM, yyyy", { locale: es })}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="p-8 md:p-12 space-y-12">
-                        {/* Info Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                            <div>
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Información del Cliente</h3>
-                                <div className="space-y-2">
+                    <div className="space-y-12">
+                        {/* Info Section */}
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <h3 className="text-xs font-black text-white bg-slate-900 px-3 py-1 inline-block uppercase tracking-widest">Información del Cliente</h3>
+                                <div className="space-y-1">
                                     <p className="text-xl font-black text-slate-800">{viewingCotizacion.cliente}</p>
-                                    <p className="text-slate-500 font-bold flex items-center gap-2 italic">
-                                        <Calendar size={16} className="text-blue-500" />
-                                        Fecha: {format(new Date(viewingCotizacion.fecha), "dd 'de' MMMM, yyyy", { locale: es })}
-                                    </p>
                                     {viewingCotizacion.correo && <p className="text-slate-500 font-bold">Email: {viewingCotizacion.correo}</p>}
-                                    {viewingCotizacion.telefono && <p className="text-slate-500 font-bold">Tel: {viewingCotizacion.telefono}</p>}
+                                    {viewingCotizacion.telefono && <p className="text-slate-500 font-bold">Teléfono: {viewingCotizacion.telefono}</p>}
                                 </div>
                             </div>
-                            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 text-right">Contacto del Hotel</h3>
-                                <div className="space-y-2 text-right">
-                                    <p className="text-slate-700 font-black">{viewingCotizacion.hotelSnapshot.direccion}</p>
-                                    <p className="text-slate-600 font-bold">{viewingCotizacion.hotelSnapshot.telefono}</p>
-                                    <p className="text-slate-600 font-bold">{viewingCotizacion.hotelSnapshot.correo}</p>
+                            <div className="space-y-4 text-right">
+                                <h3 className="text-xs font-black text-white bg-slate-900 px-3 py-1 inline-block uppercase tracking-widest">Ubicación y Contacto</h3>
+                                <div className="space-y-1 text-sm font-bold text-slate-600">
+                                    <p>{viewingCotizacion.hotelSnapshot.direccion}</p>
+                                    <p>Tel: {viewingCotizacion.hotelSnapshot.telefono}</p>
+                                    <p>{viewingCotizacion.hotelSnapshot.correo}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Items Table */}
+                        {/* Proposal Details Table */}
                         <div>
-                            <div className="overflow-hidden rounded-3xl border border-slate-100 shadow-sm">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-slate-900 text-white">
-                                            <th className="px-6 py-4 text-xs font-black uppercase tracking-wider">Descripción</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-center">Cant. Personal</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-right">Valor Unitario</th>
-                                            <th className="px-6 py-4 text-xs font-black uppercase tracking-wider text-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        <tr>
-                                            <td className="px-6 py-6">
-                                                <p className="font-black text-slate-800 text-lg">Hospedaje / Servicios</p>
-                                                <p className="text-slate-500 text-sm font-medium mt-1">{viewingCotizacion.detalles || 'Servicio de hotelería estándar.'}</p>
-                                            </td>
-                                            <td className="px-6 py-6 text-center">
-                                                <span className="inline-flex items-center justify-center px-4 py-1 bg-blue-100 text-blue-700 rounded-full font-black">
-                                                    {viewingCotizacion.numeroPersonal}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-6 text-right font-bold text-slate-700">
-                                                ${viewingCotizacion.valorPersonalNormal.toLocaleString()}
-                                            </td>
-                                            <td className="px-6 py-6 text-right font-black text-slate-800">
-                                                ${viewingCotizacion.subtotal.toLocaleString()}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="border-y-2 border-slate-900">
+                                        <th className="py-4 text-left text-xs font-black uppercase tracking-widest text-slate-900">Concepto / Servicios Incluidos</th>
+                                        <th className="py-4 text-center text-xs font-black uppercase tracking-widest text-slate-900">Cant. Pers</th>
+                                        <th className="py-4 text-right text-xs font-black uppercase tracking-widest text-slate-900">Valor Unit.</th>
+                                        <th className="py-4 text-right text-xs font-black uppercase tracking-widest text-slate-900">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-slate-100">
+                                        <td className="py-8 align-top">
+                                            <p className="text-lg font-black text-slate-800 mb-2 uppercase">Servicios de Hospedaje y Atención</p>
+                                            <div className="text-slate-500 font-medium text-sm leading-relaxed whitespace-pre-wrap max-w-md">
+                                                {viewingCotizacion.detalles || 'Servicio integral de hotelería según estándares de calidad del Hotel Balcón Plaza.'}
+                                            </div>
+                                        </td>
+                                        <td className="py-8 text-center align-top">
+                                            <span className="font-black text-slate-700">{viewingCotizacion.numeroPersonal}</span>
+                                        </td>
+                                        <td className="py-8 text-right align-top">
+                                            <span className="font-bold text-slate-700">${viewingCotizacion.valorPersonalNormal.toLocaleString()}</span>
+                                        </td>
+                                        <td className="py-8 text-right align-top">
+                                            <span className="font-black text-slate-900">${viewingCotizacion.subtotal.toLocaleString()}</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colSpan="2"></td>
+                                        <td className="py-4 text-right text-slate-500 font-bold uppercase text-xs">Subtotal Bruto</td>
+                                        <td className="py-4 text-right text-slate-700 font-black">${viewingCotizacion.subtotal.toLocaleString()}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="2"></td>
+                                        <td className="py-2 text-right text-rose-500 font-bold uppercase text-xs">Descuento Comercial</td>
+                                        <td className="py-2 text-right text-rose-600 font-black">-${viewingCotizacion.valorDescuento.toLocaleString()}</td>
+                                    </tr>
+                                    <tr className="border-t-2 border-slate-900">
+                                        <td colSpan="2"></td>
+                                        <td className="py-6 text-right text-slate-900 font-black uppercase text-sm tracking-tighter">Valor Total de Propuesta</td>
+                                        <td className="py-6 text-right text-blue-600 font-black text-3xl tracking-tighter">${viewingCotizacion.total.toLocaleString()}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        {/* Terms and Conditions */}
+                        <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Términos y Condiciones Generales</h4>
+                            <div className="text-[11px] text-slate-500 font-medium leading-relaxed space-y-2">
+                                <p>• {hotelConfig?.politica || 'La presente cotización tiene una validez de 15 días a partir de la fecha de emisión.'}</p>
+                                <p>• Reserva sujeta a disponibilidad al momento de la confirmación.</p>
+                                <p>• Los valores expresados no incluyen IVA (si aplica) ni servicios adicionales no especificados.</p>
+                                <p>• Para formalizar la reserva se requiere el 50% de anticipo.</p>
                             </div>
                         </div>
 
-                        {/* Totals */}
-                        <div className="flex flex-col items-end gap-3">
-                            <div className="w-full md:w-80 space-y-3">
-                                <div className="flex justify-between items-center text-slate-500 font-bold">
-                                    <span>Subtotal</span>
-                                    <span>${viewingCotizacion.subtotal.toLocaleString()}</span>
+                        {/* Signatures and Footer */}
+                        <div className="pt-20 grid grid-cols-2 gap-16">
+                            <div className="text-center">
+                                <div className="border-t border-slate-400 pt-4">
+                                    <p className="text-sm font-black text-slate-800">Aceptado por Cliente</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Firma y Sello</p>
                                 </div>
-                                <div className="flex justify-between items-center text-rose-500 font-bold">
-                                    <span>Descuento aplicado</span>
-                                    <span>-${viewingCotizacion.valorDescuento.toLocaleString()}</span>
-                                </div>
-                                <div className="h-px bg-slate-200 my-2"></div>
-                                <div className="flex justify-between items-center text-slate-900">
-                                    <span className="text-xl font-black uppercase tracking-tighter">Total Cotizado</span>
-                                    <span className="text-3xl font-black text-blue-600">${viewingCotizacion.total.toLocaleString()}</span>
+                            </div>
+                            <div className="text-center">
+                                <div className="border-t border-slate-400 pt-4">
+                                    <p className="text-sm font-black text-slate-800">Gestión Comercial</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{viewingCotizacion.hotelSnapshot.nombre}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Footer / Lema */}
-                        <div className="pt-12 border-t border-slate-100 text-center">
-                            <p className="text-slate-400 font-black italic mb-2">"{viewingCotizacion.hotelSnapshot.lema || 'Un oasis de paz y tradición'}"</p>
-                            <p className="text-[10px] text-slate-300 uppercase font-bold tracking-widest">Este documento es una cotización informativa y no representa una reserva confirmada.</p>
+                        <div className="pt-12 text-center">
+                            <p className="text-slate-400 font-black italic text-sm">"{viewingCotizacion.hotelSnapshot.lema || 'Gracias por elegirnos'}"</p>
                         </div>
                     </div>
                 </div>
@@ -303,7 +328,7 @@ const Cotizaciones = () => {
                         className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-sm uppercase hover:bg-slate-800 transition-all shadow-lg"
                     >
                         <Printer size={18} />
-                        Imprimir Cotización
+                        Imprimir / Guardar PDF
                     </button>
                 </div>
             </div>
