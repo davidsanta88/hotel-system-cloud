@@ -56,7 +56,8 @@ exports.createCotizacion = async (req, res) => {
                 direccion: config?.direccion,
                 telefono: config?.telefono,
                 correo: config?.correo,
-                lema: config?.lema
+                lema: config?.lema,
+                datosBancarios: config?.datosBancarios
             }
         });
 

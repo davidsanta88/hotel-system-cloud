@@ -285,7 +285,7 @@ const Cotizaciones = () => {
                                     <tr className="border-t-2 border-slate-900">
                                         <td colSpan="2"></td>
                                         <td className="py-6 text-right text-slate-900 font-black uppercase text-sm tracking-tighter">Valor Total de Propuesta</td>
-                                        <td className="py-6 text-right text-blue-600 font-black text-3xl tracking-tighter">${viewingCotizacion.total.toLocaleString()}</td>
+                                        <td className="py-6 text-right text-emerald-600 font-black text-3xl tracking-tighter">${viewingCotizacion.total.toLocaleString()}</td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -297,28 +297,19 @@ const Cotizaciones = () => {
                             <div className="text-[11px] text-slate-500 font-medium leading-relaxed space-y-2">
                                 <p>• {hotelConfig?.politica || 'La presente cotización tiene una validez de 15 días a partir de la fecha de emisión.'}</p>
                                 <p>• Reserva sujeta a disponibilidad al momento de la confirmación.</p>
-                                <p>• Los valores expresados no incluyen IVA (si aplica) ni servicios adicionales no especificados.</p>
-                                <p>• Para formalizar la reserva se requiere el 50% de anticipo.</p>
+                                <p>• Para formalizar la reserva se requiere el anticipo del 50%.</p>
+                                {viewingCotizacion.hotelSnapshot.datosBancarios && (
+                                    <div className="mt-4 p-4 bg-white border border-slate-200 rounded-2xl">
+                                        <p className="font-black text-slate-900 mb-1 tracking-tight uppercase">Datos para consignación:</p>
+                                        <p className="font-bold text-slate-700">{viewingCotizacion.hotelSnapshot.datosBancarios}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Signatures and Footer */}
-                        <div className="pt-20 grid grid-cols-2 gap-16">
-                            <div className="text-center">
-                                <div className="border-t border-slate-400 pt-4">
-                                    <p className="text-sm font-black text-slate-800">Aceptado por Cliente</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Firma y Sello</p>
-                                </div>
-                            </div>
-                            <div className="text-center">
-                                <div className="border-t border-slate-400 pt-4">
-                                    <p className="text-sm font-black text-slate-800">Gestión Comercial</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{viewingCotizacion.hotelSnapshot.nombre}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pt-12 text-center">
+                        {/* Signatures and Footer Removed as requested */}
+                        
+                        <div className="pt-8 text-center border-t border-slate-100">
                             <p className="text-slate-400 font-black italic text-sm">"{viewingCotizacion.hotelSnapshot.lema || 'Gracias por elegirnos'}"</p>
                         </div>
                     </div>

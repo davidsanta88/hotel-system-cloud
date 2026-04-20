@@ -59,7 +59,8 @@ const CotizacionSchema = new mongoose.Schema({
         direccion: String,
         telefono: String,
         correo: String,
-        lema: String
+        lema: String,
+        datosBancarios: String
     }
 }, { timestamps: true });
 
