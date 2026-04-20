@@ -289,26 +289,43 @@ const Cotizaciones = () => {
                                         </td>
                                     </tr>
                                 </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colSpan="2"></td>
-                                        <td className="py-4 text-right text-slate-500 font-bold uppercase text-xs">Subtotal Bruto</td>
-                                        <td className="py-4 text-right text-slate-700 font-black">${viewingCotizacion.subtotal.toLocaleString()}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="2"></td>
-                                        <td className="py-2 text-right text-rose-500 font-bold uppercase text-xs">
-                                            Descuento Comercial ({viewingCotizacion.subtotal > 0 ? ((viewingCotizacion.valorDescuento / viewingCotizacion.subtotal) * 100).toFixed(1) : 0}%)
-                                        </td>
-                                        <td className="py-2 text-right text-rose-600 font-black">-${viewingCotizacion.valorDescuento.toLocaleString()}</td>
-                                    </tr>
-                                    <tr className="border-t-2 border-slate-900">
-                                        <td colSpan="2"></td>
-                                        <td className="py-6 text-right text-slate-900 font-black uppercase text-sm tracking-tighter">Valor Total de Propuesta</td>
-                                        <td className="py-6 text-right text-emerald-600 font-black text-3xl tracking-tighter">${viewingCotizacion.total.toLocaleString()}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                        {/* Totals and Bank Details Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                            {/* Bank Details (More Prominent) */}
+                            <div className="p-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem]">
+                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                    <DollarSign size={16} className="text-emerald-600" />
+                                    Datos para Reserva / Pago
+                                </h4>
+                                <div className="text-sm font-bold text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                    {viewingCotizacion.hotelSnapshot.datosBancarios || hotelConfig?.datosBancarios || 'Consultar datos bancarios con el hotel.'}
+                                </div>
+                                <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-tight italic">
+                                    * Favor enviar comprobante de pago para formalizar la reserva.
+                                </p>
+                            </div>
+
+                            {/* Totals Table Section */}
+                            <div>
+                                <table className="w-full">
+                                    <tbody>
+                                        <tr>
+                                            <td className="py-2 text-right text-slate-500 font-bold uppercase text-xs">Subtotal Bruto</td>
+                                            <td className="py-2 text-right text-slate-700 font-black">${viewingCotizacion.subtotal.toLocaleString()}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-2 text-right text-rose-500 font-bold uppercase text-xs">
+                                                Descuento Comercial ({viewingCotizacion.subtotal > 0 ? ((viewingCotizacion.valorDescuento / viewingCotizacion.subtotal) * 100).toFixed(1) : 0}%)
+                                            </td>
+                                            <td className="py-2 text-right text-rose-600 font-black">-${viewingCotizacion.valorDescuento.toLocaleString()}</td>
+                                        </tr>
+                                        <tr className="border-t-2 border-slate-900">
+                                            <td className="py-6 text-right text-slate-900 font-black uppercase text-sm tracking-tighter">Valor Total de Propuesta</td>
+                                            <td className="py-6 text-right text-emerald-600 font-black text-3xl tracking-tighter">${viewingCotizacion.total.toLocaleString()}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         {/* Terms and Conditions */}
@@ -319,26 +336,12 @@ const Cotizaciones = () => {
                                     const text = hotelConfig?.politica;
                                     if (!text) return <p>• La presente cotización tiene una validez de 15 días a partir de la fecha de emisión.</p>;
                                     
-                                    // Detectar si hay enumeraciones tipo "1. ", "2. " y separar por ellas
                                     const parts = text.split(/(?=\d+\.\s+)/).map(p => p.trim()).filter(p => p);
-                                    
-                                    if (parts.length > 1) {
-                                        return parts.map((part, i) => <p key={i}>• {part}</p>);
-                                    }
-                                    
-                                    // Si no hay números, separar por saltos de línea normales
-                                    return text.split('\n').map(p => p.trim()).filter(p => p).map((part, i) => (
-                                        <p key={i}>• {part}</p>
-                                    ));
+                                    if (parts.length > 1) return parts.map((part, i) => <p key={i}>• {part}</p>);
+                                    return text.split('\n').map(p => p.trim()).filter(p => p).map((part, i) => <p key={i}>• {part}</p>);
                                 })()}
                                 <p>• Reserva sujeta a disponibilidad al momento de la confirmación.</p>
                                 <p>• Para formalizar la reserva se requiere el anticipo del 50%.</p>
-                                {viewingCotizacion.hotelSnapshot.datosBancarios && (
-                                    <div className="mt-4 p-4 bg-white border border-slate-200 rounded-2xl">
-                                        <p className="font-black text-slate-900 mb-1 tracking-tight uppercase">Datos para consignación:</p>
-                                        <p className="font-bold text-slate-700">{viewingCotizacion.hotelSnapshot.datosBancarios}</p>
-                                    </div>
-                                )}
                             </div>
                         </div>
 
