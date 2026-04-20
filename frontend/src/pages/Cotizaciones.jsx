@@ -185,6 +185,26 @@ const Cotizaciones = () => {
     if (viewingCotizacion) {
         return (
             <div className="max-w-4xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+                <style>
+                    {`
+                        @media print {
+                            @page { 
+                                margin: 1cm; 
+                            }
+                            body { 
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
+                            .print\\:hidden { 
+                                display: none !important; 
+                            }
+                            /* Intentar ocultar cabeceras/pies de página del navegador */
+                            header, footer, .no-print {
+                                display: none !important;
+                            }
+                        }
+                    `}
+                </style>
                 <button 
                     onClick={() => setViewingCotizacion(null)}
                     className="mb-6 flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold transition-colors print:hidden"
