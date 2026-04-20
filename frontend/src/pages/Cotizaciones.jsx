@@ -189,17 +189,18 @@ const Cotizaciones = () => {
                     {`
                         @media print {
                             @page { 
-                                margin: 1cm; 
+                                margin: 0.5cm; 
                             }
                             body { 
                                 -webkit-print-color-adjust: exact !important;
                                 print-color-adjust: exact !important;
+                                background-color: white !important;
                             }
                             .print\\:hidden { 
                                 display: none !important; 
                             }
-                            /* Intentar ocultar cabeceras/pies de página del navegador */
-                            header, footer, .no-print {
+                            /* Solo ocultar elementos marcados expresamente como no-print */
+                            .no-print {
                                 display: none !important;
                             }
                         }
