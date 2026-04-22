@@ -18,7 +18,8 @@ import {
     Home,
     Edit3,
     Printer,
-    LogOut
+    LogOut,
+    Clock
 } from 'lucide-react';
 import { formatCurrency, cleanNumericValue } from '../../utils/format';
 import { generateVoucher } from '../../utils/voucherGenerator';
@@ -208,6 +209,162 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                 }
             };
 
+    const handleExtendStay = async () => {
+        const inDate = moment.utc(details.fecha_ingreso);
+        const outDate = moment.utc(details.fecha_salida);
+        const currentDays = Math.max(outDate.diff(inDate, 'days'), 1);
+        const currentPricePerNight = details.total / currentDays;
+
+        const { value: formValues } = await Swal.fire({
+            title: 'Extender Estancia (Prórroga)',
+            html: `
+                <div class="text-left space-y-5 p-4 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                            <Clock size={20} />
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Gestión de Tiempo</p>
+                            <h4 class="text-sm font-black text-slate-800">Prórroga de Habitación #${details.numero_habitacion}</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">¿Cuántos días adicionales?</label>
+                            <div class="relative">
+                                <input id="swal-input-days" type="number" min="1" value="1" 
+                                    class="w-full bg-slate-50 border-none rounded-xl py-3 px-4 font-black text-slate-800 text-lg focus:ring-2 focus:ring-blue-400 transition-all text-center"
+                                />
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">NOCHES</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Precio por noche adicional</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400 font-bold text-lg">$</span>
+                                <input id="swal-input-price" type="text" value="${formatCurrency(currentPricePerNight)}" 
+                                    class="w-full bg-slate-50 border-none rounded-xl py-3 pl-10 pr-4 font-black text-slate-800 text-lg focus:ring-2 focus:ring-blue-400 transition-all"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/\\B(?=(\\d{3})+(?!\\d))/g, '.')"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-600 p-4 rounded-2xl text-white shadow-lg shadow-blue-200">
+                        <div class="flex justify-between items-center opacity-70 text-[10px] font-black uppercase tracking-tighter mb-1">
+                            <span>Resumen de Prórroga</span>
+                            <span id="swal-preview-days">1 Día extra</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <p class="text-xs font-medium">Nuevo Saldo Sugerido:</p>
+                            <p class="text-2xl font-black" id="swal-preview-total">$${formatCurrency(details.total + currentPricePerNight)}</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            width: '450px',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Confirmar Prórroga',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#64748b',
+            customClass: {
+                popup: 'rounded-[2rem] p-4',
+                confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-8 py-3.5',
+                cancelButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-8 py-3.5'
+            },
+            didOpen: () => {
+                const inputDays = document.getElementById('swal-input-days');
+                const inputPrice = document.getElementById('swal-input-price');
+                const previewTotal = document.getElementById('swal-preview-total');
+                const previewDays = document.getElementById('swal-preview-days');
+
+                const updatePreview = () => {
+                    const days = parseInt(inputDays.value) || 0;
+                    const price = parseFloat(inputPrice.value.replace(/\./g, '')) || 0;
+                    const additional = days * price;
+                    const newTotal = details.total + additional;
+                    
+                    previewTotal.innerText = `$${new Intl.NumberFormat('de-DE').format(newTotal)}`;
+                    previewDays.innerText = `${days} Día(s) extra`;
+                };
+
+                inputDays.addEventListener('input', updatePreview);
+                inputPrice.addEventListener('input', updatePreview);
+            },
+            preConfirm: () => {
+                const days = parseInt(document.getElementById('swal-input-days').value);
+                const price = parseFloat(document.getElementById('swal-input-price').value.replace(/\./g, ''));
+                
+                if (isNaN(days) || days <= 0) {
+                    Swal.showValidationMessage('Ingresa un número de días válido');
+                    return false;
+                }
+                if (isNaN(price) || price < 0) {
+                    Swal.showValidationMessage('Ingresa un precio válido');
+                    return false;
+                }
+
+                return { days, price };
+            }
+        });
+
+        if (formValues) {
+            const newOutDate = moment.utc(details.fecha_salida).add(formValues.days, 'days').format('YYYY-MM-DD');
+            const additionalTotal = formValues.days * formValues.price;
+            const newTotal = details.total + additionalTotal;
+
+            try {
+                Swal.fire({ title: 'Actualizando registro...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                await api.put(`/registros/${registroId}`, {
+                    fechaSalida: newOutDate,
+                    total: newTotal,
+                    notas: `${details.notas || ''} \n[PRÓRROGA: ${formValues.days} día(s) adicionales por $${formatCurrency(additionalTotal)}]`.trim()
+                });
+                
+                const { isConfirmed } = await Swal.fire({
+                    title: '¡Estancia Extendida!',
+                    html: `
+                        <p class="text-sm text-slate-500 mb-4 font-medium">Se han añadido ${formValues.days} día(s) a la estancia.</p>
+                        <div class="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl text-emerald-700">
+                            <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Monto a cobrar por prórroga</p>
+                            <p class="text-4xl font-black">$${formatCurrency(additionalTotal)}</p>
+                        </div>
+                        <p class="text-xs font-bold text-slate-400 mt-4 uppercase">¿Deseas registrar este pago ahora mismo?</p>
+                    `,
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, Registrar Pago',
+                    cancelButtonText: 'Después',
+                    confirmButtonColor: '#10b981',
+                    customClass: {
+                        popup: 'rounded-[2rem] p-4',
+                        confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-8 py-3.5',
+                        cancelButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-8 py-3.5'
+                    }
+                });
+
+                if (isConfirmed) {
+                    setAbonoForm({ 
+                        monto: additionalTotal, 
+                        medio: 'Efectivo', 
+                        notas: `Pago por extensión de estadía (${formValues.days} días adicionales)` 
+                    });
+                    setShowAbonoForm(true);
+                }
+                
+                fetchData();
+                if (onSuccess) onSuccess();
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo procesar la extensión de estadía', 'error');
+            }
+        }
+    };
+
     const handleCheckout = async () => {
         const result = await Swal.fire({
             title: '¿Confirmar Check-out?',
@@ -291,6 +448,15 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                         <Edit size={14} />
                                         <span>Editar</span>
                                     </button>
+                                    {details?.estado === 'activa' && (
+                                        <button 
+                                            onClick={handleExtendStay}
+                                            className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full hover:bg-amber-100 transition-all border border-amber-100 font-bold text-xs uppercase"
+                                        >
+                                            <Clock size={14} />
+                                            <span>Prórroga</span>
+                                        </button>
+                                    )}
                                     <button 
                                         onClick={async () => {
                                             await generateVoucher({
