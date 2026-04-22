@@ -113,6 +113,9 @@ const ComparativaHoteles = () => {
 
     const totalGlobalMargen = totalGlobalIngresos - totalGlobalEgresos;
     const globalMargenPercent = totalGlobalIngresos > 0 ? (totalGlobalMargen / totalGlobalIngresos) * 100 : 0;
+    
+    const globalTotalHabitaciones = globalDisponibles + globalOcupadas + globalAseo;
+    const globalOccupancyPercent = globalTotalHabitaciones > 0 ? (globalOcupadas / globalTotalHabitaciones) * 100 : 0;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
@@ -161,7 +164,7 @@ const ComparativaHoteles = () => {
             {/* Consolidado General */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Fila 1: Financiero */}
-                <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-primary-100">
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100">
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Ingresos Globales</p>
                     <div className="flex items-center justify-between">
                         <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(totalGlobalIngresos)}</h4>
@@ -171,11 +174,11 @@ const ComparativaHoteles = () => {
                     </div>
                 </div>
                 
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Egresos Globales</p>
+                <div className="bg-gradient-to-br from-rose-600 to-rose-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-rose-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Egresos Globales</p>
                     <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-slate-800">${new Intl.NumberFormat().format(totalGlobalEgresos)}</h4>
-                        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
+                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(totalGlobalEgresos)}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
                             <ArrowDownRight size={24} />
                         </div>
                     </div>
@@ -210,7 +213,12 @@ const ComparativaHoteles = () => {
                 </div>
 
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Hab. Ocupadas Totales</p>
+                    <div className="flex justify-between items-start mb-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Ocupadas Totales</p>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">
+                            {globalOccupancyPercent.toFixed(1)}% Ocupación
+                        </span>
+                    </div>
                     <div className="flex items-center justify-between">
                         <h4 className="text-3xl font-black text-rose-600">{globalOcupadas}</h4>
                         <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
