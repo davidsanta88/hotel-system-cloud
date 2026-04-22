@@ -606,7 +606,7 @@ const Registros = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase
-                                                    ${res.estado === 'activa' ? 'bg-green-100 text-green-800' : 
+                                                    ${['activa', 'activo'].includes(res.estado?.toLowerCase()) ? 'bg-green-100 text-green-800' : 
                                                       res.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
                                                       res.estado === 'completada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                                                     {res.estado}

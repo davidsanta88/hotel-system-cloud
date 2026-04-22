@@ -436,7 +436,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                             Detalles Registro <span className="text-gray-400 font-medium text-sm">#{registroId}</span>
                         </h2>
                         <div className="flex items-center gap-2">
-                             <span className={`px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest ${details?.estado === 'activa' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'}`}>
+                             <span className={`px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest ${['activa', 'activo'].includes(details?.estado?.toLowerCase()) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'}`}>
                                 {details?.estado || 'Cargando...'}
                             </span>
                             {!isEditing && (
@@ -448,7 +448,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                         <Edit size={14} />
                                         <span>Editar</span>
                                     </button>
-                                    {details?.estado === 'activa' && (
+                                    {['activa', 'activo'].includes(details?.estado?.toLowerCase()) && (
                                         <button 
                                             onClick={handleExtendStay}
                                             className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full hover:bg-amber-100 transition-all border border-amber-100 font-bold text-xs uppercase"
