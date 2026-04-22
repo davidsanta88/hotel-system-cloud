@@ -65,7 +65,7 @@ const PrivateRoute = ({ children, roles, code }) => {
 const AppRoutes = () => {
     return (
         <Routes>
-            <Route path="/" element={<Navigate to="/mapa-habitaciones" />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             
             <Route element={<PrivateRoute><Layout /></PrivateRoute>}>

@@ -175,6 +175,24 @@ const HotelConfig = () => {
                         </div>
                     </div>
 
+                    {/* Sitio Web */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                        <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Página Web</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <Globe size={18} />
+                            </div>
+                            <input
+                                type="text"
+                                name="sitioWeb"
+                                value={config.sitioWeb}
+                                onChange={handleChange}
+                                className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold text-slate-700"
+                                placeholder="www.hotel.com"
+                            />
+                        </div>
+                    </div>
+
                     {/* Política del Hotel */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
                         <label className="block text-xs font-black text-slate-400 uppercase mb-2 ml-1">Política General (Legal)</label>

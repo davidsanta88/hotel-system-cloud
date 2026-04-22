@@ -62,9 +62,34 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, initialReserva, o
 
     useEffect(() => {
         if (isOpen) {
+            // Reset state to avoid carrying over data from previous opens
+            setHuespedesList([]);
+            setSelectedCliente(null);
+            setClienteSearch('');
+            setIsTotalEdited(false);
+            setGuestForm({ 
+                nombre: '', 
+                documento: '', 
+                tipo_documento: 'CC', 
+                telefono: '', 
+                email: '', 
+                municipio_origen_id: '' 
+            });
+            setFormData({
+                habitacion_id: initialHabitacionId || '',
+                fecha_ingreso: moment.utc().format('YYYY-MM-DD'),
+                fecha_salida: moment.utc().add(1, 'days').format('YYYY-MM-DD'),
+                total: '0.00',
+                medio_pago_id: '',
+                valor_cobrado: '0.00',
+                notas: '',
+                tipo_registro_id: '',
+                reserva_id: ''
+            });
+
             fetchInitialData();
         }
-    }, [isOpen]);
+    }, [isOpen, initialHabitacionId]);
 
     useEffect(() => {
         if (initialHabitacionId) {
