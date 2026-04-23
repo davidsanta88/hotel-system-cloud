@@ -18,6 +18,23 @@ app.set('trust proxy', true); // Trust proxy (Vercel, Heroku, Nginx)
 // Conectar a MongoDB
 connectDB();
 
+// Registro preventivo de modelos para evitar MissingSchemaError en populates
+require('./models/Rol');
+require('./models/Usuario');
+require('./models/Municipio');
+require('./models/Empresa');
+require('./models/Cliente');
+require('./models/TipoHabitacion');
+require('./models/EstadoHabitacion');
+require('./models/Habitacion');
+require('./models/Registro');
+require('./models/Reserva');
+require('./models/Categoria');
+require('./models/Producto');
+require('./models/Venta');
+require('./models/Gasto');
+require('./models/MedioPago');
+
 
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');

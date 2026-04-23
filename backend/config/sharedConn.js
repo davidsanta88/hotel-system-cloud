@@ -5,9 +5,13 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const sharedUri = process.env.SHARED_MONGODB_URI;
 const mainUri = process.env.MONGODB_URI;
 
+// Normalizar URIs para comparación (ignorar parámetros y barras finales)
+const normalize = (u) => u ? u.trim().split('?')[0].replace(/\/$/, '') : '';
+const isSameDb = sharedUri && mainUri && (normalize(sharedUri) === normalize(mainUri));
+
 let sharedConn;
 
-if (sharedUri && mainUri && (sharedUri === mainUri)) {
+if (isSameDb) {
     // Si la URI compartida es la misma que la principal, usamos el objeto mongoose global
     // Esto permite que la población (populate) funcione entre todos los modelos
     sharedConn = mongoose;
