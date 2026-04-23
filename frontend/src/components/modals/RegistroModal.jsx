@@ -19,7 +19,7 @@ import {
     Mail,
     MapPin,
     Loader2,
-    Building
+    Building2
 } from 'lucide-react';
 import Select from 'react-select';
 import { formatCurrency, cleanNumericValue } from '../../utils/format';
@@ -339,7 +339,7 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, initialReserva, o
                             <Plus size={20} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black uppercase tracking-tight">Nuevo Registro</h2>
+                            <h2 className="text-xl font-black uppercase tracking-tight">Nuevo Registro v1.2</h2>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest opacity-80">Mapa Operativo</p>
                         </div>
                     </div>
@@ -483,7 +483,7 @@ const RegistroModal = ({ isOpen, onClose, initialHabitacionId, initialReserva, o
                                         <div className="sm:col-span-2">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Empresa / Convenio</label>
                                             <div className="relative">
-                                                <Building size={14} className="absolute left-3 top-2.5 text-gray-300" />
+                                                <Building2 size={14} className="absolute left-3 top-2.5 text-gray-300" />
                                                 <select 
                                                     className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-emerald-500 outline-none uppercase text-indigo-600" 
                                                     value={guestForm.empresa_id || ''} 
