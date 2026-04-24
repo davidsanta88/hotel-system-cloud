@@ -320,6 +320,20 @@ const Clientes = () => {
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button 
+                        onClick={handleExportExcel}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-all"
+                        title="Exportar a Excel"
+                    >
+                        <FileSpreadsheet size={16} /> Excel
+                    </button>
+                    <button 
+                        onClick={handleExportPDF}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 border border-rose-100 rounded-xl font-bold text-xs hover:bg-rose-100 transition-all"
+                        title="Exportar a PDF"
+                    >
+                        <FileText size={16} /> PDF
+                    </button>
                 </div>
             </div>
 
