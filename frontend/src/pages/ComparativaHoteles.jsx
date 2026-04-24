@@ -174,8 +174,8 @@ const ComparativaHoteles = () => {
             </div>
 
             {/* Consolidado General */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Fila 1: Financiero */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* 1. Ingresos Globales */}
                 <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100">
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Ingresos Globales</p>
                     <div className="flex items-center justify-between">
@@ -186,16 +186,7 @@ const ComparativaHoteles = () => {
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Promedio Ingreso Diario</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(Math.round(globalDailyAvg))}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <Activity size={24} />
-                        </div>
-                    </div>
-                </div>
-                
+                {/* 2. Egresos Globales */}
                 <div className="bg-gradient-to-br from-rose-600 to-rose-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-rose-100">
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Egresos Globales</p>
                     <div className="flex items-center justify-between">
@@ -206,16 +197,7 @@ const ComparativaHoteles = () => {
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Gasto Promedio Diario</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(Math.round(globalExpensesAvg))}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <ArrowDownRight size={24} />
-                        </div>
-                    </div>
-                </div>
-
+                {/* 3. Ganancia Global */}
                 <div className={`p-8 rounded-[2.5rem] border shadow-sm ${totalGlobalMargen >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
                     <div className="flex justify-between items-start mb-2">
                         <p className={`text-[10px] font-black uppercase tracking-widest ${totalGlobalMargen >= 0 ? 'text-emerald-600/60' : 'text-rose-600/60'}`}>Ganancia Global</p>
@@ -229,6 +211,28 @@ const ComparativaHoteles = () => {
                         </h4>
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totalGlobalMargen >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                             {totalGlobalMargen >= 0 ? <TrendingUp size={24} /> : <ArrowDownRight size={24} />}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Promedio Ingreso Diario */}
+                <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Promedio Ingreso Diario</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(Math.round(globalDailyAvg))}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <Activity size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. Gasto Promedio Diario */}
+                <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Gasto Promedio Diario</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(Math.round(globalExpensesAvg))}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <ArrowDownRight size={24} />
                         </div>
                     </div>
                 </div>
