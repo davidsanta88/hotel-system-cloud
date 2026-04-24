@@ -123,12 +123,12 @@ const Reports = () => {
         ventasDiarias.forEach(d => {
             const key = d.fecha?.slice(0, 10);
             if (!map[key]) map[key] = { fecha: key, ventas: 0, gastos: 0, hospedaje: 0 };
-            map[key].ventas = parseFloat(d.gran_total) || 0;
+            map[key].ventas += parseFloat(d.gran_total) || 0;
         });
         gastosDiarios.forEach(d => {
             const key = d.fecha?.slice(0, 10);
             if (!map[key]) map[key] = { fecha: key, ventas: 0, gastos: 0, hospedaje: 0 };
-            map[key].gastos = parseFloat(d.total_gastos) || 0;
+            map[key].gastos += parseFloat(d.total_gastos) || 0;
         });
         hospedajeDiario.forEach(d => {
             const key = d.fecha?.slice(0, 10);
