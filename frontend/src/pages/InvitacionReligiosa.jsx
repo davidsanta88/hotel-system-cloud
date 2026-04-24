@@ -133,9 +133,9 @@ const InvitacionReligiosa = () => {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
             doc.text('Belalcázar, Caldas - Colombia', 107.5, 30, { align: 'center' });
-            doc.text('Tradición, Fe y Paisaje Cultural Cafetero', 107.5, 34, { align: 'center' });
+            doc.text('Tradición y Paisaje Cultural Caldense', 107.5, 34, { align: 'center' });
             doc.setFont('helvetica', 'bold');
-            doc.text('www.hotelbalconcolonial.com  |  www.hotelbalconplaza.com', 107.5, 39, { align: 'center' });
+            doc.text('www.balconcolonial.com  |  www.hotelbalconplaza.com', 107.5, 39, { align: 'center' });
 
             // Línea de encabezado (ROJA)
             doc.setDrawColor(redColor[0], redColor[1], redColor[2]);
@@ -257,32 +257,43 @@ const InvitacionReligiosa = () => {
                 } catch (e) {}
             }
 
+            doc.setFont('helvetica', 'normal');
+            doc.text('Cordialmente,', contentX, currentY);
+            currentY += 10;
+            
+            // Nombre Estilo Firma
+            doc.setFont('times', 'italic');
+            doc.setFontSize(14);
+            doc.text('David Fernando Santa O.', contentX, currentY);
+            currentY += 2;
+            
+            // Línea de firma
             doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
+            doc.setLineWidth(0.5);
             doc.line(20, currentY, 100, currentY);
             currentY += 5;
+            
             doc.setFont('helvetica', 'bold');
-            doc.text('Cordialmente,', contentX, currentY);
-            currentY += 7;
-            doc.setFontSize(12);
+            doc.setFontSize(11);
+            doc.setTextColor(40, 40, 40);
             doc.text(hotelConfig?.adminNombre || 'David Fernando Santa Ospina', contentX, currentY);
             currentY += 5;
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text('Administrador', contentX, currentY);
             currentY += 5;
-            doc.text(`Cédula: ${hotelConfig?.adminDocumento || '12.345.678'}`, contentX, currentY);
-            currentY += 5;
             doc.text(`Celular: ${hotelConfig?.adminCelular || '316 279 9224'}`, contentX, currentY);
             currentY += 5;
-            doc.text(`Correo: ${hotelConfig?.adminCorreo || 'administracion@hotel.com'}`, contentX, currentY);
+            doc.text(`Correo: ${hotelConfig?.adminCorreo || 'balconcolonialhotel@gmail.com'}`, contentX, currentY);
             currentY += 5;
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
             doc.text('Hotel Balcón Colonial & Hotel Balcón Plaza', contentX, currentY);
 
-            // Footer más abajo y fijo (AZUL)
-            doc.setFontSize(10); // Slogan un poquito más grande
-            doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+            // Footer más abajo y fijo (ROJO E ITÁLICO)
+            doc.setFontSize(14); // Más grande como en la imagen
+            doc.setTextColor(redColor[0], redColor[1], redColor[2]);
+            doc.setFont('times', 'italic'); // Usando times para el itálico elegante
             doc.text('Belalcázar, Caldas - "El Balcón del Paisaje Cafetero"', 107.5, 275, { align: 'center' });
 
             doc.save(`Invitacion_Belalcazar_${formData.entidad.replace(/\s+/g, '_')}.pdf`);
