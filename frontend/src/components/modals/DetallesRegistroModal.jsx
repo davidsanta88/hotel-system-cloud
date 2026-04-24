@@ -521,7 +521,6 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                 {/* Left Column */}
                                 <div className="space-y-8">
                                     {/* General Info */}
-                                    </div>
                                     
                                     {/* General Info */}
                                     <div className="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden">
