@@ -6,7 +6,16 @@ const Cliente = require('../models/Cliente');
 
 exports.getVentas = async (req, res) => {
     try {
-        const ventas = await Venta.find()
+        const { inicio, fin } = req.query;
+        const filter = {};
+        
+        if (inicio || fin) {
+            filter.fecha = {};
+            if (inicio) filter.fecha.$gte = inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`);
+            if (fin) filter.fecha.$lte = fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`);
+        }
+
+        const ventas = await Venta.find(filter)
             .populate('empleado', 'nombre')
             .sort({ fecha: -1 });
         res.json(ventas);

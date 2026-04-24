@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { format, subDays, startOfMonth } from 'date-fns';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
 import { formatCurrency, getImageUrl } from '../utils/format';
@@ -38,6 +39,18 @@ const Store = () => {
     const [selectedVenta, setSelectedVenta] = useState(null);
     const [ventaDetalles, setVentaDetalles] = useState([]);
     const [loadingHistorial, setLoadingHistorial] = useState(false);
+    const [dates, setDates] = useState({ 
+        inicio: format(new Date(), 'yyyy-MM-dd'), 
+        fin: format(new Date(), 'yyyy-MM-dd') 
+    });
+    const [periodoActivo, setPeriodoActivo] = useState(0);
+
+    const PERIODOS = [
+        { label: 'Hoy', getDates: () => ({ inicio: format(new Date(), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+        { label: '7 días', getDates: () => ({ inicio: format(subDays(new Date(), 6), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+        { label: '30 días', getDates: () => ({ inicio: format(subDays(new Date(), 29), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+        { label: 'Este mes', getDates: () => ({ inicio: format(startOfMonth(new Date()), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+    ];
 
     // Edición de venta
     const [showEditModal, setShowEditModal] = useState(false);
@@ -133,10 +146,10 @@ const Store = () => {
         }
     };
 
-    const fetchHistorial = async () => {
+    const fetchHistorial = useCallback(async () => {
         setLoadingHistorial(true);
         try {
-            const response = await api.get('/ventas');
+            const response = await api.get(`/ventas?inicio=${dates.inicio}&fin=${dates.fin}`);
             setVentasHistorial(response.data);
             setShowHistorial(true);
         } catch (error) {
@@ -144,7 +157,13 @@ const Store = () => {
         } finally {
             setLoadingHistorial(false);
         }
-    };
+    }, [dates]);
+
+    useEffect(() => {
+        if (showHistorial) {
+            fetchHistorial();
+        }
+    }, [showHistorial, fetchHistorial]);
 
     const verDetalleVenta = async (venta) => {
         try {
@@ -227,8 +246,7 @@ const Store = () => {
             setShowEditModal(false);
             setEditVenta(null);
             // Refrescar historial
-            const response = await api.get('/ventas');
-            setVentasHistorial(response.data);
+            fetchHistorial();
             // Si el recibo de esta venta estaba abierto, actualizarlo
             if (selectedVenta?.id === editVenta.id) setSelectedVenta(null);
         } catch (error) {
@@ -255,8 +273,7 @@ const Store = () => {
                 await api.delete(`/ventas/${id}`);
                 Swal.fire('Eliminada!', 'La venta ha sido eliminada.', 'success');
                 // Refrescar historial
-                const response = await api.get('/ventas');
-                setVentasHistorial(response.data);
+                fetchHistorial();
                 if (selectedVenta?.id === id) setSelectedVenta(null);
             } catch (error) {
                 Swal.fire('Error', 'No se pudo eliminar la venta', 'error');
@@ -498,19 +515,49 @@ const Store = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
                     {/* Modal Principal: Lista de Ventas */}
                     <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in border border-gray-100 flex flex-col ${selectedVenta ? 'hidden md:flex' : 'flex'} max-h-[90vh]`}>
-                        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 text-blue-600 p-2.5 rounded-xl shadow-sm">
-                                    <History size={24} />
+                        <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-blue-100 text-blue-600 p-2.5 rounded-xl shadow-sm">
+                                        <History size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl md:text-2xl font-black text-gray-800">Historial de Ventas</h2>
+                                        <p className="text-xs md:text-sm text-gray-500 mt-0.5 font-medium">Registro de todas las transacciones realizadas en la tienda</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 className="text-xl md:text-2xl font-black text-gray-800">Historial de Ventas</h2>
-                                    <p className="text-xs md:text-sm text-gray-500 mt-0.5 font-medium">Registro de todas las transacciones realizadas en la tienda</p>
+                                <button onClick={() => setShowHistorial(false)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            {/* Filtros de Fecha */}
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+                                <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full md:w-auto">
+                                    {PERIODOS.map((p, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => { setPeriodoActivo(i); setDates(p.getDates()); }}
+                                            className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider ${periodoActivo === i ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            {p.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2 w-full md:w-auto">
+                                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 flex-1 md:flex-none">
+                                        <input type="date" className="bg-transparent text-xs border-none focus:ring-0 text-gray-700"
+                                            value={dates.inicio} onChange={e => { setDates({ ...dates, inicio: e.target.value }); setPeriodoActivo(-1); }} />
+                                        <span className="text-gray-300">→</span>
+                                        <input type="date" className="bg-transparent text-xs border-none focus:ring-0 text-gray-700"
+                                            value={dates.fin} onChange={e => { setDates({ ...dates, fin: e.target.value }); setPeriodoActivo(-1); }} />
+                                    </div>
+                                    <div className="bg-emerald-50 border border-emerald-100 px-4 py-2 rounded-xl flex flex-col items-end min-w-[140px]">
+                                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Total Periodo</span>
+                                        <span className="text-lg font-black text-emerald-700 leading-none">${formatCurrency(ventasHistorial.reduce((acc, v) => acc + v.total, 0))}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <button onClick={() => setShowHistorial(false)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition">
-                                <X size={24} />
-                            </button>
                         </div>
                         
                         <div className="overflow-auto flex-1 p-4 md:p-6">
