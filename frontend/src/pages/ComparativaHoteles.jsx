@@ -118,8 +118,11 @@ const ComparativaHoteles = () => {
     // Cálculo de Promedio Diario
     const diffDays = Math.max(1, differenceInDays(parseISO(dates.fin), parseISO(dates.inicio)) + 1);
     const globalDailyAvg = totalGlobalIngresos / diffDays;
+    const globalExpensesAvg = totalGlobalEgresos / diffDays;
     const plazaDailyAvg = totalPlaza / diffDays;
+    const plazaExpensesAvg = plazaExpenses / diffDays;
     const colonialDailyAvg = totalColonial / diffDays;
+    const colonialExpensesAvg = colonialExpenses / diffDays;
     
     const globalTotalHabitaciones = globalDisponibles + globalOcupadas + globalAseo;
     const globalOccupancyPercent = globalTotalHabitaciones > 0 ? (globalOcupadas / globalTotalHabitaciones) * 100 : 0;
@@ -184,7 +187,7 @@ const ComparativaHoteles = () => {
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Promedio Diario Global</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Promedio Ingreso Diario</p>
                     <div className="flex items-center justify-between">
                         <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(Math.round(globalDailyAvg))}</h4>
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
@@ -197,6 +200,16 @@ const ComparativaHoteles = () => {
                     <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Egresos Globales</p>
                     <div className="flex items-center justify-between">
                         <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(totalGlobalEgresos)}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <ArrowDownRight size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Gasto Promedio Diario</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(Math.round(globalExpensesAvg))}</h4>
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
                             <ArrowDownRight size={24} />
                         </div>
@@ -274,6 +287,7 @@ const ComparativaHoteles = () => {
                     income={totalPlaza}
                     expenses={plazaExpenses}
                     dailyAvg={plazaDailyAvg}
+                    expensesAvg={plazaExpensesAvg}
                     rooms={data?.plaza.rooms}
                     color="primary"
                 />
@@ -282,6 +296,7 @@ const ComparativaHoteles = () => {
                     income={totalColonial}
                     expenses={colonialExpenses}
                     dailyAvg={colonialDailyAvg}
+                    expensesAvg={colonialExpensesAvg}
                     rooms={data?.colonial.rooms}
                     color="slate"
                 />
@@ -430,7 +445,7 @@ const ComparativaHoteles = () => {
     );
 };
 
-const HotelCard = ({ hotelName, income, expenses, dailyAvg, rooms, color }) => {
+const HotelCard = ({ hotelName, income, expenses, dailyAvg, expensesAvg, rooms, color }) => {
     const margin = income - expenses;
     const marginPercent = income > 0 ? (margin / income) * 100 : 0;
     const themeColor = color === 'primary' ? 'blue' : 'slate';
@@ -476,8 +491,12 @@ const HotelCard = ({ hotelName, income, expenses, dailyAvg, rooms, color }) => {
                         <p className="text-3xl font-black text-slate-600">${new Intl.NumberFormat().format(expenses)}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Promedio Diario</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Promedio Ingreso</p>
                         <p className="text-3xl font-black text-primary-600">${new Intl.NumberFormat().format(Math.round(dailyAvg))}</p>
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Promedio Gasto</p>
+                        <p className="text-3xl font-black text-orange-600">${new Intl.NumberFormat().format(Math.round(expensesAvg))}</p>
                     </div>
                 </div>
 
