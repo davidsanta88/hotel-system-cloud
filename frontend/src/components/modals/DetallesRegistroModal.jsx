@@ -19,8 +19,10 @@ import {
     Edit3,
     Printer,
     LogOut,
-    Clock
+    Clock,
+    Search
 } from 'lucide-react';
+import Select from 'react-select';
 import { formatCurrency, cleanNumericValue } from '../../utils/format';
 import { generateVoucher } from '../../utils/voucherGenerator';
 
@@ -47,6 +49,10 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
     const [showConsumoForm, setShowConsumoForm] = useState(false);
     const [consumoForm, setConsumoForm] = useState({ productoId: '', cantidad: 1 });
 
+    const [showAddHuespedModal, setShowAddHuespedModal] = useState(false);
+    const [clientes, setClientes] = useState([]);
+    const [searchCliente, setSearchCliente] = useState('');
+
     useEffect(() => {
         if (isOpen && registroId) {
             fetchData();
@@ -63,13 +69,14 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [resDet, resCons, resAbonos, resProd, resMedios, resHab] = await Promise.all([
+            const [resDet, resCons, resAbonos, resProd, resMedios, resHab, resClientes] = await Promise.all([
                 api.get(`/registros/${registroId}`),
                 api.get(`/ventas/consumo/${registroId}`),
                 api.get(`/registros/${registroId}/pagos`),
                 api.get('/productos'),
                 api.get('/medios-pago'),
-                api.get('/habitaciones')
+                api.get('/habitaciones'),
+                api.get('/clientes')
             ]);
             
             const det = resDet.data;
@@ -79,6 +86,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
             setProductos(resProd.data);
             setMediosPago(resMedios.data);
             setHabitaciones(resHab.data);
+            setClientes(resClientes.data);
             
             setEditData({
                 fecha_salida: det.fecha_salida ? det.fecha_salida.split('T')[0] : '',
@@ -148,48 +156,33 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
         setEditData(prev => ({ ...prev, huespedes: newHuespedes, total: newTotal }));
     };
 
-    const handleAddHuesped = async () => {
-        try {
-            const { data: clientes } = await api.get('/clientes');
-            
-            const { value: selectedId } = await Swal.fire({
-                title: 'Agregar Acompañante',
-                input: 'select',
-                inputOptions: clientes.reduce((acc, c) => {
-                    acc[c.id || c._id] = `${c.nombre} (${c.documento})`;
-                    return acc;
-                }, {}),
-                inputPlaceholder: 'Seleccione un cliente...',
-                showCancelButton: true,
-                confirmButtonText: 'Agregar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#3b82f6'
-            });
-
-            if (selectedId) {
-                const cliente = clientes.find(c => String(c.id || c._id) === String(selectedId));
-                if (cliente) {
-                    const newHuespedes = [...editData.huespedes, cliente];
-                    
-                    // Recalcular total
-                    let newTotal = editData.total;
-                    const hab = habitaciones.find(h => String(h.id || h._id) === String(details.habitacion_id || details.habitacion?._id));
-                    if (hab && details.fecha_ingreso && editData.fecha_salida) {
-                        const inDate = new Date(details.fecha_ingreso);
-                        const outDate = new Date(editData.fecha_salida);
-                        const diffTime = outDate - inDate;
-                        const diffDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
-                        const numPersonas = Math.min(Math.max(newHuespedes.length, 1), 6);
-                        const pNoche = parseFloat(hab[`precio_${numPersonas}`]) || parseFloat(hab.precio_1) || 0;
-                        newTotal = (pNoche * diffDays).toFixed(0);
-                    }
-
-                    setEditData(prev => ({ ...prev, huespedes: newHuespedes, total: newTotal }));
-                }
-            }
-        } catch (error) {
-            Swal.fire('Error', 'No se pudieron cargar los clientes', 'error');
+    const handleAddHuesped = (cliente) => {
+        if (!cliente) return;
+        
+        const alreadyExists = editData.huespedes.some(h => String(h.id || h._id) === String(cliente.id || cliente._id));
+        if (alreadyExists) {
+            Swal.fire('Aviso', 'Este huésped ya está registrado en la lista', 'info');
+            return;
         }
+
+        const newHuespedes = [...editData.huespedes, cliente];
+        
+        // Recalcular total
+        let newTotal = editData.total;
+        const hab = habitaciones.find(h => String(h.id || h._id) === String(details.habitacion_id || details.habitacion?._id));
+        if (hab && details.fecha_ingreso && editData.fecha_salida) {
+            const inDate = new Date(details.fecha_ingreso);
+            const outDate = new Date(editData.fecha_salida);
+            const diffTime = outDate - inDate;
+            const diffDays = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
+            const numPersonas = Math.min(Math.max(newHuespedes.length, 1), 6);
+            const pNoche = parseFloat(hab[`precio_${numPersonas}`]) || parseFloat(hab.precio_1) || 0;
+            newTotal = (pNoche * diffDays).toFixed(0);
+        }
+
+        setEditData(prev => ({ ...prev, huespedes: newHuespedes, total: newTotal }));
+        setShowAddHuespedModal(false);
+        setSearchCliente('');
     };
 
     const handleSave = async () => {
@@ -686,7 +679,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                             )}
                                             {isEditing && (
                                                 <button 
-                                                    onClick={handleAddHuesped}
+                                                    onClick={() => setShowAddHuespedModal(true)}
                                                     className="w-full py-3 border-2 border-dashed border-blue-100 rounded-2xl text-blue-500 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 hover:border-blue-200 transition-all flex items-center justify-center gap-2 mt-2"
                                                 >
                                                     <Plus size={16} />
@@ -989,6 +982,93 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                     )}
                 </div>
             </div>
+
+            {/* Modal de Búsqueda de Huéspedes */}
+            {showAddHuespedModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border border-gray-100">
+                        <div className="p-6 bg-slate-50 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                                    <User size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest leading-none mb-1">Agregar Acompañante</h3>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Busca en tu base de clientes</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowAddHuespedModal(false)}
+                                className="p-2 hover:bg-gray-200 rounded-xl transition-colors text-gray-400"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 space-y-4">
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input 
+                                    type="text" 
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-12 pr-4 font-bold text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                    placeholder="Nombre o documento..."
+                                    autoFocus
+                                    value={searchCliente}
+                                    onChange={(e) => setSearchCliente(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="max-h-64 overflow-y-auto space-y-2 custom-scrollbar pr-2">
+                                {clientes
+                                    .filter(c => 
+                                        c.nombre?.toLowerCase().includes(searchCliente.toLowerCase()) || 
+                                        c.documento?.includes(searchCliente)
+                                    )
+                                    .slice(0, 10)
+                                    .map(cliente => (
+                                        <button
+                                            key={cliente.id || cliente._id}
+                                            onClick={() => handleAddHuesped(cliente)}
+                                            className="w-full flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all group text-left"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center font-bold text-xs group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                                                    {cliente.nombre?.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-black text-gray-800 uppercase tracking-tight">{cliente.nombre}</p>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase">{cliente.tipo_documento} {cliente.documento}</p>
+                                                </div>
+                                            </div>
+                                            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
+                                                <Plus size={14} />
+                                            </div>
+                                        </button>
+                                    ))
+                                }
+                                {clientes.filter(c => 
+                                    c.nombre?.toLowerCase().includes(searchCliente.toLowerCase()) || 
+                                    c.documento?.includes(searchCliente)
+                                ).length === 0 && (
+                                    <div className="text-center py-10">
+                                        <Search size={32} className="mx-auto text-slate-200 mb-2" />
+                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No se encontraron clientes</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 bg-slate-50 border-t border-gray-100">
+                            <button 
+                                onClick={() => setShowAddHuespedModal(false)}
+                                className="w-full py-3 bg-white border-2 border-slate-200 rounded-2xl text-slate-500 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
