@@ -99,9 +99,9 @@ const InvitacionReligiosa = () => {
                 const bgImg = '/bg_cristo.png';
                 // Añadir imagen de fondo con opacidad baja
                 doc.saveGraphicsState();
-                const gState = { opacity: 0.12 }; // Opacidad ajustada para la foto real
+                const gState = { opacity: 0.18 }; // Opacidad ajustada para mejor visibilidad
                 doc.setGState(new doc.GState(gState));
-                doc.addImage(bgImg, 'PNG', 0, 0, 216, 279); // Tamaño carta aproximado en mm
+                doc.addImage(bgImg, 'PNG', 50, 0, 210, 279); // Desplazado a la derecha como en la imagen meta
                 doc.restoreGraphicsState();
             } catch (e) { console.error("Error background image", e); }
 
