@@ -405,7 +405,7 @@ const Registros = () => {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <button 
-                        onClick={() => navigate('/habitaciones/mapa')}
+                        onClick={() => navigate('/mapa-habitaciones')}
                         className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
                     >
                         <Map size={18} /> Ir a Mapa de Habitaciones
