@@ -428,32 +428,32 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] overflow-y-auto h-full w-full flex items-center justify-center z-[100] p-2 md:p-4">
-            <div className="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-[1.5rem] shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
-                <div className="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-xl font-black text-gray-800 tracking-tight">
-                            Detalles Registro <span className="text-gray-400 font-medium text-sm">#{registroId}</span>
+                <div className="bg-white px-4 md:px-6 py-4 border-b border-gray-100 flex justify-between items-center shrink-0">
+                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                        <h2 className="text-lg md:text-xl font-black text-gray-800 tracking-tight">
+                            Detalles Registro <span className="text-gray-400 font-medium text-xs md:text-sm">#{registroId}</span>
                         </h2>
-                        <div className="flex items-center gap-2">
-                             <span className={`px-4 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest ${['activa', 'activo'].includes(details?.estado?.toLowerCase()) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'}`}>
+                        <div className="flex flex-wrap items-center gap-2">
+                             <span className={`px-3 md:px-4 py-1 md:py-1.5 text-[9px] md:text-[10px] font-black rounded-full uppercase tracking-widest ${['activa', 'activo'].includes(details?.estado?.toLowerCase()) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'}`}>
                                 {details?.estado || 'Cargando...'}
                             </span>
                             {!isEditing && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <button 
                                         onClick={() => setIsEditing(true)}
-                                        className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full hover:bg-blue-100 transition-all border border-blue-100 font-bold text-xs uppercase"
+                                        className="flex items-center gap-1.5 md:gap-2 bg-blue-50 text-blue-600 px-3 md:px-4 py-1 md:py-1.5 rounded-full hover:bg-blue-100 transition-all border border-blue-100 font-bold text-[10px] md:text-xs uppercase"
                                     >
-                                        <Edit size={14} />
+                                        <Edit size={12} />
                                         <span>Editar</span>
                                     </button>
                                     {['activa', 'activo'].includes(details?.estado?.toLowerCase()) && (
                                         <button 
                                             onClick={handleExtendStay}
-                                            className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full hover:bg-amber-100 transition-all border border-amber-100 font-bold text-xs uppercase"
+                                            className="flex items-center gap-1.5 md:gap-2 bg-amber-50 text-amber-600 px-3 md:px-4 py-1 md:py-1.5 rounded-full hover:bg-amber-100 transition-all border border-amber-100 font-bold text-[10px] md:text-xs uppercase"
                                         >
-                                            <Clock size={14} />
+                                            <Clock size={12} />
                                             <span>Prórroga</span>
                                         </button>
                                     )}
@@ -474,11 +474,11 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                                 tipo: 'registro'
                                             });
                                         }}
-                                        className="flex items-center gap-2 bg-slate-50 text-slate-600 px-4 py-1.5 rounded-full hover:bg-slate-100 transition-all border border-slate-200 font-bold text-xs uppercase"
+                                        className="flex items-center gap-1.5 md:gap-2 bg-slate-50 text-slate-600 px-3 md:px-4 py-1 md:py-1.5 rounded-full hover:bg-slate-100 transition-all border border-slate-200 font-bold text-[10px] md:text-xs uppercase"
                                         title="Imprimir Voucher PDF"
                                     >
-                                        <Printer size={14} />
-                                        <span>Imprimir</span>
+                                        <Printer size={12} />
+                                        <span>PDF</span>
                                     </button>
                                 </div>
                             )}
@@ -489,7 +489,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                     </button>
                 </div>
 
-                <div className="px-6 py-5">
+                <div className="px-4 md:px-6 py-5 overflow-y-auto flex-1 custom-scrollbar">
                     {loading ? (
                         <div className="h-96 flex flex-col items-center justify-center space-y-4">
                             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -498,7 +498,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                     ) : (
                         <div className="space-y-6">
                             {/* Stats Summary Cards */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Estancia</p>
                                     <p className="text-xl font-black text-gray-800">${formatCurrency(totalEstancia)}</p>
@@ -528,7 +528,7 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                                         <h3 className="text-xs font-black text-gray-800 uppercase tracking-widest flex items-center gap-2 mb-4">
                                             <Info size={14} className="text-gray-400" /> Información General
                                         </h3>
-                                        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                                             <div>
                                                 <label className="block text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Habitación</label>
                                                 <div className="flex items-center gap-2 font-black text-gray-800 text-sm">
@@ -876,35 +876,35 @@ const DetallesRegistroModal = ({ registroId, isOpen, onClose, onSuccess, initial
                 </div>
 
                 {/* Footer */}
-                <div className="bg-slate-50 px-6 py-4 flex justify-end gap-3">
+                <div className="bg-slate-50 px-4 md:px-6 py-4 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
                     {isEditing ? (
                         <>
                             <button 
                                 onClick={() => setIsEditing(false)} 
-                                className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all"
+                                className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-all w-full sm:w-auto"
                             >
                                 Cancelar
                             </button>
                             <button 
                                 onClick={handleSave} 
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95 w-full sm:w-auto"
                             >
                                 Guardar Cambios
                             </button>
                         </>
                     ) : (
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                             {details?.estado === 'activa' && (
                                 <button 
                                     onClick={handleCheckout}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-blue-200 active:scale-95 w-full sm:w-auto"
                                 >
                                     Check-out
                                 </button>
                             )}
                             <button 
                                 onClick={onClose} 
-                                className="bg-white border-2 border-slate-200 text-slate-600 px-10 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95"
+                                className="bg-white border-2 border-slate-200 text-slate-600 px-10 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-95 w-full sm:w-auto"
                             >
                                 Cerrar
                             </button>
