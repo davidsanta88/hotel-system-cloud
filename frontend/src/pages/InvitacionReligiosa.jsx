@@ -135,7 +135,7 @@ const InvitacionReligiosa = () => {
             doc.text('Belalcázar, Caldas - Colombia', 107.5, 30, { align: 'center' });
             doc.text('Tradición y Paisaje Cultural Caldense', 107.5, 34, { align: 'center' });
             doc.setFont('helvetica', 'bold');
-            doc.text('www.balconcolonial.com  |  www.hotelbalconplaza.com', 107.5, 39, { align: 'center' });
+            doc.text('www.balconnacolonial.com  |  www.hotelbalconplaza.com', 107.5, 39, { align: 'center' });
 
             // Línea de encabezado (ROJA)
             doc.setDrawColor(redColor[0], redColor[1], redColor[2]);
