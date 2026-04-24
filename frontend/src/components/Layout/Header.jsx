@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { User, Menu, ExternalLink } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 
 const Header = ({ setSidebarOpen }) => {
     const { user } = useContext(AuthContext);
@@ -33,6 +34,12 @@ const Header = ({ setSidebarOpen }) => {
                     <span className="uppercase tracking-widest">Ir al Colonial</span>
                 </a>
             </div>
+
+            {/* Buscador Global Agil */}
+            <div className="hidden md:flex flex-1 max-w-lg mx-8">
+                <GlobalSearch />
+            </div>
+
             <div className="flex items-center space-x-4">
                 <div className="text-right hidden sm:block">
                     <p className="text-sm font-semibold text-gray-800">{user?.nombre}</p>

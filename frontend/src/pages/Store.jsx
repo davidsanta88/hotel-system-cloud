@@ -3,7 +3,8 @@ import { format, subDays, startOfMonth } from 'date-fns';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
 import { formatCurrency, getImageUrl } from '../utils/format';
-import { Package, ShoppingCart, Check, History, Eye, X, Receipt, Pencil, Trash2, Plus, Minus } from 'lucide-react';
+import { Package, ShoppingCart, Check, History, Eye, X, Receipt, Pencil, Trash2, Plus, Minus, Search } from 'lucide-react';
+import Select from 'react-select';
 
 const ProductImage = ({ src, alt, className = "w-full h-full object-contain p-2 group-hover:scale-105 transition-transform" }) => {
     const [error, setError] = React.useState(false);
@@ -40,10 +41,10 @@ const Store = () => {
     const [ventaDetalles, setVentaDetalles] = useState([]);
     const [loadingHistorial, setLoadingHistorial] = useState(false);
     const [dates, setDates] = useState({ 
-        inicio: format(new Date(), 'yyyy-MM-dd'), 
+        inicio: format(startOfMonth(new Date()), 'yyyy-MM-dd'), 
         fin: format(new Date(), 'yyyy-MM-dd') 
     });
-    const [periodoActivo, setPeriodoActivo] = useState(0);
+    const [periodoActivo, setPeriodoActivo] = useState(3);
 
     const PERIODOS = [
         { label: 'Hoy', getDates: () => ({ inicio: format(new Date(), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
@@ -290,6 +291,44 @@ const Store = () => {
 
     const categorias = ['todos', ...new Set(productos.filter(p => p.tipo_inventario === 'venta').map(p => p.categoria))];
 
+    // Opciones para react-select
+    const registroOptions = registrosActivos.map(reg => ({
+        value: reg.id,
+        label: `Hab. ${reg.numero_habitacion} - ${reg.nombre_cliente}`
+    }));
+    const selectedRegistroOption = registroOptions.find(opt => opt.value === registroId) || null;
+
+    const medioPagoOptions = mediosPago.map(mp => ({
+        value: mp.nombre,
+        label: mp.nombre
+    }));
+    const selectedMedioPagoOption = medioPagoOptions.find(opt => opt.value === medioPagoId) || null;
+
+    const selectStyles = {
+        control: (base, state) => ({
+            ...base,
+            border: state.isFocused ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+            borderRadius: '0.75rem',
+            padding: '2px',
+            fontSize: '14px',
+            boxShadow: 'none',
+            '&:hover': { border: '2px solid #3b82f6' }
+        }),
+        option: (base, state) => ({
+            ...base,
+            fontSize: '13px',
+            backgroundColor: state.isSelected ? '#3b82f6' : state.isFocused ? '#eff6ff' : 'white',
+            color: state.isSelected ? 'white' : '#374151',
+            padding: '10px'
+        }),
+        menu: (base) => ({
+            ...base,
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            zIndex: 60
+        })
+    };
+
     return (
         <div className="h-full flex flex-col lg:flex-row gap-6">
             <div className="flex-1 flex flex-col space-y-4">
@@ -450,33 +489,27 @@ const Store = () => {
                     {tipoVenta === 'directa' ? (
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Medio de Pago</label>
-                            <select 
-                                required
-                                className="input-field text-sm border-2 focus:border-primary-500"
-                                value={medioPagoId}
-                                onChange={e => setMedioPagoId(e.target.value)}
-                            >
-                                <option value="">Seleccione Medio de Pago...</option>
-                                {mediosPago.map(mp => (
-                                    <option key={mp.id} value={mp.nombre}>{mp.nombre}</option>
-                                ))}
-                            </select>
+                            <Select 
+                                placeholder="Seleccione medio..."
+                                options={medioPagoOptions}
+                                value={selectedMedioPagoOption}
+                                onChange={(opt) => setMedioPagoId(opt ? opt.value : '')}
+                                styles={selectStyles}
+                                noOptionsMessage={() => "No se encontró"}
+                            />
                         </div>
                     ) : (
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Habitación / Huésped</label>
-                            <select 
-                                className="input-field text-sm"
-                                value={registroId}
-                                onChange={e => setRegistroId(e.target.value)}
-                            >
-                                <option value="">Seleccione habitación ocupada...</option>
-                                {registrosActivos.map(reg => (
-                                    <option key={reg.id} value={reg.id}>
-                                        Hab. {reg.numero_habitacion} - {reg.nombre_cliente}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select 
+                                placeholder="Buscar habitación/cliente..."
+                                options={registroOptions}
+                                value={selectedRegistroOption}
+                                onChange={(opt) => setRegistroId(opt ? opt.value : '')}
+                                styles={selectStyles}
+                                noOptionsMessage={() => "No hay registros activos"}
+                                isClearable
+                            />
                         </div>
                     )}
 
@@ -584,7 +617,7 @@ const Store = () => {
                                                 <tr key={venta.id} className={`hover:bg-blue-50/30 transition-colors ${selectedVenta?.id === venta.id ? 'bg-blue-50/50' : ''}`}>
                                                     <td className="p-4">
                                                         <div className="flex flex-col">
-                                                            <span className="font-bold text-gray-900">Venta #{venta.id}</span>
+                                                            <span className="font-bold text-gray-900">Venta #{venta.id?.slice(-6).toUpperCase()}</span>
                                                             <span className="text-xs text-gray-500 mt-0.5 font-medium">{new Date(venta.fecha).toLocaleString()}</span>
                                                         </div>
                                                     </td>
@@ -639,7 +672,7 @@ const Store = () => {
                                         <Receipt size={18} />
                                         <span className="text-xs font-black uppercase tracking-widest">Recibo de Venta</span>
                                     </div>
-                                    <h3 className="text-xl font-black text-gray-900 mb-1">Transacción #{selectedVenta.id}</h3>
+                                    <h3 className="text-xl font-black text-gray-900 mb-1">Transacción #{selectedVenta.id?.slice(-6).toUpperCase()}</h3>
                                     <p className="text-xs text-gray-500 font-medium">{new Date(selectedVenta.fecha).toLocaleString()}</p>
                                 </div>
                                 <button onClick={() => setSelectedVenta(null)} className="text-gray-400 hover:text-red-500 bg-white hover:bg-red-50 border border-gray-100 p-2 rounded-xl transition shadow-sm">
@@ -693,7 +726,7 @@ const Store = () => {
                                     <Pencil size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-gray-900">Editar Venta #{editVenta.id}</h3>
+                                    <h3 className="text-lg font-black text-gray-900">Editar Venta #{editVenta.id?.slice(-6).toUpperCase()}</h3>
                                     <p className="text-xs text-gray-500">{new Date(editVenta.fecha).toLocaleString()}</p>
                                 </div>
                             </div>

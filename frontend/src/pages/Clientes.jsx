@@ -157,7 +157,7 @@ const Clientes = () => {
             const matchesGlobal = searchTerm === '' || 
                 c.nombre?.toLowerCase().includes(searchStr) || 
                 c.documento?.toLowerCase().includes(searchStr) ||
-                (c.municipio_nombre || '').toLowerCase().includes(searchStr);
+                (c.municipio_nombre || (c.municipio_origen_id && municipios.find(m => String(m.id) === String(c.municipio_origen_id))?.nombre) || '').toLowerCase().includes(searchStr);
             if (!matchesGlobal) return false;
             
             // 2. Filtros por columna
@@ -190,7 +190,7 @@ const Clientes = () => {
             'Tipo Doc': c.tipo_documento || 'CC',
             'Teléfono': c.telefono || 'N/A',
             'Email': c.email || 'N/A',
-            'Ciudad/Municipio': c.municipio_origen_nombre || 'N/A',
+            'Ciudad/Municipio': c.municipio_nombre || (c.municipio_origen_id && municipios.find(m => String(m.id) === String(c.municipio_origen_id))?.nombre) || 'N/A',
             'Observaciones': c.observaciones || ''
         }));
 
@@ -207,7 +207,7 @@ const Clientes = () => {
             c.nombre?.toUpperCase(),
             c.documento,
             c.telefono || 'N/A',
-            c.municipio_origen_nombre || 'N/A',
+            c.municipio_nombre || (c.municipio_origen_id && municipios.find(m => String(m.id) === String(c.municipio_origen_id))?.nombre) || 'N/A',
             c.email || 'N/A'
         ]);
 

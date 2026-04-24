@@ -103,7 +103,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     return (
         <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white flex flex-col shadow-xl transition-transform duration-300 transform lg:translate-x-0 lg:static lg:inset-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'} print:hidden`}>
-            <nav className="flex-1 py-6 overflow-y-auto custom-scrollbar relative">
+            {/* Branding Header */}
+            <div className="p-5 border-b border-slate-800/50 bg-slate-950/30 flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow-inner">
+                    <img src="/logo.jpg" alt="Logo" className="w-full h-full object-contain" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-tighter leading-tight">Balcón Plaza</span>
+                    <span className="text-[10px] font-bold text-primary-500 uppercase tracking-widest">Administración</span>
+                </div>
+            </div>
+
+            <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar relative">
                 {/* Mobile close button */}
                 <button 
                     onClick={() => setIsOpen(false)} 

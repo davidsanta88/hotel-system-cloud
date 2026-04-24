@@ -150,6 +150,7 @@ app.use('/api/cierres-caja', require('./routes/cierresCaja'));
 app.use('/api/auditoria-limpieza', require('./routes/auditoriaLimpieza'));
 app.use('/api/cotizaciones', require('./routes/cotizaciones'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/search', require('./routes/search'));
 
 // Global Error Handler for JSON responses
 app.use((err, req, res, next) => {
