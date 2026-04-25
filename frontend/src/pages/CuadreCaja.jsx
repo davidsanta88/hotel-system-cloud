@@ -68,6 +68,9 @@ const CuadreCaja = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
+    const [currentPageCierres, setCurrentPageCierres] = useState(1);
+    const [itemsPerPageCierres, setItemsPerPageCierres] = useState(5);
+
     const [filtros, setFiltros] = useState({
         inicio: (() => {
             const d = new Date();
@@ -406,6 +409,11 @@ const CuadreCaja = () => {
         return filteredTransacciones.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredTransacciones, currentPage, itemsPerPage]);
 
+    const paginatedCierres = useMemo(() => {
+        const startIndex = (currentPageCierres - 1) * itemsPerPageCierres;
+        return cierres.slice(startIndex, startIndex + itemsPerPageCierres);
+    }, [cierres, currentPageCierres, itemsPerPageCierres]);
+
     const ultimoCierre = useMemo(() => {
         return cierres.length > 0 ? cierres[0] : null;
     }, [cierres]);
@@ -694,10 +702,12 @@ const CuadreCaja = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                paginatedTransacciones.map((t, i) => (
-                                    <tr key={i} className="hover:bg-gray-50 transition-colors group">
+                                paginatedTransacciones.map((t, i) => {
+                                    const esNuevo = ultimoCierre && new Date(t.fecha) > new Date(ultimoCierre.fecha);
+                                    return (
+                                    <tr key={i} className={`hover:bg-gray-50 transition-colors group ${esNuevo ? 'bg-blue-50/70 border-l-4 border-l-blue-500' : ''}`}>
                                         <td className="p-4 whitespace-nowrap">
-                                            <div className="text-xs font-bold text-gray-900 border-l-2 border-primary-500 pl-2">
+                                            <div className={`text-xs font-bold ${esNuevo ? 'text-blue-700' : 'text-gray-900'} ${!esNuevo ? 'border-l-2 border-primary-500 pl-2' : 'pl-1'}`}>
                                                 {new Date(t.fecha).toLocaleDateString()}
                                             </div>
                                             <div className="text-[10px] text-gray-400 font-bold pl-2">
@@ -780,7 +790,7 @@ const CuadreCaja = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                cierres.map((c, i) => (
+                                paginatedCierres.map((c, i) => (
                                     <tr key={i} className="hover:bg-gray-50">
                                         <td className="p-4 font-bold text-slate-700">
                                             {new Date(c.fecha).toLocaleString()}
@@ -816,8 +826,17 @@ const CuadreCaja = () => {
                                 ))
                             )}
                         </tbody>
-                    </table>
                 </div>
+                <Pagination 
+                    currentPage={currentPageCierres}
+                    totalItems={cierres.length}
+                    itemsPerPage={itemsPerPageCierres}
+                    onPageChange={setCurrentPageCierres}
+                    onItemsPerPageChange={(val) => {
+                        setItemsPerPageCierres(val);
+                        setCurrentPageCierres(1);
+                    }}
+                />
             </div>
 
             {/* Closure Modal */}
