@@ -70,6 +70,15 @@ const CalendarioIngresos = () => {
 
     const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
+    // Stats calculation for the summary cards
+    const stats = Object.values(dailyData).reduce((acc, curr) => {
+        const val = curr.balance || curr.total || 0;
+        acc.totalMes += val;
+        if (val > acc.mejorDia) acc.mejorDia = val;
+        if (curr.egresos && curr.egresos > acc.mayorGasto) acc.mayorGasto = curr.egresos;
+        return acc;
+    }, { totalMes: 0, mejorDia: 0, mayorGasto: 0 });
+
     return (
         <div className="space-y-6 animate-fade-in pb-10">
             {/* Header */}
@@ -115,6 +124,48 @@ const CalendarioIngresos = () => {
                     <button onClick={fetchData} className="p-2.5 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all">
                         <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
                     </button>
+                </div>
+            </div>
+
+            {/* Summary Cards (Moved to Top) */}
+            <div className="bg-slate-900 p-6 rounded-2xl shadow-xl text-white">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-white/10 rounded-xl">
+                            <TrendingUp className="text-emerald-400" size={24} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase opacity-60">Mejor Día</p>
+                            <p className="text-lg font-black">{formatCurrency(stats.mejorDia)}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-white/10 rounded-xl">
+                            <TrendingDown className="text-rose-400" size={24} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase opacity-60">Mayor Gasto</p>
+                            <p className="text-lg font-black">{formatCurrency(stats.mayorGasto)}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-white/10 rounded-xl">
+                            <DollarSign className="text-indigo-400" size={24} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase opacity-60">Total Mes</p>
+                            <p className="text-lg font-black">{formatCurrency(stats.totalMes)}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                        <p className="text-[10px] font-black uppercase opacity-60 mb-2">Resumen Rápido</p>
+                        <div className="flex items-center gap-2">
+                            <div className="h-2 flex-1 bg-rose-500/30 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500" style={{ width: '65%' }}></div>
+                            </div>
+                            <span className="text-[10px] font-black">Periodo Activo</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -207,48 +258,6 @@ const CalendarioIngresos = () => {
                             </div>
                         );
                     })}
-                </div>
-            </div>
-
-            {/* Legend */}
-            <div className="bg-slate-900 p-6 rounded-2xl shadow-xl text-white">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-white/10 rounded-xl">
-                            <TrendingUp className="text-emerald-400" size={24} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase opacity-60">Mejor Día</p>
-                            <p className="text-lg font-black">{Object.keys(dailyData).length > 0 ? formatCurrency(Math.max(...Object.values(dailyData).map(d => d.balance || d.total || 0))) : '$ 0'}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-white/10 rounded-xl">
-                            <TrendingDown className="text-rose-400" size={24} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase opacity-60">Mayor Gasto</p>
-                            <p className="text-lg font-black">{Object.keys(dailyData).length > 0 ? formatCurrency(Math.max(...Object.values(dailyData).map(d => d.egresos || 0))) : '$ 0'}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-white/10 rounded-xl">
-                            <DollarSign className="text-indigo-400" size={24} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase opacity-60">Total Mes</p>
-                            <p className="text-lg font-black">{formatCurrency(Object.values(dailyData).reduce((sum, d) => sum + (d.balance || d.total || 0), 0))}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                        <p className="text-[10px] font-black uppercase opacity-60 mb-2">Resumen Rápido</p>
-                        <div className="flex items-center gap-2">
-                            <div className="h-2 flex-1 bg-rose-500/30 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500" style={{ width: '65%' }}></div>
-                            </div>
-                            <span className="text-[10px] font-black">65% Rentable</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

@@ -9,6 +9,7 @@ const Cliente = require('../models/Cliente');
 const CierreCaja = require('../models/CierreCaja');
 const CategoriaGasto = require('../models/CategoriaGasto');
 const mongoose = require('mongoose');
+const moment = require('moment-timezone');
 
 // Configuración para la conexión al Hotel Colonial
 const COLONIAL_URI = 'mongodb+srv://admin:HotelColonial2026@cluster0.d1nbr5v.mongodb.net/HotelColonialDB?retryWrites=true&w=majority';
@@ -811,8 +812,8 @@ exports.getReporteHuespedes = async (req, res) => {
 exports.getIngresosCalendario = async (req, res) => {
     try {
         const { anio, mes } = req.query; // mes es 1-12
-        const startDate = new Date(anio, mes - 1, 1);
-        const endDate = new Date(anio, mes, 0, 23, 59, 59);
+        const startDate = moment.tz(`${anio}-${mes}-01`, "America/Bogota").startOf('month').toDate();
+        const endDate = moment.tz(`${anio}-${mes}-01`, "America/Bogota").endOf('month').toDate();
 
         const [registros, reservas, ventas, gastos] = await Promise.all([
             Registro.find({ "pagos.fecha": { $gte: startDate, $lte: endDate } }),
@@ -824,7 +825,7 @@ exports.getIngresosCalendario = async (req, res) => {
         const dailyData = {};
 
         const addToDay = (date, amount) => {
-            const dayKey = format(new Date(date), 'yyyy-MM-dd');
+            const dayKey = moment(date).tz("America/Bogota").format('YYYY-MM-DD');
             if (!dailyData[dayKey]) dailyData[dayKey] = { ingresos: 0, egresos: 0, balance: 0 };
             if (amount > 0) dailyData[dayKey].ingresos += amount;
             else dailyData[dayKey].egresos += Math.abs(amount);
@@ -853,8 +854,8 @@ exports.getIngresosCalendario = async (req, res) => {
 exports.getRentabilidadHabitaciones = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        const startDate = inicio ? new Date(`${inicio}T00:00:00-05:00`) : subDays(new Date(), 30);
-        const endDate = fin ? new Date(`${fin}T23:59:59-05:00`) : new Date();
+        const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
+        const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
 
         const Habitacion = mongoose.model('Habitacion');
         const habitaciones = await Habitacion.find();
@@ -920,7 +921,7 @@ exports.getIngresosCalendarioConsolidado = async (req, res) => {
 
             const daily = {};
             const add = (date, amount) => {
-                const dayKey = format(new Date(date), 'yyyy-MM-dd');
+                const dayKey = moment(date).tz("America/Bogota").format('YYYY-MM-DD');
                 if (!daily[dayKey]) daily[dayKey] = 0;
                 daily[dayKey] += amount;
             };
@@ -956,8 +957,8 @@ exports.getIngresosCalendarioConsolidado = async (req, res) => {
 exports.getRentabilidadConsolidada = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        const startDate = inicio ? new Date(`${inicio}T00:00:00-05:00`) : subDays(new Date(), 30);
-        const endDate = fin ? new Date(`${fin}T23:59:59-05:00`) : new Date();
+        const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
+        const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
 
         const fetchRentabilidad = async (models, hotelLabel) => {
             const { Registro, Venta, Habitacion } = models;
