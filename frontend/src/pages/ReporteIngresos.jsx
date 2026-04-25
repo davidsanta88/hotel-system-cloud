@@ -505,7 +505,7 @@ const ReporteIngresos = () => {
 
             {showDetalleModal && (
                 <DetalleMovimientoModal 
-                    movimiento={selectedTransaccion}
+                    transaccion={selectedTransaccion}
                     isOpen={showDetalleModal}
                     onClose={() => setShowDetalleModal(false)}
                 />

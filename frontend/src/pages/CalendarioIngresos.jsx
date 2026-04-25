@@ -80,8 +80,13 @@ const CalendarioIngresos = () => {
         acc.totalMes += val;
         if (val > acc.mejorDia) acc.mejorDia = val;
         if (curr.egresos && curr.egresos > acc.mayorGasto) acc.mayorGasto = curr.egresos;
+        if (val > 0) acc.diasGanancia += 1;
+        else if (val < 0) acc.diasPerdida += 1;
         return acc;
-    }, { totalMes: 0, mejorDia: 0, mayorGasto: 0 });
+    }, { totalMes: 0, mejorDia: 0, mayorGasto: 0, diasGanancia: 0, diasPerdida: 0 });
+
+    const totalDiasConMovimiento = stats.diasGanancia + stats.diasPerdida;
+    const pctGanancia = totalDiasConMovimiento > 0 ? Math.round((stats.diasGanancia / totalDiasConMovimiento) * 100) : 0;
 
     return (
         <div className="space-y-6 animate-fade-in pb-10">
@@ -133,7 +138,7 @@ const CalendarioIngresos = () => {
 
             {/* Summary Cards (Moved to Top) */}
             <div className="bg-slate-900 p-6 rounded-2xl shadow-xl text-white">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-white/10 rounded-xl">
                             <TrendingUp className="text-emerald-400" size={24} />
@@ -158,16 +163,27 @@ const CalendarioIngresos = () => {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase opacity-60">Total Mes</p>
-                            <p className="text-lg font-black">{formatCurrency(stats.totalMes)}</p>
+                            <p className={`text-lg font-black ${stats.totalMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatCurrency(stats.totalMes)}</p>
                         </div>
                     </div>
-                    <div className="bg-white/5 p-4 rounded-xl border border-white/10">
-                        <p className="text-[10px] font-black uppercase opacity-60 mb-2">Resumen Rápido</p>
-                        <div className="flex items-center gap-2">
-                            <div className="h-2 flex-1 bg-rose-500/30 rounded-full overflow-hidden">
-                                <div className="h-full bg-emerald-500" style={{ width: '65%' }}></div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-emerald-500/20 rounded-xl">
+                            <span className="text-emerald-400 text-lg font-black">{stats.diasGanancia}</span>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase opacity-60">Días Ganancia</p>
+                            <p className="text-[10px] text-emerald-400 font-bold">{pctGanancia}% del periodo</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-rose-500/20 rounded-xl">
+                            <span className="text-rose-400 text-lg font-black">{stats.diasPerdida}</span>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase opacity-60">Días Pérdida</p>
+                            <div className="mt-1 h-1.5 w-20 bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${pctGanancia}%` }}></div>
                             </div>
-                            <span className="text-[10px] font-black">Periodo Activo</span>
                         </div>
                     </div>
                 </div>
