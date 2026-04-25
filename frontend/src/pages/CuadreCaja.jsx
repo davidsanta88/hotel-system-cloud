@@ -723,14 +723,16 @@ const CuadreCaja = () => {
                                                 {new Date(t.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </td>
-                                        <td className="p-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             {esNuevo ? (
-                                                <span className="bg-amber-100 text-amber-700 border border-amber-200 px-2 py-1 rounded-lg text-[9px] font-black uppercase animate-pulse shadow-sm flex items-center gap-1 w-fit">
-                                                    <Clock size={10} /> Pendiente
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200 uppercase tracking-widest animate-pulse">
+                                                    <Clock size={12} />
+                                                    Pendiente
                                                 </span>
                                             ) : (
-                                                <span className="bg-gray-100 text-gray-500 border border-gray-200 px-2 py-1 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 w-fit">
-                                                    <Lock size={10} /> Procesado
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-slate-50 text-slate-400 border border-slate-200 uppercase tracking-widest">
+                                                    <Lock size={12} />
+                                                    Cerrado
                                                 </span>
                                             )}
                                         </td>
