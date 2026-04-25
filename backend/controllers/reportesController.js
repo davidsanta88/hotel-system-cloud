@@ -812,8 +812,15 @@ exports.getReporteHuespedes = async (req, res) => {
 exports.getIngresosCalendario = async (req, res) => {
     try {
         const { anio, mes } = req.query; // mes es 1-12
-        const startDate = moment.tz(`${anio}-${mes}-01`, "America/Bogota").startOf('month').toDate();
-        const endDate = moment.tz(`${anio}-${mes}-01`, "America/Bogota").endOf('month').toDate();
+        const year = parseInt(anio);
+        const month = parseInt(mes);
+        
+        // Consultar rango ampliado para cubrir días grises del calendario
+        const startOfMonth = moment.tz([year, month - 1, 1], "America/Bogota").startOf('month');
+        const endOfMonth = moment.tz([year, month - 1, 1], "America/Bogota").endOf('month');
+        
+        const startDate = startOfMonth.clone().startOf('week').toDate();
+        const endDate = endOfMonth.clone().endOf('week').toDate();
 
         const [registros, reservas, ventas, gastos] = await Promise.all([
             Registro.find({ "pagos.fecha": { $gte: startDate, $lte: endDate } }),
@@ -825,6 +832,7 @@ exports.getIngresosCalendario = async (req, res) => {
         const dailyData = {};
 
         const addToDay = (date, amount) => {
+            if (!date) return;
             const dayKey = moment(date).tz("America/Bogota").format('YYYY-MM-DD');
             if (!dailyData[dayKey]) dailyData[dayKey] = { ingresos: 0, egresos: 0, balance: 0 };
             if (amount > 0) dailyData[dayKey].ingresos += amount;
@@ -907,8 +915,14 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
 exports.getIngresosCalendarioConsolidado = async (req, res) => {
     try {
         const { anio, mes } = req.query;
-        const startDate = new Date(anio, mes - 1, 1);
-        const endDate = new Date(anio, mes, 0, 23, 59, 59);
+        const year = parseInt(anio);
+        const month = parseInt(mes);
+
+        const startOfMonth = moment.tz([year, month - 1, 1], "America/Bogota").startOf('month');
+        const endOfMonth = moment.tz([year, month - 1, 1], "America/Bogota").endOf('month');
+        
+        const startDate = startOfMonth.clone().startOf('week').toDate();
+        const endDate = endOfMonth.clone().endOf('week').toDate();
 
         const fetchDaily = async (models) => {
             const { Registro, Reserva, Venta, Gasto } = models;
