@@ -98,7 +98,7 @@ app.get('/', (req, res) => res.send('Hotel System API is running (v1.2.12)'));
 app.get('/api/ping', (req, res) => {
     res.json({ 
         status: 'UP', 
-        version: '1.2.15 (Consolidated Map Update)', 
+        version: '1.2.16 (Consolidated Map Models Fix)', 
         time: new Date().toISOString(),
         sharedConn: 'OK'
     });
