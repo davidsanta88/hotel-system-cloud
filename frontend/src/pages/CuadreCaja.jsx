@@ -700,10 +700,10 @@ const CuadreCaja = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
-                                <tr><td colSpan="6" className="p-12 text-center text-gray-400 font-bold animate-pulse">Analizando flujos de caja...</td></tr>
+                                <tr><td colSpan="8" className="p-12 text-center text-gray-400 font-bold animate-pulse">Analizando flujos de caja...</td></tr>
                             ) : paginatedTransacciones.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="p-12 text-center text-gray-500 font-medium italic">
+                                    <td colSpan="8" className="p-12 text-center text-gray-500 font-medium italic">
                                         No se encontraron movimientos.
                                     </td>
                                 </tr>
@@ -764,8 +764,9 @@ const CuadreCaja = () => {
                                             </button>
                                         </td>
                                     </tr>
-                                ))
-                            )}
+                                );
+                            })
+                        )}
                         </tbody>
                     </table>
                 </div>
