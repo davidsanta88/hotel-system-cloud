@@ -61,7 +61,8 @@ const RentabilidadHabitaciones = () => {
             'Ingresos Hospedaje': h.ingresosHospedaje || 0,
             'Ingresos Ventas': h.ingresosVentas || 0,
             'Total Generado': h.total,
-            'N° Registros': h.numReservas || 0
+            'N° Registros': h.numReservas || 0,
+            'Promedio x Uso': h.numReservas > 0 ? Math.round(h.total / h.numReservas) : 0
         }));
 
         const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -149,11 +150,16 @@ const RentabilidadHabitaciones = () => {
                                 <p className={`text-[10px] font-black uppercase tracking-widest ${idx === 0 ? 'text-indigo-200' : 'text-gray-400'}`}>
                                     Habitación {h.numero} {h.hotel ? `(${h.hotel})` : ''}
                                 </p>
-                                <h3 className="text-3xl font-black mt-1 mb-4">{formatCurrency(h.total)}</h3>
-                                <div className="flex items-center gap-2">
+                                <h3 className="text-3xl font-black mt-1 mb-3">{formatCurrency(h.total)}</h3>
+                                <div className="flex items-center gap-2 mb-1">
                                     <TrendingUp size={16} className={idx === 0 ? 'text-emerald-300' : 'text-emerald-500'} />
                                     <span className="text-xs font-bold italic">{h.numReservas || 0} registros en el periodo</span>
                                 </div>
+                                {h.numReservas > 0 && (
+                                    <div className={`text-[10px] font-black uppercase tracking-wider mt-2 ${idx === 0 ? 'text-indigo-200' : 'text-gray-400'}`}>
+                                        Prom. x uso: <span className={`font-black ${idx === 0 ? 'text-white' : 'text-indigo-600'}`}>{formatCurrency(Math.round(h.total / h.numReservas))}</span>
+                                    </div>
+                                )}
                             </div>
                             {/* Decorative background shape */}
                             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white opacity-5 rounded-full"></div>
@@ -174,6 +180,7 @@ const RentabilidadHabitaciones = () => {
                                     <th className="px-6 py-5 text-right">Ing. Hospedaje</th>
                                     <th className="px-6 py-5 text-right">Ing. Tienda</th>
                                     <th className="px-6 py-5 text-right">Total Generado</th>
+                                    <th className="px-6 py-5 text-right">Prom. x Uso</th>
                                     <th className="px-6 py-5 text-center">N° Usos</th>
                                 </tr>
                             </thead>
@@ -217,6 +224,11 @@ const RentabilidadHabitaciones = () => {
                                         <td className="px-6 py-4 text-right">
                                             <span className="text-sm font-black text-indigo-600 group-hover:scale-110 transition-transform inline-block">
                                                 {formatCurrency(h.total)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className="text-xs font-black text-emerald-600">
+                                                {h.numReservas > 0 ? formatCurrency(Math.round(h.total / h.numReservas)) : '—'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
