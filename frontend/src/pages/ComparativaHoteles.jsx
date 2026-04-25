@@ -140,7 +140,7 @@ const ComparativaHoteles = () => {
     const globalCashEfectivo = (data?.plaza?.cash?.efectivo || 0) + (data?.colonial?.cash?.efectivo || 0);
     const globalCashNequi = (data?.plaza?.cash?.nequi || 0) + (data?.colonial?.cash?.nequi || 0);
     const globalCashBancolombia = (data?.plaza?.cash?.bancolombia || 0) + (data?.colonial?.cash?.bancolombia || 0);
-    const globalCashTotal = (data?.plaza?.cash?.total || 0) + (data?.colonial?.cash?.total || 0);
+    const globalCashTotal = (data?.plaza?.cash?.efectivo || 0) + (data?.colonial?.cash?.efectivo || 0);
     const globalCashBase = (data?.plaza?.cash?.base || 0) + (data?.colonial?.cash?.base || 0);
     const globalCashTotalConBase = globalCashTotal + globalCashBase;
 
@@ -214,7 +214,7 @@ const ComparativaHoteles = () => {
                                 <span className="text-[9px] font-bold text-blue-400 group-hover:text-blue-200 uppercase">Total en Caja</span>
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-blue-700 group-hover:text-white">${new Intl.NumberFormat().format((data?.plaza?.cash?.total || 0) + (data?.plaza?.cash?.base || 0))}</div>
+                        <div className="text-3xl font-black text-blue-700 group-hover:text-white">${new Intl.NumberFormat().format((data?.plaza?.cash?.efectivo || 0) + (data?.plaza?.cash?.base || 0))}</div>
                         <div className="mt-4 pt-4 border-t border-blue-100 group-hover:border-blue-500/30 flex justify-between items-center">
                             <span className="text-[10px] font-bold text-blue-500 group-hover:text-blue-200 uppercase tracking-tighter">Base: ${new Intl.NumberFormat().format(data?.plaza?.cash?.base || 0)}</span>
                             <span className="text-[10px] font-bold text-blue-500 group-hover:text-blue-200 uppercase tracking-tighter">Hoy: ${new Intl.NumberFormat().format(data?.plaza?.cash?.efectivo || 0)}</span>
@@ -232,7 +232,7 @@ const ComparativaHoteles = () => {
                                 <span className="text-[9px] font-bold text-slate-400 group-hover:text-slate-200 uppercase">Total en Caja</span>
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-slate-700 group-hover:text-white">${new Intl.NumberFormat().format((data?.colonial?.cash?.total || 0) + (data?.colonial?.cash?.base || 0))}</div>
+                        <div className="text-3xl font-black text-slate-700 group-hover:text-white">${new Intl.NumberFormat().format((data?.colonial?.cash?.efectivo || 0) + (data?.colonial?.cash?.base || 0))}</div>
                         <div className="mt-4 pt-4 border-t border-slate-200 group-hover:border-slate-500/30 flex justify-between items-center">
                             <span className="text-[10px] font-bold text-slate-500 group-hover:text-slate-200 uppercase tracking-tighter">Base: ${new Intl.NumberFormat().format(data?.colonial?.cash?.base || 0)}</span>
                             <span className="text-[10px] font-bold text-slate-500 group-hover:text-slate-200 uppercase tracking-tighter">Hoy: ${new Intl.NumberFormat().format(data?.colonial?.cash?.efectivo || 0)}</span>
