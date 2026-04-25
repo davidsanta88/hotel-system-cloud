@@ -301,24 +301,27 @@ async function getCashBalance(models) {
         const startDate = ultimoCierre ? ultimoCierre.fecha : new Date(0);
         const endDate = new Date();
 
-        // 2. Fetch Hospedaje Payments
+        // Base amount from last closure
+        const base = ultimoCierre ? (ultimoCierre.medios_pago?.efectivo || ultimoCierre.saldo_real || ultimoCierre.saldo_calculado || 0) : 0;
+
+        // 2. Fetch Hospedaje Payments (Strictly after last closure)
         const pagosRegistros = await Registro.find({
-            "pagos.fecha": { $gte: startDate, $lte: endDate }
+            "pagos.fecha": { $gt: startDate, $lte: endDate }
         });
 
         // 3. Fetch Reserva Deposits
         const abonosReservas = await Reserva.find({
-            "abonos.fecha": { $gte: startDate, $lte: endDate }
+            "abonos.fecha": { $gt: startDate, $lte: endDate }
         });
 
         // 4. Fetch Product Sales
         const ventas = await Venta.find({
-            fecha: { $gte: startDate, $lte: endDate }
+            fecha: { $gt: startDate, $lte: endDate }
         });
 
         // 5. Fetch Manual Expenses/Incomes
         const gastos = await Gasto.find({
-            fecha: { $gte: startDate, $lte: endDate }
+            fecha: { $gt: startDate, $lte: endDate }
         }).populate('categoria');
 
         let cash = 0;
@@ -335,7 +338,7 @@ async function getCashBalance(models) {
 
         pagosRegistros.forEach(reg => {
             reg.pagos.forEach(p => {
-                if (p.fecha >= startDate && p.fecha <= endDate) {
+                if (p.fecha > startDate && p.fecha <= endDate) {
                     processMedio(p.medio, p.monto);
                 }
             });
@@ -343,7 +346,7 @@ async function getCashBalance(models) {
 
         abonosReservas.forEach(res => {
             res.abonos.forEach(a => {
-                if (a.fecha >= startDate && a.fecha <= endDate) {
+                if (a.fecha > startDate && a.fecha <= endDate) {
                     processMedio(a.medio_pago, a.monto);
                 }
             });
@@ -364,11 +367,12 @@ async function getCashBalance(models) {
             nequi: nequi,
             bancolombia: bancolombia,
             total: cash + nequi + bancolombia,
+            base: base,
             ultimaFecha: startDate
         };
     } catch (error) {
         console.error('Error calculating cash balance:', error);
-        return { efectivo: 0, nequi: 0, bancolombia: 0, total: 0 };
+        return { efectivo: 0, nequi: 0, bancolombia: 0, total: 0, base: 0 };
     }
 }
 

@@ -33,8 +33,8 @@ const PERIODOS = [
 const ComparativaHoteles = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [dates, setDates] = useState(PERIODOS[2].getDates()); // 30 días por defecto
-    const [periodoActivo, setPeriodoActivo] = useState(2);
+    const [dates, setDates] = useState(PERIODOS[0].getDates()); // Hoy por defecto
+    const [periodoActivo, setPeriodoActivo] = useState(0);
 
     useEffect(() => {
         fetchComparativeData();
@@ -140,6 +140,8 @@ const ComparativaHoteles = () => {
     const globalCashNequi = (data?.plaza?.cash?.nequi || 0) + (data?.colonial?.cash?.nequi || 0);
     const globalCashBancolombia = (data?.plaza?.cash?.bancolombia || 0) + (data?.colonial?.cash?.bancolombia || 0);
     const globalCashTotal = (data?.plaza?.cash?.total || 0) + (data?.colonial?.cash?.total || 0);
+    const globalCashBase = (data?.plaza?.cash?.base || 0) + (data?.colonial?.cash?.base || 0);
+    const globalCashTotalConBase = globalCashTotal + globalCashBase;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
@@ -251,22 +253,43 @@ const ComparativaHoteles = () => {
                         </div>
                     </div>
 
+                    {/* Total en Caja (+Base) */}
+                    <div className="bg-primary-600 p-6 rounded-3xl border border-primary-700 flex flex-col justify-between shadow-xl shadow-primary-100 text-white">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-white/20 text-white rounded-xl">
+                                <Lock size={18} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Total en Caja (+Base)</span>
+                        </div>
+                        <div className="text-2xl font-black">${new Intl.NumberFormat().format(globalCashTotalConBase)}</div>
+                        <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-1 text-[9px] font-bold opacity-70 uppercase">
+                            <div className="flex justify-between">
+                                <span>Plaza: ${new Intl.NumberFormat().format((data?.plaza?.cash?.total || 0) + (data?.plaza?.cash?.base || 0))}</span>
+                                <span>(Base: ${new Intl.NumberFormat().format(data?.plaza?.cash?.base || 0)})</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Colonial: ${new Intl.NumberFormat().format((data?.colonial?.cash?.total || 0) + (data?.colonial?.cash?.base || 0))}</span>
+                                <span>(Base: ${new Intl.NumberFormat().format(data?.colonial?.cash?.base || 0)})</span>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Promedio x Hotel */}
                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex flex-col justify-center">
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hotel Plaza</span>
-                                <span className="text-sm font-black text-slate-700">${new Intl.NumberFormat().format(data?.plaza?.cash?.total || 0)}</span>
+                                <span className="text-sm font-black text-slate-700">${new Intl.NumberFormat().format((data?.plaza?.cash?.total || 0) + (data?.plaza?.cash?.base || 0))}</span>
                             </div>
                             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-primary-500 rounded-full" style={{ width: `${globalCashTotal > 0 ? ((data?.plaza?.cash?.total || 0) / globalCashTotal) * 100 : 0}%` }}></div>
+                                <div className="h-full bg-primary-500 rounded-full" style={{ width: `${globalCashTotalConBase > 0 ? (((data?.plaza?.cash?.total || 0) + (data?.plaza?.cash?.base || 0)) / globalCashTotalConBase) * 100 : 0}%` }}></div>
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hotel Colonial</span>
-                                <span className="text-sm font-black text-slate-700">${new Intl.NumberFormat().format(data?.colonial?.cash?.total || 0)}</span>
+                                <span className="text-sm font-black text-slate-700">${new Intl.NumberFormat().format((data?.colonial?.cash?.total || 0) + (data?.colonial?.cash?.base || 0))}</span>
                             </div>
                             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-slate-500 rounded-full" style={{ width: `${globalCashTotal > 0 ? ((data?.colonial?.cash?.total || 0) / globalCashTotal) * 100 : 0}%` }}></div>
+                                <div className="h-full bg-slate-500 rounded-full" style={{ width: `${globalCashTotalConBase > 0 ? (((data?.colonial?.cash?.total || 0) + (data?.colonial?.cash?.base || 0)) / globalCashTotalConBase) * 100 : 0}%` }}></div>
                             </div>
                         </div>
                     </div>
