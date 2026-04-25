@@ -866,7 +866,7 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
         const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
 
         const Habitacion = mongoose.model('Habitacion');
-        const habitaciones = await Habitacion.find();
+        const habitaciones = await Habitacion.find().populate('tipo', 'nombre');
         
         const registros = await Registro.find({
             $or: [
@@ -897,7 +897,7 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
             return {
                 _id: hab._id,
                 numero: hab.numero,
-                tipo: hab.tipo,
+                tipo: hab.tipo?.nombre || 'Sin tipo',
                 ingresosHospedaje,
                 ingresosVentas,
                 total: ingresosHospedaje + ingresosVentas,
@@ -976,7 +976,7 @@ exports.getRentabilidadConsolidada = async (req, res) => {
 
         const fetchRentabilidad = async (models, hotelLabel) => {
             const { Registro, Venta, Habitacion } = models;
-            const habitaciones = await Habitacion.find();
+            const habitaciones = await Habitacion.find().populate('tipo', 'nombre');
             const registros = await Registro.find({
                 $or: [
                     { fechaEntrada: { $gte: startDate, $lte: endDate } },
