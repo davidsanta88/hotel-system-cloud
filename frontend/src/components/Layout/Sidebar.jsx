@@ -75,7 +75,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Notas y Alertas', path: '/notas', icon: <StickyNote size={20} />, code: 'notas' },
                 { name: 'Reportes', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
                 {name: 'Cuadre de Caja', path: '/cuadre-caja', icon: <Wallet size={20} />, code: 'cuadre_caja' },
-                { name: 'Reporte de Ingresos', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reportes' },
+                { name: 'Reporte de Caja', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reportes' },
                 { name: 'R. Ingresos Consolidado', path: '/reporte-ingresos-consolidado', icon: <Building2 size={20} />, code: 'reportes' },
                 { name: 'Cotizaciones', path: '/cotizaciones', icon: <FileText size={20} />, code: 'cotizaciones' },
                 { name: 'Invitación Religiosa', path: '/invitacion-religiosa', icon: <Mail size={20} />, code: 'invitacion' },
