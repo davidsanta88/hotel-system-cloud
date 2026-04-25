@@ -264,69 +264,58 @@ const MapaHabitacionesConsolidado = () => {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            <div className="space-y-12">
                 {['Hotel Plaza', 'Hotel Colonial'].filter(hotel => hotelFilter === 'todos' || hotel === hotelFilter).map(hotel => (
                     <div key={hotel} className="space-y-4">
-                        <div className="flex items-center gap-2 px-2">
-                            <Building2 size={16} className={hotel === 'Hotel Plaza' ? 'text-indigo-600' : 'text-slate-600'} />
-                            <h2 className="text-sm font-black uppercase tracking-widest text-gray-800">{hotel}</h2>
-                            <span className="ml-auto bg-slate-100 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500">
-                                {filteredHabitaciones.filter(h => h.hotel === hotel).length} habs
+                        <div className="flex items-center gap-3 px-2">
+                            <div className={`w-1 h-6 rounded-full ${hotel === 'Hotel Plaza' ? 'bg-indigo-500' : 'bg-slate-500'}`} />
+                            <h2 className="text-lg font-black uppercase tracking-tighter text-gray-800">{hotel}</h2>
+                            <span className="bg-slate-100 px-2 py-0.5 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                {filteredHabitaciones.filter(h => h.hotel === hotel).length} habitaciones
                             </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-2">
                             {filteredHabitaciones.filter(h => h.hotel === hotel).map(hab => {
                                 const styles = getStatusStyles(hab.estado, hab.estadoLimpieza);
                                 return (
                                     <div 
                                         key={hab.id}
                                         onClick={() => handleRoomClick(hab)}
-                                        className={`group relative bg-white rounded-2xl shadow-sm border-2 ${styles.border} overflow-hidden flex flex-col transition-all hover:-translate-y-1 cursor-pointer`}
+                                        className={`group relative bg-white rounded-xl shadow-sm border ${styles.border} overflow-hidden flex flex-col transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer`}
                                     >
-                                        <div className={`p-3 ${styles.bg} flex flex-col items-center justify-center relative`}>
-                                            <div className={`p-1.5 rounded-lg bg-white shadow-sm ${styles.icon} mb-1 transition-transform group-hover:scale-110`}>
-                                                <Hotel size={18} />
-                                            </div>
-                                            <h3 className="text-sm font-black text-gray-900 leading-none">Hab {hab.numero}</h3>
-                                            <span className={`mt-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${styles.badge}`}>
-                                                {styles.label}
+                                        <div className={`px-2 py-1.5 ${styles.bg} border-b ${styles.border} flex justify-between items-center`}>
+                                            <span className="text-[11px] font-black text-gray-900 leading-none">{hab.numero}</span>
+                                            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-tighter ${styles.badge}`}>
+                                                {styles.label === 'Por Asear' ? 'ASEO' : styles.label.substring(0, 4)}
                                             </span>
                                         </div>
-
-                                        <div className="p-3 flex-1 flex flex-col space-y-2">
-                                            <div className="flex justify-between items-center text-[9px] font-bold">
-                                                <span className="text-gray-400 uppercase tracking-widest">Tipo</span>
-                                                <span className="text-gray-800 uppercase">{hab.tipo}</span>
+                                        
+                                        <div className="p-1.5 flex-1 flex flex-col justify-between min-h-[50px]">
+                                            <div className="text-[7px] font-black text-gray-400 uppercase tracking-tighter truncate">
+                                                {hab.tipo}
                                             </div>
 
                                             {hab.registroActual ? (
-                                                <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-                                                    <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-700 uppercase truncate">
-                                                        <User size={10} /> {hab.registroActual.huesped}
+                                                <div className="space-y-1">
+                                                    <div className="text-[9px] font-black text-slate-700 leading-tight line-clamp-1 break-all">
+                                                        {hab.registroActual.huesped}
                                                     </div>
-                                                    <div className="flex justify-between text-[8px] font-bold text-slate-400">
+                                                    <div className="flex justify-between text-[7px] font-bold text-slate-400">
                                                         <span>{moment(hab.registroActual.fecha_ingreso).format('DD/MM')}</span>
                                                         <span>→</span>
                                                         <span>{moment(hab.registroActual.fecha_salida).format('DD/MM')}</span>
                                                     </div>
-                                                    <div className="pt-1 border-t border-slate-100 flex justify-between items-center">
-                                                        <span className="text-[8px] font-black text-emerald-600 uppercase">Saldo</span>
-                                                        <span className="text-[9px] font-black text-gray-700">
-                                                            ${formatCurrency(hab.registroActual.total - (hab.registroActual.pagos?.reduce((s, p) => s + p.monto, 0) || 0))}
-                                                        </span>
-                                                    </div>
                                                 </div>
                                             ) : (
-                                                <div className="space-y-1.5 pt-1">
+                                                <div className="flex flex-col gap-0.5">
                                                     {hab.reservasProximas.length > 0 ? (
-                                                        hab.reservasProximas.map(res => (
-                                                            <div key={res.id} className="flex justify-between items-center bg-yellow-50/50 p-1.5 rounded-lg border border-yellow-100">
-                                                                <div className="text-[8px] font-black text-yellow-800 uppercase truncate max-w-[60px]">{res.cliente}</div>
-                                                                <div className="text-[8px] font-black text-yellow-600">{moment(res.fecha_entrada).format('DD/MM')}</div>
+                                                        hab.reservasProximas.slice(0, 1).map(res => (
+                                                            <div key={res.id} className="text-[7px] font-black text-yellow-600 uppercase truncate">
+                                                                R: {res.cliente}
                                                             </div>
                                                         ))
                                                     ) : (
-                                                        <div className="text-[8px] text-slate-300 italic text-center py-1">Sin movimientos</div>
+                                                        <div className="text-[7px] text-slate-300 italic">Libre</div>
                                                     )}
                                                 </div>
                                             )}

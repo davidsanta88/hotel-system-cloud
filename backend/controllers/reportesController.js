@@ -1040,12 +1040,12 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
             console.log(`[DEBUG] Fetching data for ${hotelLabel}...`);
             
             // 1. Get all rooms
-            const habitaciones = await Habitacion.find()
+            const habs = await Habitacion.find()
                 .populate('tipo', 'nombre')
                 .populate('estado', 'nombre color')
-                .sort({ numero: 1 });
+                .lean();
 
-            // 2. Get active registrations
+            const porAsear = habs.filter(h => h.estadoLimpieza?.toUpperCase() === 'SUCIA').length;
             const registrosActivos = await Registro.find({ estado: 'activo' })
                 .populate('habitacion')
                 .populate('tipo_registro', 'nombre');
@@ -1062,11 +1062,15 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
             }).sort({ fecha_entrada: 1 });
 
             // 4. Map everything together
-            return habitaciones.map(hab => {
+            return habs.map(hab => {
                 const habId = hab._id.toString();
                 
                 // Active registration
-                const reg = registrosActivos.find(r => r.habitacion?._id.toString() === habId);
+                const reg = registrosActivos.find(r => {
+                    const rHabId = r.habitacion?._id ? r.habitacion._id.toString() : r.habitacion?.toString();
+                    return rHabId === habId;
+                });
+
                 let registroInfo = null;
                 if (reg) {
                     const titular = reg.cliente ? clientMap.get(reg.cliente.toString()) : null;
@@ -1100,10 +1104,10 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
                 return {
                     id: hab._id,
                     numero: hab.numero,
-                    tipo: hab.tipo?.nombre || 'Estándar',
+                    tipo: hab.tipo?.nombre || 'General',
                     estado: hab.estado?.nombre || 'Disponible',
                     color: hab.estado?.color || '#10b981',
-                    estadoLimpieza: hab.estadoLimpieza || 'Limpia',
+                    estadoLimpieza: hab.estadoLimpieza?.toUpperCase() || 'LIMPIA',
                     hotel: hotelLabel,
                     registroActual: registroInfo,
                     reservasProximas: proximas

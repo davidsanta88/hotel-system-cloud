@@ -47,6 +47,8 @@ const MENU_HIERARCHY = [
         permissions: [
             { id: 'reporte_ingresos_consolidado', nombre: 'Caja Consolidada' },
             { id: 'mapa_habitaciones_consolidado', nombre: 'Mapa Consolidado' },
+            { id: 'calendario_ingresos', nombre: 'Flujo Caja Consolidado' },
+            { id: 'rentabilidad', nombre: 'Rentabilidad Consolidada' },
             { id: 'reservas_consolidadas', nombre: 'Consolidado Reservas' },
             { id: 'comparativa', nombre: 'Comparativa de Hoteles' },
             { id: 'estadisticas', nombre: 'Estadísticas Avanzadas' }
