@@ -47,7 +47,11 @@ const CalendarioIngresos = () => {
                 : `/reportes/ingresos-calendario-consolidado?anio=${anio}&mes=${mes}`;
             
             const res = await api.get(endpoint);
-            setDailyData(res.data);
+            if (res.data && typeof res.data === 'object' && !Array.isArray(res.data)) {
+                setDailyData(res.data);
+            } else {
+                setDailyData({});
+            }
         } catch (error) {
             console.error('Error fetching calendar data:', error);
         } finally {

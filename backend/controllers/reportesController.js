@@ -974,7 +974,7 @@ exports.getRentabilidadConsolidada = async (req, res) => {
             const ventas = await Venta.find({ registro: { $in: registroIds } });
 
             return habitaciones.map(hab => {
-                const regsHab = registros.filter(r => r.habitacion.toString() === hab._id.toString());
+                const regsHab = registros.filter(r => r.habitacion && r.habitacion.toString() === hab._id.toString());
                 let total = 0;
                 regsHab.forEach(r => {
                     r.pagos.forEach(p => { if (p.fecha >= startDate && p.fecha <= endDate) total += p.monto; });
@@ -984,12 +984,16 @@ exports.getRentabilidadConsolidada = async (req, res) => {
                 return {
                     hotel: hotelLabel,
                     numero: hab.numero,
-                    total
+                    tipo: hab.tipo,
+                    ingresosHospedaje: regsHab.reduce((sum, r) => sum + r.pagos.reduce((pSum, p) => p.fecha >= startDate && p.fecha <= endDate ? pSum + p.monto : pSum, 0), 0),
+                    ingresosVentas: ventas.filter(v => regsHab.some(r => r._id.toString() === v.registro?.toString())).reduce((vSum, v) => v.fecha >= startDate && v.fecha <= endDate ? vSum + v.total : vSum, 0),
+                    total,
+                    numReservas: regsHab.length
                 };
             });
         };
 
-        const plazaStats = await fetchRentabilidad({ Registro, Venta, Habitacion: mongoose.model('Habitacion') }, 'Plaza');
+        const plazaStats = await fetchRentabilidad({ Registro, Venta, Habitacion }, 'Plaza');
         const colonialModels = await getColonialModels();
         const colonialStats = await fetchRentabilidad(colonialModels, 'Colonial');
 

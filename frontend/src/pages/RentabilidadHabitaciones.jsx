@@ -39,7 +39,11 @@ const RentabilidadHabitaciones = () => {
                 : `/reportes/rentabilidad-habitaciones-consolidado?inicio=${filtros.inicio}&fin=${filtros.fin}`;
             
             const res = await api.get(endpoint);
-            setHabitaciones(res.data);
+            if (Array.isArray(res.data)) {
+                setHabitaciones(res.data);
+            } else {
+                setHabitaciones([]);
+            }
         } catch (error) {
             console.error('Error fetching room profitability:', error);
         } finally {
