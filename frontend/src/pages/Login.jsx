@@ -16,9 +16,13 @@ const Login = () => {
 
     useEffect(() => {
         if (user) {
-            const isSuperAdmin = user?.rol_id === 1 || 
-                               user?.rol_nombre?.toLowerCase()?.includes('admin') || 
-                               user?.nombre === 'Administrador';
+            const isSuperAdmin = 
+                user?.rol_id === 1 || 
+                user?.rol_id === '1' ||
+                user?.rol_nombre?.toLowerCase()?.includes('admin') || 
+                user?.nombre?.toLowerCase()?.includes('administrador') ||
+                user?.email === 'admin@hotel.com';
+            
             if (isSuperAdmin) {
                 navigate('/mapa-habitaciones-consolidado');
             } else {
@@ -46,9 +50,12 @@ const Login = () => {
         try {
             const loggedUser = await login(email, password);
             
-            const isSuperAdmin = loggedUser?.rol_id === 1 || 
-                               loggedUser?.rol_nombre?.toLowerCase()?.includes('admin') || 
-                               loggedUser?.nombre === 'Administrador';
+            const isSuperAdmin = 
+                loggedUser?.rol_id === 1 || 
+                loggedUser?.rol_id === '1' ||
+                loggedUser?.rol_nombre?.toLowerCase()?.includes('admin') || 
+                loggedUser?.nombre?.toLowerCase()?.includes('administrador') ||
+                loggedUser?.email === 'admin@hotel.com';
 
             if (isSuperAdmin) {
                 navigate('/mapa-habitaciones-consolidado');
