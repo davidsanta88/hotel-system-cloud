@@ -703,13 +703,16 @@ const CuadreCaja = () => {
                                 </tr>
                             ) : (
                                 paginatedTransacciones.map((t, i) => {
-                                    const esNuevo = ultimoCierre && new Date(t.fecha) > new Date(ultimoCierre.fecha);
+                                    const tTime = new Date(t.fecha).getTime();
+                                    const cTime = ultimoCierre ? new Date(ultimoCierre.fecha).getTime() : 0;
+                                    const esNuevo = !ultimoCierre || tTime > cTime;
+                                    
                                     return (
-                                    <tr key={i} className={`hover:bg-blue-100/30 transition-colors group ${esNuevo ? 'bg-blue-50 border-l-[6px] border-l-blue-600 shadow-sm' : ''}`}>
+                                    <tr key={i} className={`transition-all duration-300 group ${esNuevo ? 'bg-blue-100/40 border-l-[6px] border-l-blue-600 shadow-sm' : 'hover:bg-gray-50'}`}>
                                         <td className="p-4 whitespace-nowrap">
-                                            <div className={`text-xs font-black ${esNuevo ? 'text-blue-800' : 'text-gray-900'} ${!esNuevo ? 'border-l-2 border-primary-500 pl-2' : 'pl-2'}`}>
+                                            <div className={`text-xs font-black ${esNuevo ? 'text-blue-900' : 'text-gray-900'} ${!esNuevo ? 'border-l-2 border-primary-500 pl-2' : 'pl-2'}`}>
                                                 {new Date(t.fecha).toLocaleDateString()}
-                                                {esNuevo && <span className="ml-2 bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded-full animate-pulse">NUEVO</span>}
+                                                {esNuevo && <span className="ml-2 bg-blue-700 text-white text-[9px] px-2 py-0.5 rounded-full shadow-sm animate-pulse uppercase tracking-tighter">Pendiente de Cierre</span>}
                                             </div>
                                             <div className="text-[10px] text-gray-400 font-bold pl-2">
                                                 {new Date(t.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
