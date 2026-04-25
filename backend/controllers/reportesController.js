@@ -998,7 +998,7 @@ exports.getRentabilidadConsolidada = async (req, res) => {
                 return {
                     hotel: hotelLabel,
                     numero: hab.numero,
-                    tipo: hab.tipo,
+                    tipo: hab.tipo?.nombre || 'Sin tipo',
                     ingresosHospedaje: regsHab.reduce((sum, r) => sum + r.pagos.reduce((pSum, p) => p.fecha >= startDate && p.fecha <= endDate ? pSum + p.monto : pSum, 0), 0),
                     ingresosVentas: ventas.filter(v => regsHab.some(r => r._id.toString() === v.registro?.toString())).reduce((vSum, v) => v.fecha >= startDate && v.fecha <= endDate ? vSum + v.total : vSum, 0),
                     total,
