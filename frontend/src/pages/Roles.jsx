@@ -9,15 +9,17 @@ const MENU_HIERARCHY = [
         title: 'Recepción y Operaciones',
         permissions: [
             { id: 'dashboard', nombre: 'Dashboard Inicio' },
-            { id: 'registros', nombre: 'Mapa de Habitaciones / Registros' },
+            { id: 'registros', nombre: 'Mapa de Habitaciones' },
             { id: 'tienda', nombre: 'Tienda / POS' },
-            { id: 'inventario', nombre: 'Productos Tienda (Inventario)' },
+            { id: 'inventario', nombre: 'Productos Tienda' },
             { id: 'reservas', nombre: 'Reservas a Futuro' },
             { id: 'clientes', nombre: 'Gestión de Clientes' },
+            { id: 'configuracion', nombre: 'Empresas Convenio' },
             { id: 'gastos', nombre: 'Gastos e Ingresos' },
             { id: 'solicitudes', nombre: 'Solicitudes de Reserva' },
             { id: 'mantenimiento', nombre: 'Mantenimiento y Reparaciones' },
-            { id: 'aseo', nombre: 'Aseo y Auditoría Limpieza' }
+            { id: 'aseo', nombre: 'Aseo Diario' },
+            { id: 'aseo', nombre: 'Auditoría de Limpieza' }
         ]
     },
     {
@@ -30,8 +32,11 @@ const MENU_HIERARCHY = [
         title: 'Administración y Tesorería',
         permissions: [
             { id: 'notas', nombre: 'Notas y Alertas' },
-            { id: 'reportes', nombre: 'Reportes y Analítica' },
+            { id: 'reportes', nombre: 'Reportes Generales' },
             { id: 'cuadre_caja', nombre: 'Cuadre de Caja' },
+            { id: 'reportes', nombre: 'Reporte de Caja' },
+            { id: 'reportes', nombre: 'Calendario Flujo de Caja' },
+            { id: 'reportes', nombre: 'Rentabilidad de Habitaciones' },
             { id: 'cotizaciones', nombre: 'Cotizaciones Profesionales' },
             { id: 'invitacion', nombre: 'Invitación Religiosa' },
             { id: 'medios_pago', nombre: 'Medios de Pago' }
@@ -49,7 +54,7 @@ const MENU_HIERARCHY = [
     {
         title: 'Configuraciones',
         permissions: [
-            { id: 'habitaciones', nombre: 'Zonas y Habitaciones' },
+            { id: 'habitaciones', nombre: 'Zonas y Habitación' },
             { id: 'tipos_habitaciones', nombre: 'Tipos de Habitación' },
             { id: 'estados_habitaciones', nombre: 'Estados de Habitación' },
             { id: 'municipios', nombre: 'Orígenes y Municipios' },
@@ -58,7 +63,7 @@ const MENU_HIERARCHY = [
             { id: 'tipos_registro', nombre: 'Tipos de Registro' },
             { id: 'usuarios', nombre: 'Personal y Usuarios' },
             { id: 'roles_permisos', nombre: 'Roles y Permisos' },
-            { id: 'configuracion', nombre: 'Información del Hotel / Empresas' },
+            { id: 'configuracion', nombre: 'Información del Hotel' },
             { id: 'notificaciones', nombre: 'Notificaciones del Sistema' }
         ]
     }
