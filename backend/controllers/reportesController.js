@@ -439,6 +439,7 @@ exports.getDetalleIngresos = async (req, res) => {
                 fecha: venta.fecha,
                 tipo: 'VENTA',
                 descripcion: `Venta de productos`,
+                detalle: venta.items?.map(i => `${i.cantidad}x ${i.producto?.nombre || 'Prod'}`).join(', ') || '-',
                 usuario: venta.empleado?.nombre || venta.usuarioCreacion,
                 medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
                 monto: venta.total
@@ -456,6 +457,7 @@ exports.getDetalleIngresos = async (req, res) => {
                 fecha: mov.fecha,
                 tipo: esIngreso ? 'INGRESO MANUAL' : 'GASTO',
                 descripcion: mov.descripcion,
+                detalle: `${mov.categoria?.nombre || 'General'}${mov.nota ? ' - ' + mov.nota : ''}`,
                 usuario: mov.usuario?.nombre || 'Sistema',
                 medioPago: (mov.medioPago || 'EFECTIVO').toUpperCase(),
                 monto: esIngreso ? mov.monto : -mov.monto
@@ -542,13 +544,14 @@ exports.getDetalleIngresosConsolidado = async (req, res) => {
             // 3. Ventas
             const ventas = await Venta.find({
                 fecha: { $gte: startDate, $lte: endDate }
-            }).populate('empleado', 'nombre');
+            }).populate('empleado', 'nombre').populate('items.producto', 'nombre');
 
             ventas.forEach(venta => {
                 localIngresos.push({
                     fecha: venta.fecha,
                     tipo: 'VENTA',
                     descripcion: `Venta de productos`,
+                    detalle: venta.items?.map(i => `${i.cantidad}x ${i.producto?.nombre || 'Prod'}`).join(', ') || '-',
                     usuario: venta.empleado?.nombre || venta.usuarioCreacion,
                     medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
                     monto: venta.total,
@@ -567,6 +570,7 @@ exports.getDetalleIngresosConsolidado = async (req, res) => {
                     fecha: mov.fecha,
                     tipo: esIngreso ? 'INGRESO MANUAL' : 'GASTO',
                     descripcion: mov.descripcion,
+                    detalle: `${mov.categoria?.nombre || 'General'}${mov.nota ? ' - ' + mov.nota : ''}`,
                     usuario: mov.usuario?.nombre || 'Sistema',
                     medioPago: (mov.medioPago || 'EFECTIVO').toUpperCase(),
                     monto: esIngreso ? mov.monto : -mov.monto,

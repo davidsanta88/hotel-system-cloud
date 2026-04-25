@@ -41,6 +41,7 @@ const ReporteIngresosConsolidado = () => {
         fecha: '',
         tipo: '',
         descripcion: '',
+        detalle: '',
         usuario: '',
         medio: '',
         valor: ''
@@ -111,6 +112,7 @@ const ReporteIngresosConsolidado = () => {
             const searchLower = searchTerm.toLowerCase();
             const matchesGlobal = (
                 i.descripcion.toLowerCase().includes(searchLower) ||
+                (i.detalle || '').toLowerCase().includes(searchLower) ||
                 i.tipo.toLowerCase().includes(searchLower) ||
                 i.usuario.toLowerCase().includes(searchLower) ||
                 i.medioPago.toLowerCase().includes(searchLower) ||
@@ -122,6 +124,7 @@ const ReporteIngresosConsolidado = () => {
                 format(new Date(i.fecha), 'dd/MM/yyyy').includes(columnFilters.fecha) &&
                 i.tipo.toLowerCase().includes(columnFilters.tipo.toLowerCase()) &&
                 i.descripcion.toLowerCase().includes(columnFilters.descripcion.toLowerCase()) &&
+                (i.detalle || '').toLowerCase().includes(columnFilters.detalle.toLowerCase()) &&
                 i.usuario.toLowerCase().includes(columnFilters.usuario.toLowerCase()) &&
                 i.medioPago.toLowerCase().includes(columnFilters.medio.toLowerCase()) &&
                 (columnFilters.valor === '' || i.monto.toString().includes(columnFilters.valor))
@@ -165,6 +168,7 @@ const ReporteIngresosConsolidado = () => {
             'Fecha y Hora': format(new Date(i.fecha), 'dd/MM/yyyy HH:mm'),
             'Tipo': i.tipo,
             'Descripción': i.descripcion,
+            'Detalle': i.detalle || '-',
             'Usuario': i.usuario,
             'Medio de Pago': i.medioPago,
             'Valor': i.monto
@@ -194,6 +198,7 @@ const ReporteIngresosConsolidado = () => {
             format(new Date(i.fecha), 'dd/MM/yyyy HH:mm'),
             i.tipo,
             i.descripcion,
+            i.detalle || '-',
             i.usuario,
             i.medioPago,
             formatCurrency(i.monto)
@@ -201,13 +206,13 @@ const ReporteIngresosConsolidado = () => {
 
         doc.autoTable({
             startY: 50,
-            head: [['Hotel', 'Fecha', 'Tipo', 'Descripción', 'Usuario', 'Medio', 'Valor']],
+            head: [['Hotel', 'Fecha', 'Tipo', 'Descripción', 'Detalle', 'Usuario', 'Medio', 'Valor']],
             body: tableData,
             theme: 'striped',
             headStyles: { fillColor: [79, 70, 229] },
             styles: { fontSize: 7 },
             columnStyles: {
-                6: { halign: 'right' }
+                7: { halign: 'right' }
             }
         });
 
@@ -372,27 +377,31 @@ const ReporteIngresosConsolidado = () => {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50 border-b border-gray-100">
-                                <th className="px-6 py-4">
+                                <th className="px-4 py-4">
                                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Hotel</span>
                                     <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" placeholder="..." value={columnFilters.hotel} onChange={e => toggleColumnFilter('hotel', e.target.value)} />
                                 </th>
-                                <th className="px-6 py-4">
+                                <th className="px-4 py-4 min-w-[120px]">
                                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Fecha</span>
                                     <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" placeholder="..." value={columnFilters.fecha} onChange={e => toggleColumnFilter('fecha', e.target.value)} />
                                 </th>
-                                <th className="px-6 py-4">
+                                <th className="px-4 py-4">
                                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Tipo</span>
                                     <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" placeholder="..." value={columnFilters.tipo} onChange={e => toggleColumnFilter('tipo', e.target.value)} />
                                 </th>
-                                <th className="px-6 py-4">
+                                <th className="px-4 py-4 min-w-[200px]">
                                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Descripción</span>
                                     <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" placeholder="..." value={columnFilters.descripcion} onChange={e => toggleColumnFilter('descripcion', e.target.value)} />
                                 </th>
-                                <th className="px-6 py-4">
+                                <th className="px-4 py-4 min-w-[200px]">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Detalle</span>
+                                    <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" placeholder="..." value={columnFilters.detalle} onChange={e => toggleColumnFilter('detalle', e.target.value)} />
+                                </th>
+                                <th className="px-4 py-4">
                                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Usuario</span>
                                     <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" placeholder="..." value={columnFilters.usuario} onChange={e => toggleColumnFilter('usuario', e.target.value)} />
                                 </th>
-                                <th className="px-6 py-4 text-right">
+                                <th className="px-4 py-4 text-right">
                                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Valor</span>
                                     <input type="text" className="w-full text-[9px] p-1 border border-slate-200 rounded text-right font-bold" placeholder="..." value={columnFilters.valor} onChange={e => toggleColumnFilter('valor', e.target.value)} />
                                 </th>
@@ -410,20 +419,20 @@ const ReporteIngresosConsolidado = () => {
                             ) : paginatedMovimientos.length > 0 ? (
                                 paginatedMovimientos.map((mov, index) => (
                                     <tr key={index} className="hover:bg-slate-50/50 transition-colors group text-xs font-medium">
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
                                                 mov.hotel === 'Hotel Plaza' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'
                                             }`}>
                                                 {mov.hotel}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-gray-700">{format(new Date(mov.fecha), 'dd/MM/yyyy')}</span>
                                                 <span className="text-[9px] font-bold text-gray-400">{format(new Date(mov.fecha), 'HH:mm')}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
                                                 mov.tipo === 'GASTO' ? 'bg-rose-50 text-rose-600' :
                                                 mov.tipo === 'HOSPEDAJE' ? 'bg-blue-50 text-blue-600' :
@@ -433,13 +442,16 @@ const ReporteIngresosConsolidado = () => {
                                                 {mov.tipo}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-4">
                                             <p className="line-clamp-1">{mov.descripcion}</p>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4">
+                                            <p className="text-[10px] text-slate-400 italic line-clamp-1">{mov.detalle || '-'}</p>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <span className="text-gray-600 font-bold">{mov.usuario}</span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                        <td className="px-4 py-4 whitespace-nowrap text-right">
                                             <span className={`font-black ${mov.monto > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                 {mov.monto > 0 ? '+' : ''}{formatCurrency(mov.monto)}
                                             </span>
