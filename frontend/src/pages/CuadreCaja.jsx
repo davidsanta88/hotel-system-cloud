@@ -705,10 +705,11 @@ const CuadreCaja = () => {
                                 paginatedTransacciones.map((t, i) => {
                                     const esNuevo = ultimoCierre && new Date(t.fecha) > new Date(ultimoCierre.fecha);
                                     return (
-                                    <tr key={i} className={`hover:bg-gray-50 transition-colors group ${esNuevo ? 'bg-blue-50/70 border-l-4 border-l-blue-500' : ''}`}>
+                                    <tr key={i} className={`hover:bg-blue-100/30 transition-colors group ${esNuevo ? 'bg-blue-50 border-l-[6px] border-l-blue-600 shadow-sm' : ''}`}>
                                         <td className="p-4 whitespace-nowrap">
-                                            <div className={`text-xs font-bold ${esNuevo ? 'text-blue-700' : 'text-gray-900'} ${!esNuevo ? 'border-l-2 border-primary-500 pl-2' : 'pl-1'}`}>
+                                            <div className={`text-xs font-black ${esNuevo ? 'text-blue-800' : 'text-gray-900'} ${!esNuevo ? 'border-l-2 border-primary-500 pl-2' : 'pl-2'}`}>
                                                 {new Date(t.fecha).toLocaleDateString()}
+                                                {esNuevo && <span className="ml-2 bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded-full animate-pulse">NUEVO</span>}
                                             </div>
                                             <div className="text-[10px] text-gray-400 font-bold pl-2">
                                                 {new Date(t.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
