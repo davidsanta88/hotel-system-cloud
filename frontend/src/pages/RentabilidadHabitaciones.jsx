@@ -11,7 +11,8 @@ import {
     Award,
     Hotel,
     DollarSign,
-    RefreshCw
+    RefreshCw,
+    Activity
 } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { formatCurrency } from '../utils/format';
