@@ -4,35 +4,61 @@ import api from '../services/api';
 import { ShieldCheck, Plus, Edit2, Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-const TODOS_LOS_PERMISOS = [
-    { id: 'dashboard', nombre: 'Pantalla de Inicio (Dashboard)' },
-    { id: 'registros', nombre: 'Registro de Huéspedes' },
-    { id: 'clientes', nombre: 'Gestión de Clientes' },
-    { id: 'habitaciones', nombre: 'Listado de Habitaciones' },
-    { id: 'tipos_habitaciones', nombre: 'Tipos de Habitaciones' },
-    { id: 'estados_habitaciones', nombre: 'Estados de Habitaciones' },
-    { id: 'tienda', nombre: 'Tienda (Punto de Venta)' },
-    { id: 'inventario', nombre: 'Inventario de Tienda' },
-    { id: 'reservas', nombre: 'Reservas a Futuro' },
-    { id: 'solicitudes', nombre: 'Solicitudes de Reserva' },
-    { id: 'gastos', nombre: 'Registro de Gastos' },
-    { id: 'categorias_productos', nombre: 'Categorías de Productos' },
-    { id: 'categorias_gastos', nombre: 'Categorías de Gastos' },
-    { id: 'reportes', nombre: 'Generador de Reportes' },
-    { id: 'cotizaciones', nombre: 'Cotizaciones Profesionales' },
-    { id: 'invitacion', nombre: 'Invitaciones Religiosas' },
-    { id: 'cuadre_caja', nombre: 'Cuadre de Caja' },
-    { id: 'notas', nombre: 'Notas y Alertas' },
-    { id: 'medios_pago', nombre: 'Medios de Pago' },
-    { id: 'municipios', nombre: 'Orígenes y Municipios' },
-    { id: 'usuarios', nombre: 'Personal y Accesos' },
-    { id: 'aseo', nombre: 'Gestión de Aseo (Housekeeping)' },
-    { id: 'mantenimiento', nombre: 'Mantenimiento y Reparaciones' },
-    { id: 'checkin_digital', nombre: 'Check-in Digital QR' },
-    { id: 'estadisticas', nombre: 'Estadísticas Avanzadas' },
-    { id: 'roles_permisos', nombre: 'Configuración de Roles' },
-    { id: 'configuracion', nombre: 'Información del Hotel (Config)' },
-    { id: 'notificaciones', nombre: 'Notificaciones del Sistema' }
+const MENU_HIERARCHY = [
+    {
+        title: 'Recepción y Operaciones',
+        permissions: [
+            { id: 'dashboard', nombre: 'Dashboard Inicio' },
+            { id: 'registros', nombre: 'Mapa de Habitaciones / Registros' },
+            { id: 'tienda', nombre: 'Tienda / POS' },
+            { id: 'inventario', nombre: 'Productos Tienda (Inventario)' },
+            { id: 'reservas', nombre: 'Reservas a Futuro' },
+            { id: 'clientes', nombre: 'Gestión de Clientes' },
+            { id: 'gastos', nombre: 'Gastos e Ingresos' },
+            { id: 'solicitudes', nombre: 'Solicitudes de Reserva' },
+            { id: 'mantenimiento', nombre: 'Mantenimiento y Reparaciones' },
+            { id: 'aseo', nombre: 'Aseo y Auditoría Limpieza' }
+        ]
+    },
+    {
+        title: 'Recepción y Reservas',
+        permissions: [
+            { id: 'checkin_digital', nombre: 'Check-in Digital QR' }
+        ]
+    },
+    {
+        title: 'Administración y Tesorería',
+        permissions: [
+            { id: 'notas', nombre: 'Notas y Alertas' },
+            { id: 'reportes', nombre: 'Reportes y Analítica' },
+            { id: 'cuadre_caja', nombre: 'Cuadre de Caja' },
+            { id: 'cotizaciones', nombre: 'Cotizaciones Profesionales' },
+            { id: 'invitacion', nombre: 'Invitación Religiosa' },
+            { id: 'medios_pago', nombre: 'Medios de Pago' }
+        ]
+    },
+    {
+        title: 'Gestión Multi-Hotel',
+        permissions: [
+            { id: 'estadisticas', nombre: 'Estadísticas y Comparativa' }
+        ]
+    },
+    {
+        title: 'Configuraciones',
+        permissions: [
+            { id: 'habitaciones', nombre: 'Zonas y Habitaciones' },
+            { id: 'tipos_habitaciones', nombre: 'Tipos de Habitación' },
+            { id: 'estados_habitaciones', nombre: 'Estados de Habitación' },
+            { id: 'municipios', nombre: 'Orígenes y Municipios' },
+            { id: 'categorias_productos', nombre: 'Categorías de Productos' },
+            { id: 'categorias_gastos', nombre: 'Categorías de Gastos/Ingresos' },
+            { id: 'tipos_registro', nombre: 'Tipos de Registro' },
+            { id: 'usuarios', nombre: 'Personal y Usuarios' },
+            { id: 'roles_permisos', nombre: 'Roles y Permisos' },
+            { id: 'configuracion', nombre: 'Información del Hotel / Empresas' },
+            { id: 'notificaciones', nombre: 'Notificaciones del Sistema' }
+        ]
+    }
 ];
 
 const Roles = () => {
@@ -248,43 +274,54 @@ const Roles = () => {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">
-                                                {TODOS_LOS_PERMISOS.map(perm => {
-                                                    const currentPerm = current.permisos.find(p => p.p === perm.id) || { p: perm.id, v: 0, e: 0, d: 0 };
-                                                    return (
-                                                        <tr key={perm.id} className="hover:bg-blue-50/30 transition-colors">
-                                                            <td className="p-3">
-                                                                <span className="text-sm font-bold text-gray-700">{perm.nombre}</span>
-                                                            </td>
-                                                            <td className="p-3 text-center">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-30 cursor-pointer"
-                                                                    disabled={current.id === 1}
-                                                                    checked={!!currentPerm.v}
-                                                                    onChange={() => togglePermission(perm.id, 'v')}
-                                                                />
-                                                            </td>
-                                                            <td className="p-3 text-center">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 disabled:opacity-30 cursor-pointer"
-                                                                    disabled={current.id === 1 || !currentPerm.v}
-                                                                    checked={!!currentPerm.e}
-                                                                    onChange={() => togglePermission(perm.id, 'e')}
-                                                                />
-                                                            </td>
-                                                            <td className="p-3 text-center">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-30 cursor-pointer"
-                                                                    disabled={current.id === 1 || !currentPerm.v}
-                                                                    checked={!!currentPerm.d}
-                                                                    onChange={() => togglePermission(perm.id, 'd')}
-                                                                />
+                                                {MENU_HIERARCHY.map(group => (
+                                                    <React.Fragment key={group.title}>
+                                                        <tr className="bg-blue-900/5 border-y border-blue-900/10">
+                                                            <td colSpan="4" className="p-3">
+                                                                <span className="text-[10px] font-black uppercase text-blue-900 tracking-[0.2em]">
+                                                                    {group.title}
+                                                                </span>
                                                             </td>
                                                         </tr>
-                                                    );
-                                                })}
+                                                        {group.permissions.map(perm => {
+                                                            const currentPerm = current.permisos.find(p => p.p === perm.id) || { p: perm.id, v: 0, e: 0, d: 0 };
+                                                            return (
+                                                                <tr key={perm.id} className="hover:bg-blue-50/30 transition-colors">
+                                                                    <td className="p-3 pl-8">
+                                                                        <span className="text-sm font-bold text-gray-700">{perm.nombre}</span>
+                                                                    </td>
+                                                                    <td className="p-3 text-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500 disabled:opacity-30 cursor-pointer"
+                                                                            disabled={current.id === 1}
+                                                                            checked={!!currentPerm.v}
+                                                                            onChange={() => togglePermission(perm.id, 'v')}
+                                                                        />
+                                                                    </td>
+                                                                    <td className="p-3 text-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 disabled:opacity-30 cursor-pointer"
+                                                                            disabled={current.id === 1 || !currentPerm.v}
+                                                                            checked={!!currentPerm.e}
+                                                                            onChange={() => togglePermission(perm.id, 'e')}
+                                                                        />
+                                                                    </td>
+                                                                    <td className="p-3 text-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500 disabled:opacity-30 cursor-pointer"
+                                                                            disabled={current.id === 1 || !currentPerm.v}
+                                                                            checked={!!currentPerm.d}
+                                                                            onChange={() => togglePermission(perm.id, 'd')}
+                                                                        />
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </React.Fragment>
+                                                ))}
                                             </tbody>
                                         </table>
                                     </div>

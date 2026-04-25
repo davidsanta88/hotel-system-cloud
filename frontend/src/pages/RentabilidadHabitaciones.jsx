@@ -61,6 +61,7 @@ const RentabilidadHabitaciones = () => {
             'Ingresos Hospedaje': h.ingresosHospedaje || 0,
             'Ingresos Ventas': h.ingresosVentas || 0,
             'Total Generado': h.total,
+            'Promedio/Día': Math.round(h.promedioDia || 0),
             'N° Registros': h.numReservas || 0,
             'Promedio x Uso': h.numReservas > 0 ? Math.round(h.total / h.numReservas) : 0
         }));
@@ -180,6 +181,7 @@ const RentabilidadHabitaciones = () => {
                                     <th className="px-6 py-5 text-right">Ing. Hospedaje</th>
                                     <th className="px-6 py-5 text-right">Ing. Tienda</th>
                                     <th className="px-6 py-5 text-right">Total Generado</th>
+                                    <th className="px-6 py-5 text-right">Promedio Diario</th>
                                     <th className="px-6 py-5 text-right">Prom. x Uso</th>
                                     <th className="px-6 py-5 text-center">N° Usos</th>
                                 </tr>
@@ -224,6 +226,11 @@ const RentabilidadHabitaciones = () => {
                                         <td className="px-6 py-4 text-right">
                                             <span className="text-sm font-black text-indigo-600 group-hover:scale-110 transition-transform inline-block">
                                                 {formatCurrency(h.total)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className="text-sm font-black text-amber-600">
+                                                {formatCurrency(Math.round(h.promedioDia || 0))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">

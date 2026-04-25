@@ -32,7 +32,8 @@ const getColonialModels = async () => {
         Cliente: conn.models.Cliente || conn.model('Cliente', Cliente.schema),
         Habitacion: conn.models.Habitacion || conn.model('Habitacion', Habitacion.schema),
         Usuario: conn.models.Usuario || conn.model('Usuario', Usuario.schema),
-        CategoriaGasto: conn.models.CategoriaGasto || conn.model('CategoriaGasto', CategoriaGasto.schema)
+        CategoriaGasto: conn.models.CategoriaGasto || conn.model('CategoriaGasto', CategoriaGasto.schema),
+        Producto: conn.models.Producto || conn.model('Producto', Producto.schema)
     };
 };
 
@@ -865,6 +866,9 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
         const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
         const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
 
+        // Calcular das del periodo para promedio diario
+        const diffDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
+
         const Habitacion = mongoose.model('Habitacion');
         const habitaciones = await Habitacion.find().populate('tipo', 'nombre');
         
@@ -901,6 +905,7 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
                 ingresosHospedaje,
                 ingresosVentas,
                 total: ingresosHospedaje + ingresosVentas,
+                promedioDia: (ingresosHospedaje + ingresosVentas) / diffDays,
                 numReservas: regsHab.length
             };
         });
@@ -974,6 +979,8 @@ exports.getRentabilidadConsolidada = async (req, res) => {
         const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
         const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
 
+        const diffDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
+
         const fetchRentabilidad = async (models, hotelLabel) => {
             const { Registro, Venta, Habitacion } = models;
             const habitaciones = await Habitacion.find().populate('tipo', 'nombre');
@@ -1002,6 +1009,7 @@ exports.getRentabilidadConsolidada = async (req, res) => {
                     ingresosHospedaje: regsHab.reduce((sum, r) => sum + r.pagos.reduce((pSum, p) => p.fecha >= startDate && p.fecha <= endDate ? pSum + p.monto : pSum, 0), 0),
                     ingresosVentas: ventas.filter(v => regsHab.some(r => r._id.toString() === v.registro?.toString())).reduce((vSum, v) => v.fecha >= startDate && v.fecha <= endDate ? vSum + v.total : vSum, 0),
                     total,
+                    promedioDia: total / diffDays,
                     numReservas: regsHab.length
                 };
             });
