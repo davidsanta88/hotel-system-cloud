@@ -74,15 +74,20 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             items: [
                 { name: 'Notas y Alertas', path: '/notas', icon: <StickyNote size={20} />, code: 'notas' },
                 { name: 'Reportes', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
-                {name: 'Cuadre de Caja', path: '/cuadre-caja', icon: <Wallet size={20} />, code: 'cuadre_caja' },
+                { name: 'Cuadre de Caja', path: '/cuadre-caja', icon: <Wallet size={20} />, code: 'cuadre_caja' },
                 { name: 'Reporte de Caja', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reportes' },
-                { name: 'R. Ingresos Consolidado', path: '/reporte-ingresos-consolidado', icon: <Building2 size={20} />, code: 'reportes' },
                 { name: 'Cotizaciones', path: '/cotizaciones', icon: <FileText size={20} />, code: 'cotizaciones' },
                 { name: 'Invitación Religiosa', path: '/invitacion-religiosa', icon: <Mail size={20} />, code: 'invitacion' },
-                { name: 'Estadísticas Avanzadas', path: '/estadisticas', icon: <TrendingUp size={20} />, code: 'estadisticas' },
-                { name: 'Comparativa Hoteles', path: '/comparativa', icon: <LayoutDashboard size={20} />, code: 'estadisticas' },
-                { name: 'Consolidado Reservas', path: '/reservas-consolidadas', icon: <Building2 size={20} />, code: 'estadisticas' },
                 { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },
+            ]
+        },
+        {
+            title: 'Gestión Multi-Hotel',
+            items: [
+                { name: 'Caja Consolidada', path: '/reporte-ingresos-consolidado', icon: <Building2 size={20} />, code: 'reportes' },
+                { name: 'Consolidado Reservas', path: '/reservas-consolidadas', icon: <Building2 size={20} />, code: 'estadisticas' },
+                { name: 'Comparativa Hoteles', path: '/comparativa', icon: <LayoutDashboard size={20} />, code: 'estadisticas' },
+                { name: 'Estadísticas Avanzadas', path: '/estadisticas', icon: <TrendingUp size={20} />, code: 'estadisticas' },
             ]
         },
         {
