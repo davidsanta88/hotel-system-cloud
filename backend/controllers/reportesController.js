@@ -410,7 +410,8 @@ exports.getDetalleIngresos = async (req, res) => {
                         detalle: `Folio: ${reg.folio || '-'} | Hab: ${reg.habitacion?.numero || '-'}`,
                         usuario: pago.usuario_nombre || reg.usuarioCreacion,
                         medioPago: (pago.medio || 'EFECTIVO').toUpperCase(),
-                        monto: pago.monto
+                        monto: pago.monto,
+                        id_ref: reg._id
                     });
                 }
             });
@@ -427,7 +428,8 @@ exports.getDetalleIngresos = async (req, res) => {
                         detalle: `Referencia: ${reserva.codigoReserva || '-'}`,
                         usuario: abono.usuario_nombre || reserva.usuarioCreacion,
                         medioPago: (abono.medio_pago || 'EFECTIVO').toUpperCase(),
-                        monto: abono.monto
+                        monto: abono.monto,
+                        id_ref: reserva._id
                     });
                 }
             });
@@ -439,15 +441,16 @@ exports.getDetalleIngresos = async (req, res) => {
         }).populate('items.producto', 'nombre').populate('empleado', 'nombre');
 
         ventas.forEach(venta => {
-            ingresos.push({
-                fecha: venta.fecha,
-                tipo: 'VENTA',
-                descripcion: `Venta de productos`,
-                detalle: venta.items?.map(i => `${i.cantidad}x ${i.producto?.nombre || 'Prod'}`).join(', ') || '-',
-                usuario: venta.empleado?.nombre || venta.usuarioCreacion,
-                medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
-                monto: venta.total
-            });
+                    ingresos.push({
+                        fecha: venta.fecha,
+                        tipo: 'VENTA',
+                        descripcion: `Venta de productos`,
+                        detalle: venta.items?.map(i => `${i.cantidad}x ${i.producto?.nombre || 'Prod'}`).join(', ') || '-',
+                        usuario: venta.empleado?.nombre || venta.usuarioCreacion,
+                        medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
+                        monto: venta.total,
+                        id_ref: venta._id
+                    });
         });
 
         // 4. Gastos e Ingresos manuales
@@ -457,15 +460,16 @@ exports.getDetalleIngresos = async (req, res) => {
 
         movimientos.forEach(mov => {
             const esIngreso = mov.categoria?.tipo === 'Ingreso';
-            ingresos.push({
-                fecha: mov.fecha,
-                tipo: esIngreso ? 'INGRESO MANUAL' : 'GASTO',
-                descripcion: mov.descripcion,
-                detalle: `${mov.categoria?.nombre || 'General'}${mov.nota ? ' - ' + mov.nota : ''}`,
-                usuario: mov.usuario?.nombre || 'Sistema',
-                medioPago: (mov.medioPago || 'EFECTIVO').toUpperCase(),
-                monto: esIngreso ? mov.monto : -mov.monto
-            });
+                    ingresos.push({
+                        fecha: mov.fecha,
+                        tipo: esIngreso ? 'INGRESO MANUAL' : 'GASTO',
+                        descripcion: mov.descripcion,
+                        detalle: `${mov.categoria?.nombre || 'General'}${mov.nota ? ' - ' + mov.nota : ''}`,
+                        usuario: mov.usuario?.nombre || 'Sistema',
+                        medioPago: (mov.medioPago || 'EFECTIVO').toUpperCase(),
+                        monto: esIngreso ? mov.monto : -mov.monto,
+                        id_ref: mov._id
+                    });
         });
 
         // Ordenar por fecha desc
