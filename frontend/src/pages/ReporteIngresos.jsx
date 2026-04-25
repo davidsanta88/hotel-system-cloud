@@ -14,22 +14,37 @@ import {
     ChevronRight,
     FileText,
     TrendingDown,
-    Activity
+    Activity,
+    Printer,
+    FileDown,
+    RefreshCw
 } from 'lucide-react';
-import { format, startOfMonth } from 'date-fns';
+import { format, startOfMonth, subDays, startOfDay, endOfDay } from 'date-fns';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const ReporteIngresos = () => {
     const [movimientos, setMovimientos] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activePreset, setActivePreset] = useState('HOY');
     const [filtros, setFiltros] = useState({
-        inicio: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
+        inicio: format(new Date(), 'yyyy-MM-dd'),
         fin: format(new Date(), 'yyyy-MM-dd')
     });
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [columnFilters, setColumnFilters] = useState({
+        fecha: '',
+        tipo: '',
+        descripcion: '',
+        usuario: '',
+        medio: '',
+        valor: ''
+    });
+
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(20);
 
@@ -37,10 +52,11 @@ const ReporteIngresos = () => {
         fetchMovimientos();
     }, []);
 
-    const fetchMovimientos = async () => {
+    const fetchMovimientos = async (customFilters = null) => {
         try {
             setLoading(true);
-            const res = await api.get(`/reportes/detalle-ingresos?inicio=${filtros.inicio}&fin=${filtros.fin}`);
+            const f = customFilters || filtros;
+            const res = await api.get(`/reportes/detalle-ingresos?inicio=${f.inicio}&fin=${f.fin}`);
             setMovimientos(res.data);
             setCurrentPage(1);
         } catch (error) {
@@ -50,22 +66,67 @@ const ReporteIngresos = () => {
         }
     };
 
+    const handlePresetChange = (preset) => {
+        setActivePreset(preset);
+        let inicio = new Date();
+        let fin = new Date();
+
+        switch (preset) {
+            case 'HOY':
+                inicio = new Date();
+                break;
+            case '7 DÍAS':
+                inicio = subDays(new Date(), 7);
+                break;
+            case '30 DÍAS':
+                inicio = subDays(new Date(), 30);
+                break;
+            case 'ESTE MES':
+                inicio = startOfMonth(new Date());
+                break;
+            case '90 DÍAS':
+                inicio = subDays(new Date(), 90);
+                break;
+            default:
+                break;
+        }
+
+        const newFiltros = {
+            inicio: format(inicio, 'yyyy-MM-dd'),
+            fin: format(fin, 'yyyy-MM-dd')
+        };
+        setFiltros(newFiltros);
+        fetchMovimientos(newFiltros);
+    };
+
     const handleFilterSubmit = (e) => {
         e.preventDefault();
+        setActivePreset('CUSTOM');
         fetchMovimientos();
     };
 
     const filteredMovimientos = useMemo(() => {
         return movimientos.filter(i => {
             const searchLower = searchTerm.toLowerCase();
-            return (
+            const matchesGlobal = (
                 i.descripcion.toLowerCase().includes(searchLower) ||
                 i.tipo.toLowerCase().includes(searchLower) ||
                 i.usuario.toLowerCase().includes(searchLower) ||
                 i.medioPago.toLowerCase().includes(searchLower)
             );
+
+            const matchesColumn = (
+                format(new Date(i.fecha), 'dd/MM/yyyy').includes(columnFilters.fecha) &&
+                i.tipo.toLowerCase().includes(columnFilters.tipo.toLowerCase()) &&
+                i.descripcion.toLowerCase().includes(columnFilters.descripcion.toLowerCase()) &&
+                i.usuario.toLowerCase().includes(columnFilters.usuario.toLowerCase()) &&
+                i.medioPago.toLowerCase().includes(columnFilters.medio.toLowerCase()) &&
+                (columnFilters.valor === '' || i.monto.toString().includes(columnFilters.valor))
+            );
+
+            return matchesGlobal && matchesColumn;
         });
-    }, [movimientos, searchTerm]);
+    }, [movimientos, searchTerm, columnFilters]);
 
     const paginatedMovimientos = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -102,10 +163,53 @@ const ReporteIngresos = () => {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Movimientos');
         const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
         const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
-        saveAs(data, `Reporte_Movimientos_${filtros.inicio}_a_${filtros.fin}.xlsx`);
+        saveAs(data, `Reporte_Caja_${filtros.inicio}_a_${filtros.fin}.xlsx`);
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text('Reporte Detallado de Caja', 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Periodo: ${filtros.inicio} al ${filtros.fin}`, 14, 28);
+        doc.text(`Generado el: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 34);
+
+        doc.setFontSize(12);
+        doc.text(`Total Ingresos: ${formatCurrency(stats.ingresos)}`, 14, 45);
+        doc.text(`Total Egresos: ${formatCurrency(stats.egresos)}`, 14, 52);
+        doc.text(`Balance Neto: ${formatCurrency(stats.balance)}`, 14, 59);
+
+        const tableData = filteredMovimientos.map(i => [
+            format(new Date(i.fecha), 'dd/MM/yyyy HH:mm'),
+            i.tipo,
+            i.descripcion,
+            i.usuario,
+            i.medioPago,
+            formatCurrency(i.monto)
+        ]);
+
+        doc.autoTable({
+            startY: 70,
+            head: [['Fecha', 'Tipo', 'Descripción', 'Usuario', 'Medio', 'Valor']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229] },
+            styles: { fontSize: 8 },
+            columnStyles: {
+                5: { halign: 'right' }
+            }
+        });
+
+        doc.save(`Reporte_Caja_${filtros.inicio}_a_${filtros.fin}.pdf`);
     };
 
     const totalPages = Math.ceil(filteredMovimientos.length / itemsPerPage);
+
+    const toggleColumnFilter = (column, value) => {
+        setColumnFilters(prev => ({ ...prev, [column]: value }));
+        setCurrentPage(1);
+    };
 
     return (
         <div className="space-y-6 animate-fade-in pb-10">
@@ -118,14 +222,25 @@ const ReporteIngresos = () => {
                         </div>
                         Reporte Detallado de Caja
                     </h1>
-                    <p className="text-gray-500 text-sm font-medium mt-1 uppercase tracking-wider">Ingresos y Egresos por Periodo</p>
+                    <div className="flex items-center gap-4 mt-1">
+                        <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">Flujo de Efectivo</p>
+                        <button onClick={() => fetchMovimientos()} className="text-primary-600 hover:rotate-180 transition-transform duration-500">
+                            <RefreshCw size={14} />
+                        </button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <button 
                         onClick={handleExportExcel}
                         className="btn-secondary flex items-center gap-2 text-sm font-bold bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100"
                     >
-                        <Download size={18} /> Exportar Excel
+                        <Download size={18} /> Excel
+                    </button>
+                    <button 
+                        onClick={handleExportPDF}
+                        className="btn-secondary flex items-center gap-2 text-sm font-bold bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100"
+                    >
+                        <Printer size={18} /> PDF
                     </button>
                 </div>
             </div>
@@ -137,16 +252,16 @@ const ReporteIngresos = () => {
                         <TrendingUp size={24} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Ingresos</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ingresos Totales</p>
                         <p className="text-xl font-black text-emerald-700">{formatCurrency(stats.ingresos)}</p>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 group">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 group border-rose-100">
                     <div className="p-4 bg-rose-50 text-rose-600 rounded-xl group-hover:bg-rose-600 group-hover:text-white transition-all">
                         <TrendingDown size={24} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Egresos</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-rose-500">Egresos Totales</p>
                         <p className="text-xl font-black text-rose-700">{formatCurrency(stats.egresos)}</p>
                     </div>
                 </div>
@@ -161,47 +276,76 @@ const ReporteIngresos = () => {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                <form onSubmit={handleFilterSubmit} className="flex flex-wrap items-end gap-4">
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Fecha Inicio</label>
+            {/* Presets and Date Filters */}
+            <div className="flex flex-col lg:flex-row items-center gap-4">
+                <div className="bg-slate-100/50 p-1 rounded-xl flex flex-wrap gap-1 border border-slate-200">
+                    {['HOY', '7 DÍAS', '30 DÍAS', 'ESTE MES', '90 DÍAS'].map(preset => (
+                        <button
+                            key={preset}
+                            onClick={() => handlePresetChange(preset)}
+                            className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                activePreset === preset 
+                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30 scale-105' 
+                                : 'text-slate-500 hover:bg-slate-200'
+                            }`}
+                        >
+                            {preset}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex-1 bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <div className="relative">
-                            <Calendar className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                            <Calendar className="absolute left-3 top-2 text-slate-400" size={14} />
                             <input 
                                 type="date" 
-                                className="input-field pl-10 py-2 h-11 w-full" 
+                                className="input-field pl-9 py-1 text-xs font-bold w-40" 
                                 value={filtros.inicio}
-                                onChange={e => setFiltros({...filtros, inicio: e.target.value})}
+                                onChange={e => {
+                                    setFiltros({...filtros, inicio: e.target.value});
+                                    setActivePreset('CUSTOM');
+                                }}
                             />
                         </div>
-                    </div>
-                    <div className="flex-1 min-w-[200px]">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase mb-1 ml-1 tracking-widest">Fecha Fin</label>
+                        <span className="text-slate-400 font-bold">→</span>
                         <div className="relative">
-                            <Calendar className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                            <Calendar className="absolute left-3 top-2 text-slate-400" size={14} />
                             <input 
                                 type="date" 
-                                className="input-field pl-10 py-2 h-11 w-full" 
+                                className="input-field pl-9 py-1 text-xs font-bold w-40" 
                                 value={filtros.fin}
-                                onChange={e => setFiltros({...filtros, fin: e.target.value})}
+                                onChange={e => {
+                                    setFiltros({...filtros, fin: e.target.value});
+                                    setActivePreset('CUSTOM');
+                                }}
                             />
                         </div>
                     </div>
-                    <button type="submit" className="btn-primary flex items-center gap-2 h-11 px-8 font-bold shadow-lg shadow-primary-500/20">
-                        <Filter size={18} /> Filtrar
+                    <button 
+                        onClick={handleFilterSubmit}
+                        className="btn-primary flex items-center gap-2 px-6 py-2 text-xs font-black uppercase tracking-widest shadow-lg shadow-primary-500/20"
+                    >
+                        <Filter size={14} /> Filtrar
                     </button>
-                </form>
+                    <button 
+                        onClick={() => fetchMovimientos()}
+                        className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                        title="Refrescar datos"
+                    >
+                        <RefreshCw size={18} />
+                    </button>
+                </div>
             </div>
 
             {/* Search and Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="p-4 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/30">
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                         <input 
                             type="text" 
-                            placeholder="Buscar por descripción, tipo o usuario..."
+                            placeholder="Búsqueda rápida..."
                             className="input-field pl-10 py-2 w-full text-sm font-medium"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -232,13 +376,67 @@ const ReporteIngresos = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-slate-50/50 border-b border-gray-100">
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fecha y Hora</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tipo</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Descripción / Detalle</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Usuario</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Medio</th>
-                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Valor</th>
+                            <tr className="bg-slate-50 border-b border-gray-100">
+                                <th className="px-6 py-4">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Fecha</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" 
+                                        placeholder="Filtrar..."
+                                        value={columnFilters.fecha}
+                                        onChange={e => toggleColumnFilter('fecha', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-4">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Tipo</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" 
+                                        placeholder="Filtrar..."
+                                        value={columnFilters.tipo}
+                                        onChange={e => toggleColumnFilter('tipo', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-4">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Descripción</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" 
+                                        placeholder="Filtrar..."
+                                        value={columnFilters.descripcion}
+                                        onChange={e => toggleColumnFilter('descripcion', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-4">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Usuario</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" 
+                                        placeholder="Filtrar..."
+                                        value={columnFilters.usuario}
+                                        onChange={e => toggleColumnFilter('usuario', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-4">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Medio</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-full text-[9px] p-1 border border-slate-200 rounded font-bold" 
+                                        placeholder="Filtrar..."
+                                        value={columnFilters.medio}
+                                        onChange={e => toggleColumnFilter('medio', e.target.value)}
+                                    />
+                                </th>
+                                <th className="px-6 py-4 text-right">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Valor</span>
+                                    <input 
+                                        type="text" 
+                                        className="w-full text-[9px] p-1 border border-slate-200 rounded text-right font-bold" 
+                                        placeholder="0.00"
+                                        value={columnFilters.valor}
+                                        onChange={e => toggleColumnFilter('valor', e.target.value)}
+                                    />
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -283,7 +481,7 @@ const ReporteIngresos = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase">{mov.medioPago}</span>
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-tight">{mov.medioPago}</span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
                                             <span className={`text-sm font-black ${mov.monto > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
