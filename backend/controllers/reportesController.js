@@ -804,3 +804,197 @@ exports.getReporteHuespedes = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// --- NUEVOS REPORTES SOLICITADOS ---
+
+// 1. Calendario de Ingresos (Individual)
+exports.getIngresosCalendario = async (req, res) => {
+    try {
+        const { anio, mes } = req.query; // mes es 1-12
+        const startDate = new Date(anio, mes - 1, 1);
+        const endDate = new Date(anio, mes, 0, 23, 59, 59);
+
+        const [registros, reservas, ventas, gastos] = await Promise.all([
+            Registro.find({ "pagos.fecha": { $gte: startDate, $lte: endDate } }),
+            Reserva.find({ "abonos.fecha": { $gte: startDate, $lte: endDate } }),
+            Venta.find({ fecha: { $gte: startDate, $lte: endDate } }),
+            Gasto.find({ fecha: { $gte: startDate, $lte: endDate } }).populate('categoria')
+        ]);
+
+        const dailyData = {};
+
+        const addToDay = (date, amount) => {
+            const dayKey = format(new Date(date), 'yyyy-MM-dd');
+            if (!dailyData[dayKey]) dailyData[dayKey] = { ingresos: 0, egresos: 0, balance: 0 };
+            if (amount > 0) dailyData[dayKey].ingresos += amount;
+            else dailyData[dayKey].egresos += Math.abs(amount);
+            dailyData[dayKey].balance += amount;
+        };
+
+        registros.forEach(reg => reg.pagos.forEach(p => {
+            if (p.fecha >= startDate && p.fecha <= endDate) addToDay(p.fecha, p.monto);
+        }));
+        reservas.forEach(res => res.abonos.forEach(a => {
+            if (a.fecha >= startDate && a.fecha <= endDate) addToDay(a.fecha, a.monto);
+        }));
+        ventas.forEach(v => addToDay(v.fecha, v.total));
+        gastos.forEach(g => {
+            const esIngreso = g.categoria?.tipo === 'Ingreso';
+            addToDay(g.fecha, esIngreso ? g.monto : -g.monto);
+        });
+
+        res.json(dailyData);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// 2. Rentabilidad por Habitación (Individual)
+exports.getRentabilidadHabitaciones = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const startDate = inicio ? new Date(`${inicio}T00:00:00-05:00`) : subDays(new Date(), 30);
+        const endDate = fin ? new Date(`${fin}T23:59:59-05:00`) : new Date();
+
+        const Habitacion = mongoose.model('Habitacion');
+        const habitaciones = await Habitacion.find();
+        
+        const registros = await Registro.find({
+            $or: [
+                { fechaEntrada: { $gte: startDate, $lte: endDate } },
+                { fechaSalida: { $gte: startDate, $lte: endDate } },
+                { estado: 'activo' }
+            ]
+        });
+
+        const registroIds = registros.map(r => r._id);
+        const ventas = await Venta.find({ registro: { $in: registroIds } });
+
+        const stats = habitaciones.map(hab => {
+            const regsHab = registros.filter(r => r.habitacion.toString() === hab._id.toString());
+            let ingresosHospedaje = 0;
+            let ingresosVentas = 0;
+
+            regsHab.forEach(r => {
+                r.pagos.forEach(p => {
+                    if (p.fecha >= startDate && p.fecha <= endDate) ingresosHospedaje += p.monto;
+                });
+                const ventasReg = ventas.filter(v => v.registro?.toString() === r._id.toString());
+                ventasReg.forEach(v => {
+                    if (v.fecha >= startDate && v.fecha <= endDate) ingresosVentas += v.total;
+                });
+            });
+
+            return {
+                _id: hab._id,
+                numero: hab.numero,
+                tipo: hab.tipo,
+                ingresosHospedaje,
+                ingresosVentas,
+                total: ingresosHospedaje + ingresosVentas,
+                numReservas: regsHab.length
+            };
+        });
+
+        res.json(stats.sort((a, b) => b.total - a.total));
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// 3. Calendario Consolidado
+exports.getIngresosCalendarioConsolidado = async (req, res) => {
+    try {
+        const { anio, mes } = req.query;
+        const startDate = new Date(anio, mes - 1, 1);
+        const endDate = new Date(anio, mes, 0, 23, 59, 59);
+
+        const fetchDaily = async (models) => {
+            const { Registro, Reserva, Venta, Gasto } = models;
+            const [registros, reservas, ventas, gastos] = await Promise.all([
+                Registro.find({ "pagos.fecha": { $gte: startDate, $lte: endDate } }),
+                Reserva.find({ "abonos.fecha": { $gte: startDate, $lte: endDate } }),
+                Venta.find({ fecha: { $gte: startDate, $lte: endDate } }),
+                Gasto.find({ fecha: { $gte: startDate, $lte: endDate } }).populate('categoria')
+            ]);
+
+            const daily = {};
+            const add = (date, amount) => {
+                const dayKey = format(new Date(date), 'yyyy-MM-dd');
+                if (!daily[dayKey]) daily[dayKey] = 0;
+                daily[dayKey] += amount;
+            };
+
+            registros.forEach(reg => reg.pagos.forEach(p => { if (p.fecha >= startDate && p.fecha <= endDate) add(p.fecha, p.monto); }));
+            reservas.forEach(res => res.abonos.forEach(a => { if (a.fecha >= startDate && a.fecha <= endDate) add(a.fecha, a.monto); }));
+            ventas.forEach(v => add(v.fecha, v.total));
+            gastos.forEach(g => { const esIngreso = g.categoria?.tipo === 'Ingreso'; add(g.fecha, esIngreso ? g.monto : -g.monto); });
+            return daily;
+        };
+
+        const plazaData = await fetchDaily({ Registro, Reserva, Venta, Gasto });
+        const colonialModels = await getColonialModels();
+        const colonialData = await fetchDaily(colonialModels);
+
+        const consolidated = {};
+        const allKeys = new Set([...Object.keys(plazaData), ...Object.keys(colonialData)]);
+        allKeys.forEach(key => {
+            consolidated[key] = {
+                plaza: plazaData[key] || 0,
+                colonial: colonialData[key] || 0,
+                total: (plazaData[key] || 0) + (colonialData[key] || 0)
+            };
+        });
+
+        res.json(consolidated);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// 4. Rentabilidad Consolidada
+exports.getRentabilidadConsolidada = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const startDate = inicio ? new Date(`${inicio}T00:00:00-05:00`) : subDays(new Date(), 30);
+        const endDate = fin ? new Date(`${fin}T23:59:59-05:00`) : new Date();
+
+        const fetchRentabilidad = async (models, hotelLabel) => {
+            const { Registro, Venta, Habitacion } = models;
+            const habitaciones = await Habitacion.find();
+            const registros = await Registro.find({
+                $or: [
+                    { fechaEntrada: { $gte: startDate, $lte: endDate } },
+                    { fechaSalida: { $gte: startDate, $lte: endDate } },
+                    { estado: 'activo' }
+                ]
+            });
+            const registroIds = registros.map(r => r._id);
+            const ventas = await Venta.find({ registro: { $in: registroIds } });
+
+            return habitaciones.map(hab => {
+                const regsHab = registros.filter(r => r.habitacion.toString() === hab._id.toString());
+                let total = 0;
+                regsHab.forEach(r => {
+                    r.pagos.forEach(p => { if (p.fecha >= startDate && p.fecha <= endDate) total += p.monto; });
+                    const ventasReg = ventas.filter(v => v.registro?.toString() === r._id.toString());
+                    ventasReg.forEach(v => { if (v.fecha >= startDate && v.fecha <= endDate) total += v.total; });
+                });
+                return {
+                    hotel: hotelLabel,
+                    numero: hab.numero,
+                    total
+                };
+            });
+        };
+
+        const plazaStats = await fetchRentabilidad({ Registro, Venta, Habitacion: mongoose.model('Habitacion') }, 'Plaza');
+        const colonialModels = await getColonialModels();
+        const colonialStats = await fetchRentabilidad(colonialModels, 'Colonial');
+
+        const allStats = [...plazaStats, ...colonialStats].sort((a, b) => b.total - a.total);
+        res.json(allStats);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

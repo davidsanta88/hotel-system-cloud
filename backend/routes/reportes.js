@@ -15,5 +15,9 @@ router.get('/cuadre-caja', verifyToken, isAdmin, reportesController.getCuadreCaj
 router.get('/detalle-ingresos', verifyToken, isAdmin, reportesController.getDetalleIngresos);
 router.get('/detalle-ingresos-consolidado', verifyToken, isAdmin, reportesController.getDetalleIngresosConsolidado);
 router.get('/huespedes', verifyToken, isAdmin, reportesController.getReporteHuespedes);
+router.get('/ingresos-calendario', verifyToken, isAdmin, reportesController.getIngresosCalendario);
+router.get('/ingresos-calendario-consolidado', verifyToken, isAdmin, reportesController.getIngresosCalendarioConsolidado);
+router.get('/rentabilidad-habitaciones', verifyToken, isAdmin, reportesController.getRentabilidadHabitaciones);
+router.get('/rentabilidad-habitaciones-consolidado', verifyToken, isAdmin, reportesController.getRentabilidadConsolidada);
 
 module.exports = router;

@@ -30,7 +30,9 @@ import {
     Wallet,
     FileText,
     Mail,
-    ExternalLink
+    ExternalLink,
+    Award,
+    Calendar
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -76,6 +78,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Reportes', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
                 { name: 'Cuadre de Caja', path: '/cuadre-caja', icon: <Wallet size={20} />, code: 'cuadre_caja' },
                 { name: 'Reporte de Caja', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reportes' },
+                { name: 'Calendario Flujo Caja', path: '/calendario-ingresos', icon: <Calendar size={20} />, code: 'reportes' },
+                { name: 'Rentabilidad Habitaciones', path: '/rentabilidad-habitaciones', icon: <Award size={20} />, code: 'reportes' },
                 { name: 'Cotizaciones', path: '/cotizaciones', icon: <FileText size={20} />, code: 'cotizaciones' },
                 { name: 'Invitación Religiosa', path: '/invitacion-religiosa', icon: <Mail size={20} />, code: 'invitacion' },
                 { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },

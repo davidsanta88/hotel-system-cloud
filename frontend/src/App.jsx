@@ -40,6 +40,8 @@ import Cotizaciones from './pages/Cotizaciones';
 import InvitacionReligiosa from './pages/InvitacionReligiosa';
 import ReporteIngresos from './pages/ReporteIngresos';
 import ReporteIngresosConsolidado from './pages/ReporteIngresosConsolidado';
+import CalendarioIngresos from './pages/CalendarioIngresos';
+import RentabilidadHabitaciones from './pages/RentabilidadHabitaciones';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -109,6 +111,8 @@ const AppRoutes = () => {
                 <Route path="invitacion-religiosa" element={<PrivateRoute code="reportes"><InvitacionReligiosa /></PrivateRoute>} />
                 <Route path="reporte-ingresos" element={<PrivateRoute code="reportes"><ReporteIngresos /></PrivateRoute>} />
                 <Route path="reporte-ingresos-consolidado" element={<PrivateRoute code="reportes"><ReporteIngresosConsolidado /></PrivateRoute>} />
+                <Route path="calendario-ingresos" element={<PrivateRoute code="reportes"><CalendarioIngresos /></PrivateRoute>} />
+                <Route path="rentabilidad-habitaciones" element={<PrivateRoute code="reportes"><RentabilidadHabitaciones /></PrivateRoute>} />
                 <Route path="config" element={<PrivateRoute code="configuracion"><HotelConfig /></PrivateRoute>} />
             </Route>
             <Route path="/checkin" element={<CheckinPublico />} />
