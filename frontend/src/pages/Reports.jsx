@@ -54,7 +54,7 @@ const Reports = () => {
     const [dates, setDates] = useState(PERIODOS[2].getDates());
     const [periodoActivo, setPeriodoActivo] = useState(2);
     const [loading, setLoading] = useState(true);
-    const [mainChartType, setMainChartType] = useState('line');
+    const [mainChartType, setMainChartType] = useState('bar');
     const [pieChartType, setPieChartType] = useState('pie');
 
     // Datos
