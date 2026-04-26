@@ -303,51 +303,6 @@ const ReporteIngresosConsolidado = () => {
                 </div>
             </div>
 
-            {/* Hotel Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Plaza Stats */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-l-blue-500 border-gray-100">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Building2 size={16} className="text-blue-500" />
-                        <h3 className="text-sm font-black text-gray-800 uppercase tracking-tight">Totales Hotel Plaza</h3>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Ingresos</p>
-                            <p className="text-sm font-black text-emerald-600">{formatCurrency(stats.plaza.ingresos)}</p>
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Egresos</p>
-                            <p className="text-sm font-black text-rose-600">{formatCurrency(stats.plaza.egresos)}</p>
-                        </div>
-                        <div className="bg-blue-50 p-2 rounded-lg text-right">
-                            <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Balance</p>
-                            <p className="text-md font-black text-blue-700">{formatCurrency(stats.plaza.balance)}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Colonial Stats */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-l-slate-600 border-gray-100">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Building2 size={16} className="text-slate-600" />
-                        <h3 className="text-sm font-black text-gray-800 uppercase tracking-tight">Totales Hotel Colonial</h3>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Ingresos</p>
-                            <p className="text-sm font-black text-emerald-600">{formatCurrency(stats.colonial.ingresos)}</p>
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Egresos</p>
-                            <p className="text-sm font-black text-rose-600">{formatCurrency(stats.colonial.egresos)}</p>
-                        </div>
-                        <div className="bg-slate-50 p-2 rounded-lg text-right">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Balance</p>
-                            <p className="text-md font-black text-slate-700">{formatCurrency(stats.colonial.balance)}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Presets and Filters */}

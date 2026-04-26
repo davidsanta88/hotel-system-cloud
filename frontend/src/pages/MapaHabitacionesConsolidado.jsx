@@ -403,7 +403,6 @@ const MapaHabitacionesConsolidado = () => {
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
                                 {hotelHabs.map(hab => {
                                     const styles = getStatusStyles(hab.estado, hab.estadoLimpieza);
-                                    const isDirty = hab.estadoLimpieza === 'SUCIA' || hab.estadoLimpieza === 'PENDIENTE POR ASEAR';
                                     
                                     return (
                                         <div 
@@ -418,66 +417,6 @@ const MapaHabitacionesConsolidado = () => {
                                                         {styles.label === 'Por Asear' ? 'ASEO' : styles.label.substring(0, 4)}
                                                     </span>
                                                 </div>
-
-                                                {/* Barra de Acciones Verticales (Siempre Visible) */}
-                                                <div className="flex flex-col gap-1 shrink-0 ml-1">
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            toggleLimpieza(hab.id, hab.estadoLimpieza, hab.hotel);
-                                                        }}
-                                                        disabled={updating === hab.id}
-                                                        className={`p-1 rounded-md transition-all shadow-sm border ${
-                                                            isDirty 
-                                                            ? 'bg-orange-500 border-orange-400 text-white hover:bg-orange-600' 
-                                                            : 'bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600'
-                                                        }`}
-                                                        title={isDirty ? 'Marcar como Limpia' : 'Marcar como Sucia'}
-                                                    >
-                                                        {updating === hab.id ? <Loader2 size={10} className="animate-spin" /> : (isDirty ? <Brush size={10} /> : <CheckCircle size={10} />)}
-                                                    </button>
-
-                                                    {hab.estado.toLowerCase() === 'ocupada' && hab.registroActual?.id && (
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleQuickCheckout(hab.id, hab.registroActual.id, hab.registroActual.saldo, hab.hotel);
-                                                            }}
-                                                            className="p-1 rounded-md bg-red-600 border border-red-500 text-white hover:bg-red-700 shadow-sm transition-all"
-                                                            title="Salida Rápida"
-                                                        >
-                                                            <LogOut size={10} />
-                                                        </button>
-                                                    )}
-
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const isPlaza = window.location.hostname.includes('plaza') || window.location.port === '5173';
-                                                            const targetHotel = isPlaza ? 'Hotel Plaza' : 'Hotel Colonial';
-                                                            if (hab.hotel !== targetHotel) {
-                                                                    Swal.fire({
-                                                                    title: 'Cambio de Hotel',
-                                                                    text: `Para reservar en el ${hab.hotel}, debe ir a su sistema.`,
-                                                                    icon: 'info',
-                                                                    showCancelButton: true,
-                                                                    confirmButtonText: `Ir al ${hab.hotel.split(' ')[1]}`,
-                                                                    cancelButtonText: 'Cancelar'
-                                                                }).then((result) => {
-                                                                    if (result.isConfirmed) {
-                                                                        window.location.href = hab.hotel.includes('Plaza') ? 'https://hotelbalconplaza.com/reservas' : 'https://hotelbalconcolonial.com/reservas';
-                                                                    }
-                                                                });
-                                                                return;
-                                                            }
-                                                            navigate('/reservas', { state: { fromMap: true, selectedHab: hab } });
-                                                        }}
-                                                        className="p-1 rounded-md bg-sky-500 border border-sky-400 text-white hover:bg-sky-600 shadow-sm transition-all"
-                                                        title="Reservar"
-                                                    >
-                                                        <CalendarPlus size={10} />
-                                                    </button>
-                                                </div>
                                             </div>
                                             
                                             <div className="flex-1 flex flex-col justify-end space-y-0.5">
@@ -488,14 +427,8 @@ const MapaHabitacionesConsolidado = () => {
                                                         <p className={`text-[9px] font-black ${styles.text} leading-tight truncate uppercase`}>
                                                             {hab.registroActual.huesped}
                                                         </p>
-                                                        <div className="flex items-center gap-1 mt-0.5 opacity-60">
-                                                            <span className="text-[7px] font-bold">{moment(hab.registroActual.fecha_ingreso).format('DD/MM')}</span>
-                                                            <span className="text-[7px]">→</span>
-                                                            <span className="text-[7px] font-bold">{moment(hab.registroActual.fecha_salida).format('DD/MM')}</span>
-                                                        </div>
                                                         <div className="mt-1 pt-1 border-t border-black/5 flex justify-between items-center text-[8px] font-black">
-                                                            <span className="text-rose-600">${formatCurrency(hab.registroActual?.saldo || 0)}</span>
-                                                            <span className="text-emerald-600 opacity-50">${formatCurrency(hab.registroActual?.pagado || 0)}</span>
+                                                            <span className="text-rose-600">${new Intl.NumberFormat().format(hab.registroActual?.total || 0)}</span>
                                                         </div>
                                                     </div>
                                                 ) : (
