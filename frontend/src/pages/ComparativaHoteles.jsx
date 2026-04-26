@@ -28,7 +28,10 @@ import {
     Brush,
     Target,
     Heart,
-    Crown
+    Crown,
+    ShieldCheck,
+    User,
+    Building2
 } from 'lucide-react';
 import { format, subDays, startOfMonth, differenceInDays, parseISO } from 'date-fns';
 
@@ -598,19 +601,19 @@ const ComparativaHoteles = () => {
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                                <Bell size={20} className="text-rose-500 animate-pulse" />
+                                <Bell size={20} className="text-rose-500" />
                                 Alertas Globales
                             </h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Eventos críticos en tiempo real</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Operatividad y Stock</p>
                         </div>
                         <span className="bg-rose-50 text-rose-600 text-[10px] font-black px-3 py-1 rounded-full border border-rose-100">
-                            {statsConsolidadas?.alerts?.length || 0} ACTIVAS
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').length} ACTIVAS
                         </span>
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                        {statsConsolidadas?.alerts?.length > 0 ? (
-                            statsConsolidadas.alerts.map((alert, idx) => (
+                        {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').length > 0 ? (
+                            (statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').map((alert, idx) => (
                                 <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors group">
                                     <div className={`p-2 rounded-xl shrink-0 ${
                                         alert.type === 'STOCK' ? 'bg-amber-100 text-amber-600' : 
@@ -631,7 +634,76 @@ const ComparativaHoteles = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-slate-300 space-y-2">
                                 <Sparkles size={40} className="opacity-20" />
-                                <p className="text-xs font-black uppercase tracking-widest">No hay alertas activas</p>
+                                <p className="text-xs font-black uppercase tracking-widest">Sin alertas operativas</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 1.5. Panel de Anomalías de Precio (NUEVO Y APARTE) */}
+                <div className="bg-white rounded-[2.5rem] p-8 border-2 border-orange-100 shadow-xl shadow-orange-50 flex flex-col h-[400px] relative overflow-hidden">
+                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-50 rounded-full blur-2xl opacity-50" />
+                    
+                    <div className="flex items-center justify-between mb-6 relative z-10">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                <AlertTriangle size={20} className="text-orange-500 animate-bounce" />
+                                Anomalías de Precio
+                            </h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Desviaciones vs Precio Recomendado</p>
+                        </div>
+                        <span className="bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-orange-200">
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length} CASOS
+                        </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar relative z-10">
+                        {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length > 0 ? (
+                            (statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').map((alert, idx) => {
+                                const details = alert.details || {};
+                                return (
+                                    <div key={idx} className="p-4 rounded-3xl bg-orange-50/50 border border-orange-100 hover:bg-white hover:shadow-lg transition-all group">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${alert.hotel.includes('Plaza') ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-white'}`}>
+                                                    {alert.hotel}
+                                                </span>
+                                                <span className="text-sm font-black text-slate-900">Hab #{details.habitacion}</span>
+                                            </div>
+                                            <span className="text-[14px] font-black text-orange-600 bg-white px-2 py-1 rounded-xl border border-orange-100 shadow-sm">
+                                                -{details.diferenciaPct}%
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                <span>Cobrado: <strong className="text-slate-900">${new Intl.NumberFormat().format(details.precioCobrado)}</strong></span>
+                                                <span>Ref: <strong className="text-slate-500">${new Intl.NumberFormat().format(details.precioRecomendado)}</strong></span>
+                                            </div>
+                                            
+                                            <div className="pt-2 border-t border-orange-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center text-slate-400">
+                                                        <User size={14} />
+                                                    </div>
+                                                    <span className="text-[11px] font-black text-slate-700 truncate max-w-[120px] uppercase tracking-tighter">
+                                                        {details.huespedTitular}
+                                                    </span>
+                                                </div>
+                                                {details.esEmpresa && (
+                                                    <span className="flex items-center gap-1 bg-blue-100 text-blue-600 text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-widest">
+                                                        <Building2 size={10} /> Empresa
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-200 space-y-2 opacity-50">
+                                <ShieldCheck size={48} />
+                                <p className="text-xs font-black uppercase tracking-widest text-center">Todo en orden.<br/>Precios dentro del rango.</p>
                             </div>
                         )}
                     </div>

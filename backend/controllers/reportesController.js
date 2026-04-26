@@ -1173,7 +1173,7 @@ exports.getStatsConsolidadas = async (req, res) => {
                     { fechaEntrada: { $gte: startDate, $lte: endDate } },
                     { fechaSalida: { $gte: startDate, $lte: endDate } }
                 ]
-            }).lean();
+            }).populate('cliente', 'nombre empresa_id').lean();
             const regIds = registrosPeriodo.map(r => r._id);
             const ventasPeriodo = await Venta.find({ registro: { $in: regIds } }).lean();
 
@@ -1237,12 +1237,18 @@ exports.getStatsConsolidadas = async (req, res) => {
                 const recommendedPrice = hab[`precio_${Math.min(numHuespedes, 6)}`] || hab.precio_1 || 0;
 
                 if (recommendedPrice > 0 && r.total < recommendedPrice * (1 - tolerance)) {
+                    const diff = recommendedPrice - r.total;
+                    const pct = Math.round((diff / recommendedPrice) * 100);
+                    
                     priceAnomalies.push({
                         habitacion: hab.numero,
                         precioCobrado: r.total,
                         precioRecomendado: recommendedPrice,
                         huespedes: numHuespedes,
-                        hotel: hotelLabel
+                        hotel: hotelLabel,
+                        huespedTitular: r.cliente?.nombre || 'Desconocido',
+                        esEmpresa: !!r.cliente?.empresa_id,
+                        diferenciaPct: pct
                     });
                 }
             }
