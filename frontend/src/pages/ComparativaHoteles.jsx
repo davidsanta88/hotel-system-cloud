@@ -344,6 +344,176 @@ const ComparativaHoteles = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* 7. Total en Caja (+Base) Global */}
+                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Total en Caja (+Base)</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(globalCashTotalConBase)}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <Lock size={24} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <HotelCard 
+                    hotelName="Hotel Balcón Plaza"
+                    income={totalPlaza}
+                    expenses={plazaExpenses}
+                    dailyAvg={plazaDailyAvg}
+                    expensesAvg={plazaExpensesAvg}
+                    profitAvg={plazaProfitAvg}
+                    shopSales={shopPlaza}
+                    rooms={data?.plaza.rooms}
+                    cash={data?.plaza.cash}
+                    color="primary"
+                />
+                <HotelCard 
+                    hotelName="Hotel Balcón Colonial"
+                    income={totalColonial}
+                    expenses={colonialExpenses}
+                    dailyAvg={colonialDailyAvg}
+                    expensesAvg={colonialExpensesAvg}
+                    profitAvg={colonialProfitAvg}
+                    shopSales={shopColonial}
+                    rooms={data?.colonial.rooms}
+                    cash={data?.colonial.cash}
+                    color="slate"
+                />
+            </div>
+
+            {/* Income Comparison Chart */}
+            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Comparativa de Ingresos</h3>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Evolución de ingresos por hotel</p>
+                    </div>
+                </div>
+
+                <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis 
+                                dataKey="name" 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                            />
+                            <YAxis 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tick={{fill: '#94a3b8', fontSize: 10}}
+                                tickFormatter={(val) => `$${new Intl.NumberFormat('es-CO', { notation: 'compact' }).format(val)}`}
+                            />
+                            <Tooltip 
+                                cursor={{fill: '#f8fafc'}}
+                                contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
+                                formatter={(value) => [`$${new Intl.NumberFormat().format(value)}`, '']}
+                            />
+                            <Legend verticalAlign="top" height={36} iconType="circle" />
+                            <Bar name="Plaza" dataKey="plazaIngresos" fill="#2563eb" radius={[6, 6, 0, 0]} barSize={25} />
+                            <Bar name="Colonial" dataKey="colonialIngresos" fill="#64748b" radius={[6, 6, 0, 0]} barSize={25} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Profit Margin Comparison */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Plaza Profit Card */}
+                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Evolución de Margen (Plaza)</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Margen Neto por periodo</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Margen Total</p>
+                            <p className="text-2xl font-black text-emerald-500">${new Intl.NumberFormat().format(totalPlaza - plazaExpenses)}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="colorPlazaMargen" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fill: '#94a3b8', fontSize: 10}}
+                                    tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`}
+                                />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
+                                    formatter={(value) => [`$${new Intl.NumberFormat().format(value)}`, 'Margen']}
+                                />
+                                <Area type="monotone" dataKey="plazaMargen" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorPlazaMargen)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Colonial Profit Card */}
+                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm flex flex-col">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Evolución de Margen (Colonial)</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Margen Neto por periodo</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Margen Total</p>
+                            <p className="text-2xl font-black text-indigo-500">${new Intl.NumberFormat().format(totalColonial - colonialExpenses)}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="colorColonialMargen" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
+                                />
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fill: '#94a3b8', fontSize: 10}}
+                                    tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`}
+                                />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
+                                    formatter={(value) => [`$${new Intl.NumberFormat().format(value)}`, 'Margen']}
+                                />
+                                <Area type="monotone" dataKey="colonialMargen" stroke="#6366f1" strokeWidth={4} fillOpacity={1} fill="url(#colorColonialMargen)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
             </div>
 
             {/* Fila de Módulos Inteligentes Consolidados */}
@@ -532,165 +702,6 @@ const ComparativaHoteles = () => {
                     ))}
                 </div>
             </div>
-
-            {/* Main KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <HotelCard 
-                    hotelName="Hotel Balcón Plaza"
-                    income={totalPlaza}
-                    expenses={plazaExpenses}
-                    dailyAvg={plazaDailyAvg}
-                    expensesAvg={plazaExpensesAvg}
-                    profitAvg={plazaProfitAvg}
-                    shopSales={shopPlaza}
-                    rooms={data?.plaza.rooms}
-                    cash={data?.plaza.cash}
-                    color="primary"
-                />
-                <HotelCard 
-                    hotelName="Hotel Balcón Colonial"
-                    income={totalColonial}
-                    expenses={colonialExpenses}
-                    dailyAvg={colonialDailyAvg}
-                    expensesAvg={colonialExpensesAvg}
-                    profitAvg={colonialProfitAvg}
-                    shopSales={shopColonial}
-                    rooms={data?.colonial.rooms}
-                    cash={data?.colonial.cash}
-                    color="slate"
-                />
-            </div>
-
-            {/* Income Comparison Chart */}
-            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
-                    <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Comparativa de Ingresos</h3>
-                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Evolución de ingresos por hotel</p>
-                    </div>
-                </div>
-
-                <div className="h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                            <XAxis 
-                                dataKey="name" 
-                                axisLine={false} 
-                                tickLine={false} 
-                                tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
-                            />
-                            <YAxis 
-                                axisLine={false} 
-                                tickLine={false} 
-                                tick={{fill: '#94a3b8', fontSize: 10}}
-                                tickFormatter={(val) => `$${new Intl.NumberFormat('es-CO', { notation: 'compact' }).format(val)}`}
-                            />
-                            <Tooltip 
-                                cursor={{fill: '#f8fafc'}}
-                                contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
-                                formatter={(value) => [`$${new Intl.NumberFormat().format(value)}`, '']}
-                            />
-                            <Legend verticalAlign="top" height={36} iconType="circle" />
-                            <Bar name="Plaza" dataKey="plazaIngresos" fill="#2563eb" radius={[6, 6, 0, 0]} barSize={25} />
-                            <Bar name="Colonial" dataKey="colonialIngresos" fill="#64748b" radius={[6, 6, 0, 0]} barSize={25} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            {/* Profit Margin Comparison */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Plaza Profit Card */}
-                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm flex flex-col">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Evolución de Margen (Plaza)</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Margen Neto por periodo</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Margen Total</p>
-                            <p className="text-2xl font-black text-emerald-500">${new Intl.NumberFormat().format(totalPlaza - plazaExpenses)}</p>
-                        </div>
-                    </div>
-                    
-                    <div className="h-[350px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorPlazaMargen" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fill: '#94a3b8', fontSize: 10}}
-                                    tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`}
-                                />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
-                                    formatter={(value) => [`$${new Intl.NumberFormat().format(value)}`, 'Margen']}
-                                />
-                                <Area type="monotone" dataKey="plazaMargen" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorPlazaMargen)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Colonial Profit Card */}
-                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm flex flex-col">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Evolución de Margen (Colonial)</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Margen Neto por periodo</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Margen Total</p>
-                            <p className="text-2xl font-black text-indigo-500">${new Intl.NumberFormat().format(totalColonial - colonialExpenses)}</p>
-                        </div>
-                    </div>
-                    
-                    <div className="h-[350px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorColonialMargen" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}}
-                                />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fill: '#94a3b8', fontSize: 10}}
-                                    tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`}
-                                />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold', padding: '16px' }}
-                                    formatter={(value) => [`$${new Intl.NumberFormat().format(value)}`, 'Margen']}
-                                />
-                                <Area type="monotone" dataKey="colonialMargen" stroke="#6366f1" strokeWidth={4} fillOpacity={1} fill="url(#colorColonialMargen)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
@@ -744,6 +755,19 @@ const HotelCard = ({ hotelName, income, expenses, dailyAvg, expensesAvg, profitA
                     <div className="flex flex-col items-center flex-1">
                         <span className="text-[7px] font-black text-slate-400 uppercase tracking-tighter">Bancolombia</span>
                         <span className="text-xs font-black text-blue-600">${new Intl.NumberFormat().format(cash?.bancolombia || 0)}</span>
+                    </div>
+                </div>
+
+                {/* Total en Caja (+Base) Individual */}
+                <div className="mb-8 p-5 bg-indigo-50 rounded-[2rem] border border-indigo-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Total en Caja (+Base)</p>
+                        <h4 className="text-2xl font-black text-indigo-600">
+                            ${new Intl.NumberFormat().format((cash?.efectivo || 0) + (cash?.base || 0))}
+                        </h4>
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl text-indigo-500 shadow-sm">
+                        <Lock size={20} />
                     </div>
                 </div>
 
