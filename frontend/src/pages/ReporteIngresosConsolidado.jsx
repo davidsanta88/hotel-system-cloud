@@ -303,8 +303,6 @@ const ReporteIngresosConsolidado = () => {
                 </div>
             </div>
 
-            </div>
-
             {/* Presets and Filters */}
             <div className="flex flex-col lg:flex-row items-center gap-4">
                 <div className="bg-slate-100/50 p-1 rounded-xl flex flex-wrap gap-1 border border-slate-200">
