@@ -19,7 +19,8 @@ import {
     ClipboardList,
     Loader2,
     Paintbrush,
-    CalendarPlus
+    CalendarPlus,
+    Brush
 } from 'lucide-react';
 import moment from 'moment';
 import RegistroModal from '../components/modals/RegistroModal';
@@ -388,7 +389,7 @@ const MapaHabitaciones = () => {
                     </div>
                 </div>
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center space-x-4">
-                    <div className="bg-sky-100 p-3 rounded-2xl text-sky-600"><RefreshCw size={24}/></div>
+                    <div className="bg-sky-100 p-3 rounded-2xl text-sky-600"><Brush size={24}/></div>
                     <div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Por Asear</p>
                         <p className="text-2xl font-black text-gray-900">{(habitaciones || []).filter(h => h && h.estadoVisual === 'por_asear').length}</p>
@@ -425,7 +426,7 @@ const MapaHabitaciones = () => {
                                             }`}
                                             title={isDirty(hab.estadoLimpieza) ? 'Marcar como Limpia' : 'Marcar como Sucia'}
                                         >
-                                            {updating === hab.id ? <Loader2 size={10} className="animate-spin" /> : (isDirty(hab.estadoLimpieza) ? <RefreshCw size={10} /> : <Paintbrush size={10} />)}
+                                            {updating === hab.id ? <Loader2 size={10} className="animate-spin" /> : (isDirty(hab.estadoLimpieza) ? <Brush size={10} /> : <CheckCircle size={10} />)}
                                         </button>
 
                                         {hab.estadoVisual === 'ocupada' && hab.detalleEstado?.id_registro && (

@@ -210,7 +210,7 @@ const Housekeeping = () => {
                                         : 'bg-white border-rose-100 text-rose-600 hover:bg-rose-50'
                                     }`}
                                 >
-                                    <AlertCircle size={18} />
+                                    <Brush size={18} />
                                     <span className="text-[9px] font-black mt-1 uppercase tracking-tighter">Sucia</span>
                                 </button>
                             </div>

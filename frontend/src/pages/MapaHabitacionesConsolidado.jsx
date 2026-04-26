@@ -19,7 +19,8 @@ import {
     CalendarPlus,
     Building2,
     Search,
-    Filter
+    Filter,
+    Brush
 } from 'lucide-react';
 import moment from 'moment';
 import RegistroModal from '../components/modals/RegistroModal';
@@ -256,7 +257,7 @@ const MapaHabitacionesConsolidado = () => {
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 border-sky-50">
-                    <div className="p-3 bg-sky-50 text-sky-600 rounded-2xl"><RefreshCw size={20}/></div>
+                    <div className="p-3 bg-sky-50 text-sky-600 rounded-2xl"><Brush size={20}/></div>
                     <div>
                         <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Por Asear</p>
                         <p className="text-xl font-black text-sky-700">{habitaciones.filter(h => h.estadoLimpieza === 'SUCIA').length}</p>
