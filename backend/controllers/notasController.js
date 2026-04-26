@@ -6,8 +6,8 @@ exports.getAll = async (req, res) => {
         const query = {
             $or: [
                 { usuario: req.userId },
-                { usuarioDestino: req.userId },
-                { usuarioDestino: null }
+                { usuariosDestino: req.userId },
+                { usuariosDestino: { $size: 0 } }
             ]
         };
 
