@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { 
     Calendar as CalendarIcon, 
@@ -29,7 +30,17 @@ const CalendarioIngresos = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [loading, setLoading] = useState(true);
     const [dailyData, setDailyData] = useState({});
-    const [viewMode, setViewMode] = useState('individual');
+    const [searchParams] = useSearchParams();
+    const [viewMode, setViewMode] = useState(searchParams.get('mode') === 'consolidated' ? 'consolidated' : 'individual');
+
+    useEffect(() => {
+        const mode = searchParams.get('mode');
+        if (mode === 'consolidated') {
+            setViewMode('consolidated');
+        } else if (mode === 'individual') {
+            setViewMode('individual');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         fetchData();

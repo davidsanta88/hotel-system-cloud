@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { 
     TrendingUp, 
@@ -22,11 +23,21 @@ import { saveAs } from 'file-saver';
 const RentabilidadHabitaciones = () => {
     const [loading, setLoading] = useState(true);
     const [habitaciones, setHabitaciones] = useState([]);
-    const [viewMode, setViewMode] = useState('individual'); // 'individual' or 'consolidated'
+    const [searchParams] = useSearchParams();
+    const [viewMode, setViewMode] = useState(searchParams.get('mode') === 'consolidated' ? 'consolidated' : 'individual'); // 'individual' or 'consolidated'
     const [filtros, setFiltros] = useState({
         inicio: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
         fin: format(new Date(), 'yyyy-MM-dd')
     });
+
+    useEffect(() => {
+        const mode = searchParams.get('mode');
+        if (mode === 'consolidated') {
+            setViewMode('consolidated');
+        } else if (mode === 'individual') {
+            setViewMode('individual');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         fetchData();

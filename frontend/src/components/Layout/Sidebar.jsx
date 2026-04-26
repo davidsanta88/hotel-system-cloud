@@ -90,8 +90,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             items: [
                 { name: 'Caja Consolidada', path: '/reporte-ingresos-consolidado', icon: <Building2 size={20} />, code: 'reporte_ingresos_consolidado' },
                 { name: 'Mapa Consolidado', path: '/mapa-habitaciones-consolidado', icon: <Hotel size={20} />, code: 'mapa_habitaciones_consolidado' },
-                { name: 'Flujo Caja Consolidado', path: '/calendario-ingresos', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
-                { name: 'Rentabilidad Consolidada', path: '/rentabilidad-habitaciones', icon: <Award size={20} />, code: 'rentabilidad' },
+                { name: 'Flujo Caja Consolidado', path: '/calendario-ingresos?mode=consolidated', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
+                { name: 'Rentabilidad Consolidada', path: '/rentabilidad-habitaciones?mode=consolidated', icon: <Award size={20} />, code: 'rentabilidad' },
                 { name: 'Consolidado Reservas', path: '/reservas-consolidadas', icon: <Building2 size={20} />, code: 'reservas_consolidadas' },
                 { name: 'Comparativa Hoteles', path: '/comparativa', icon: <LayoutDashboard size={20} />, code: 'comparativa' },
                 { name: 'Estadísticas Avanzadas', path: '/estadisticas', icon: <TrendingUp size={20} />, code: 'estadisticas' },
