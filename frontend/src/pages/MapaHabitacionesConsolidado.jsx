@@ -185,9 +185,10 @@ const MapaHabitacionesConsolidado = () => {
                     </div>
                     <button 
                         onClick={fetchMapa}
-                        className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-95"
                     >
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                        Actualizar
                     </button>
                 </div>
             </div>
@@ -275,7 +276,9 @@ const MapaHabitacionesConsolidado = () => {
                                 <div className="flex items-center gap-2">
                                     <div className={`w-1.5 h-6 rounded-full ${hotel === 'Hotel Plaza' ? 'bg-indigo-500' : 'bg-slate-500'}`} />
                                     <h2 className="text-sm font-black text-gray-800 uppercase tracking-tight">{hotel}</h2>
-                                    <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold">{hotelHabs.length} HABITACIONES</span>
+                                    <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold">
+                                        {hotelHabs.length} {filter === 'todas' ? 'HABITACIONES' : filter.replace('_', ' ').toUpperCase()}
+                                    </span>
                                 </div>
                             </div>
                             
