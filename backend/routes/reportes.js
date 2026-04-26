@@ -20,5 +20,6 @@ router.get('/ingresos-calendario-consolidado', verifyToken, checkPermission('cal
 router.get('/rentabilidad-habitaciones', verifyToken, checkPermission('reportes', 'v'), reportesController.getRentabilidadHabitaciones);
 router.get('/rentabilidad-habitaciones-consolidado', verifyToken, checkPermission('rentabilidad', 'v'), reportesController.getRentabilidadConsolidada);
 router.get('/mapa-habitaciones-consolidado', verifyToken, checkPermission('mapa_habitaciones_consolidado', 'v'), reportesController.getMapaHabitacionesConsolidado);
+router.get('/stats-consolidado', verifyToken, checkPermission('dashboard', 'v'), reportesController.getStatsConsolidadas);
 
 module.exports = router;

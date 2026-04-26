@@ -14,12 +14,15 @@ import {
     RefreshCw,
     Loader2,
     LayoutDashboard,
-    PieChart as PieIcon,
-    Users,
-    Zap,
-    Brush,
     Activity,
-    Lock
+    Lock,
+    Bell,
+    Award,
+    Trophy,
+    Sparkles,
+    AlertTriangle,
+    Eye,
+    MapPin
 } from 'lucide-react';
 import { format, subDays, startOfMonth, differenceInDays, parseISO } from 'date-fns';
 
@@ -36,10 +39,21 @@ const ComparativaHoteles = () => {
     const [loading, setLoading] = useState(true);
     const [dates, setDates] = useState(PERIODOS[0].getDates()); // Hoy por defecto
     const [periodoActivo, setPeriodoActivo] = useState(0);
+    const [statsConsolidadas, setStatsConsolidadas] = useState(null);
 
     useEffect(() => {
         fetchComparativeData();
+        fetchConsolidatedStats();
     }, [dates]);
+
+    const fetchConsolidatedStats = async () => {
+        try {
+            const response = await api.get(`/reportes/stats-consolidado?inicio=${dates.inicio}&fin=${dates.fin}`);
+            setStatsConsolidadas(response.data);
+        } catch (error) {
+            console.error('Error fetching consolidated stats:', error);
+        }
+    };
 
     const fetchComparativeData = async () => {
         setLoading(true);
@@ -326,74 +340,193 @@ const ComparativaHoteles = () => {
                 </div>
             </div>
 
-            {/* Resumen de Caja Consolidado Simplificado (Más compacto) */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 p-6 opacity-5">
-                    <DollarSign size={80} className="text-slate-900" />
+                </div>
+            </div>
+
+            {/* Fila de Módulos Inteligentes Consolidados */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* 1. Panel de Alertas Globales */}
+                <div className="lg:col-span-2 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-[400px]">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                <Bell size={20} className="text-rose-500 animate-pulse" />
+                                Alertas Globales
+                            </h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Eventos críticos en tiempo real</p>
+                        </div>
+                        <span className="bg-rose-50 text-rose-600 text-[10px] font-black px-3 py-1 rounded-full border border-rose-100">
+                            {statsConsolidadas?.alerts?.length || 0} ACTIVAS
+                        </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        {statsConsolidadas?.alerts?.length > 0 ? (
+                            statsConsolidadas.alerts.map((alert, idx) => (
+                                <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors group">
+                                    <div className={`p-2 rounded-xl shrink-0 ${
+                                        alert.type === 'STOCK' ? 'bg-amber-100 text-amber-600' : 
+                                        alert.type === 'TIME' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
+                                    }`}>
+                                        {alert.type === 'STOCK' ? <Zap size={16} /> : alert.type === 'TIME' ? <Activity size={16} /> : <AlertTriangle size={16} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{alert.hotel}</span>
+                                            <span className="text-[8px] font-bold text-slate-300 uppercase">Ahora</span>
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-700 mt-0.5 line-clamp-2">{alert.msg}</p>
+                                    </div>
+                                    <button className="p-2 text-slate-300 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-all">
+                                        <Eye size={16} />
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-300 space-y-2">
+                                <Sparkles size={40} className="opacity-20" />
+                                <p className="text-xs font-black uppercase tracking-widest">No hay alertas activas</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* 2. Pronóstico de Ingresos */}
+                <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-[2.5rem] p-8 text-white shadow-xl shadow-primary-100 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                        <Target size={120} />
+                    </div>
+                    
+                    <div className="relative z-10 h-full flex flex-col justify-between">
+                        <div>
+                            <div className="p-3 bg-white/20 rounded-2xl w-fit mb-6 backdrop-blur-md">
+                                <Sparkles size={24} />
+                            </div>
+                            <h3 className="text-xl font-black tracking-tight">Pronóstico de Ingresos</h3>
+                            <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mt-1">Próximos 7 días (Reservas + Saldos)</p>
+                        </div>
+
+                        <div>
+                            <div className="text-4xl font-black tracking-tighter mb-2">
+                                ${new Intl.NumberFormat().format(statsConsolidadas?.forecast || 0)}
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] font-black bg-white/10 w-fit px-3 py-1.5 rounded-full backdrop-blur-sm">
+                                <TrendingUp size={12} />
+                                ESTIMACIÓN BASADA EN DATOS
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Ranking Habitaciones Estrella */}
+                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-[400px]">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                                <Trophy size={20} className="text-amber-500" />
+                                Habitaciones Estrella
+                            </h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Top 5 más rentables</p>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 space-y-4">
+                        {statsConsolidadas?.rankingHabs?.slice(0, 5).map((hab, idx) => (
+                            <div key={idx} className="flex items-center gap-4">
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${
+                                    idx === 0 ? 'bg-amber-100 text-amber-600' : 
+                                    idx === 1 ? 'bg-slate-100 text-slate-600' : 
+                                    idx === 2 ? 'bg-orange-100 text-orange-600' : 'bg-slate-50 text-slate-400'
+                                }`}>
+                                    {idx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-end mb-1">
+                                        <span className="text-xs font-black text-slate-700">Hab #{hab.numero} <span className="text-[9px] text-slate-400">({hab.hotel})</span></span>
+                                        <span className="text-xs font-black text-emerald-600">${new Intl.NumberFormat().format(hab.income)}</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full rounded-full transition-all duration-1000 ${
+                                                hab.hotel === 'Plaza' ? 'bg-primary-500' : 'bg-slate-700'
+                                            }`} 
+                                            style={{ width: `${(hab.income / statsConsolidadas.rankingHabs[0].income) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* 4. Fidelidad de Clientes Consolidada */}
+            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-10 opacity-[0.03] -rotate-12 translate-x-1/4">
+                    <Heart size={200} />
                 </div>
                 
-                <div className="mb-6 relative z-10">
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                        <RefreshCw size={18} className="text-primary-500" /> 
-                        Saldos en Efectivo (+Base)
-                    </h2>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Total disponible físicamente en caja por cada hotel</p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-rose-50 text-rose-500 rounded-2xl">
+                                <Heart size={24} />
+                            </div>
+                            Fidelidad de Clientes Consolidada
+                        </h3>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Clientes con más visitas en ambas sedes</p>
+                    </div>
+                    <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
+                        Ver Todos los Clientes <Users size={16} />
+                    </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-                    {/* Hotel Plaza */}
-                    <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col justify-between group hover:bg-blue-600 transition-all duration-300">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="p-2 bg-blue-600 text-white rounded-xl group-hover:bg-white group-hover:text-blue-600 transition-colors">
-                                <Hotel size={18} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {statsConsolidadas?.topClients?.slice(0, 5).map((client, idx) => (
+                        <div key={idx} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 hover:border-rose-200 hover:bg-white transition-all group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-white rounded-2xl text-rose-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <Crown size={20} />
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visitas</span>
+                                    <p className="text-xl font-black text-slate-900 leading-none mt-1">{client.count}</p>
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-[9px] font-black text-blue-700 group-hover:text-blue-100 uppercase tracking-widest block">Hotel Plaza</span>
-                            </div>
+                            <h4 className="font-black text-slate-800 text-sm line-clamp-1 mb-1">{client.nombre}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tighter">ID: {client.documento}</p>
                         </div>
-                        <div className="text-2xl font-black text-blue-700 group-hover:text-white">${new Intl.NumberFormat().format((data?.plaza?.cash?.efectivo || 0) + (data?.plaza?.cash?.base || 0))}</div>
-                        <div className="mt-3 pt-3 border-t border-blue-100 group-hover:border-blue-500/30 flex justify-between items-center text-[8px] font-bold text-blue-500 group-hover:text-blue-200 uppercase tracking-tighter">
-                            <span>Base: ${new Intl.NumberFormat().format(data?.plaza?.cash?.base || 0)}</span>
-                            <span>Hoy: ${new Intl.NumberFormat().format(data?.plaza?.cash?.efectivo || 0)}</span>
-                        </div>
-                    </div>
+                    ))}
+                </div>
+            </div>
 
-                    {/* Hotel Colonial */}
-                    <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between group hover:bg-slate-700 transition-all duration-300">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="p-2 bg-slate-700 text-white rounded-xl group-hover:bg-white group-hover:text-slate-700 transition-colors">
-                                <Hotel size={18} />
-                            </div>
-                            <div>
-                                <span className="text-[9px] font-black text-slate-700 group-hover:text-slate-100 uppercase tracking-widest block">Hotel Colonial</span>
-                            </div>
-                        </div>
-                        <div className="text-2xl font-black text-slate-700 group-hover:text-white">${new Intl.NumberFormat().format((data?.colonial?.cash?.efectivo || 0) + (data?.colonial?.cash?.base || 0))}</div>
-                        <div className="mt-3 pt-3 border-t border-slate-200 group-hover:border-slate-500/30 flex justify-between items-center text-[8px] font-bold text-slate-500 group-hover:text-slate-200 uppercase tracking-tighter">
-                            <span>Base: ${new Intl.NumberFormat().format(data?.colonial?.cash?.base || 0)}</span>
-                            <span>Hoy: ${new Intl.NumberFormat().format(data?.colonial?.cash?.efectivo || 0)}</span>
-                        </div>
+            {/* 5. Ranking de Procedencia (NUEVO) */}
+            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                        <MapPin size={24} />
                     </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Ranking de Procedencia</h3>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">¿De dónde vienen nuestros clientes?</p>
+                    </div>
+                </div>
 
-                    {/* Consolidado */}
-                    <div className="bg-emerald-600 p-5 rounded-2xl border border-emerald-700 flex flex-col justify-between shadow-lg shadow-emerald-100 relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300">
-                        <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-125 transition-transform duration-500">
-                            <Lock size={60} />
-                        </div>
-                        <div className="flex items-center gap-2 mb-4 relative z-10">
-                            <div className="p-2 bg-white/20 text-white rounded-xl backdrop-blur-md">
-                                <Activity size={18} />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {statsConsolidadas?.topOrigins?.slice(0, 8).map((origin, idx) => (
+                        <div key={idx} className="flex items-center gap-4 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-md transition-all group">
+                            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-slate-400 font-black text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                #{idx + 1}
                             </div>
-                            <div>
-                                <span className="text-[9px] font-black text-emerald-100 uppercase tracking-widest block">Consolidado Total</span>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ciudad/Municipio</p>
+                                <p className="text-sm font-black text-slate-800">{origin.nombre}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{origin.count} <span className="text-[9px]">Visitas</span></p>
                             </div>
                         </div>
-                        <div className="text-3xl font-black text-white relative z-10 tracking-tight">${new Intl.NumberFormat().format(globalCashTotalConBase)}</div>
-                        <div className="mt-3 pt-3 border-t border-white/10 flex justify-between items-center relative z-10">
-                            <span className="text-[8px] font-bold text-emerald-100 uppercase tracking-tighter">Gran Total en Caja (+Base)</span>
-                            <TrendingUp size={14} className="text-emerald-100 animate-bounce" />
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
 

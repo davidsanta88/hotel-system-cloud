@@ -1140,3 +1140,174 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
     }
 };
 
+exports.getStatsConsolidadas = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
+        const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
+        const next7Days = moment().add(7, 'days').endOf('day').toDate();
+
+        const fetchHotelStats = async (models, hotelLabel) => {
+            const { Registro, Venta, Habitacion, Producto, Reserva, Cliente } = models;
+            
+            // 1. Alertas
+            const lowStock = await Producto.find({ $expr: { $lte: ["$stock", "$stockMinimo"] } }).lean();
+            const longStayNoPayment = await Registro.find({ 
+                estado: 'activo',
+                fechaEntrada: { $lte: moment().subtract(3, 'days').toDate() }
+            }).lean();
+            // Filtrar los que de verdad no tienen pagos significativos (ej: pagos sum < total*0.1 o algo simple)
+            const alertsLongStay = longStayNoPayment.filter(r => {
+                const totalPagado = (r.pagos || []).reduce((sum, p) => sum + p.monto, 0);
+                return totalPagado === 0; // Alerta si no ha pagado nada
+            });
+
+            const lateCheckouts = await Registro.find({
+                estado: 'activo',
+                fechaSalida: { $lt: new Date() }
+            }).populate('habitacion', 'numero').lean();
+
+            // 2. Ranking Habitaciones
+            const registrosPeriodo = await Registro.find({
+                $or: [
+                    { fechaEntrada: { $gte: startDate, $lte: endDate } },
+                    { fechaSalida: { $gte: startDate, $lte: endDate } }
+                ]
+            }).lean();
+            const regIds = registrosPeriodo.map(r => r._id);
+            const ventasPeriodo = await Venta.find({ registro: { $in: regIds } }).lean();
+
+            const habs = await Habitacion.find().lean();
+            const rankingHabs = habs.map(h => {
+                const regs = registrosPeriodo.filter(r => r.habitacion?.toString() === h._id.toString());
+                let income = regs.reduce((sum, r) => sum + (r.total || 0), 0);
+                const vts = ventasPeriodo.filter(v => regs.some(r => r._id.toString() === v.registro?.toString()));
+                income += vts.reduce((sum, v) => sum + (v.total || 0), 0);
+                return { numero: h.numero, income, hotel: hotelLabel };
+            });
+
+            // 3. Pronóstico
+            const reservasFuturas = await Reserva.find({
+                estado: 'Pendiente',
+                fecha_entrada: { $gte: new Date(), $lte: next7Days }
+            }).lean();
+            const forecastReservas = reservasFuturas.reduce((sum, r) => sum + (r.valor_total || 0), 0);
+            
+            const checkoutsProximos = await Registro.find({
+                estado: 'activo',
+                fechaSalida: { $gte: new Date(), $lte: next7Days }
+            }).lean();
+            const forecastCheckouts = checkoutsProximos.reduce((sum, r) => {
+                const totalPagado = (r.pagos || []).reduce((s, p) => s + p.monto, 0);
+                return sum + Math.max(0, (r.total || 0) - totalPagado);
+            }, 0);
+
+            // 4. Fidelidad (Registros por cliente)
+            const allRegs = await Registro.find().lean();
+            const clientCounts = {};
+            const originCounts = {};
+            
+            const clientIdsForOrigins = [...new Set(allRegs.map(r => r.cliente?.toString()).filter(id => id))];
+            const clientsWithOrigin = await Cliente.find({ _id: { $in: clientIdsForOrigins } }).select('municipio_origen_id').lean();
+            const clientOriginMap = new Map(clientsWithOrigin.map(c => [c._id.toString(), c.municipio_origen_id?.toString()]));
+
+            allRegs.forEach(r => {
+                if (r.cliente) {
+                    const cid = r.cliente.toString();
+                    clientCounts[cid] = (clientCounts[cid] || 0) + 1;
+                    
+                    const oid = clientOriginMap.get(cid);
+                    if (oid) {
+                        originCounts[oid] = (originCounts[oid] || 0) + 1;
+                    }
+                }
+            });
+
+            return {
+                alerts: {
+                    lowStock: lowStock.map(p => ({ nombre: p.nombre, stock: p.stock, hotel: hotelLabel })),
+                    longStay: alertsLongStay.map(r => ({ id: r._id, habitacion: r.numero_habitacion, hotel: hotelLabel })),
+                    lateCheckouts: lateCheckouts.map(r => ({ id: r._id, habitacion: r.habitacion?.numero, hotel: hotelLabel }))
+                },
+                rankingHabs,
+                forecast: forecastReservas + forecastCheckouts,
+                clientCounts,
+                originCounts
+            };
+        };
+
+        const plaza = await fetchHotelStats({ Registro, Venta, Habitacion, Producto, Reserva, Cliente }, 'Plaza');
+        const colonialModels = await getColonialModels();
+        const colonial = await fetchHotelStats(colonialModels, 'Colonial');
+
+        // Combinar Alertas
+        const allAlerts = [
+            ...plaza.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
+            ...plaza.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
+            ...plaza.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
+            ...colonial.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
+            ...colonial.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
+            ...colonial.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel }))
+        ];
+
+        // Combinar Ranking
+        const combinedRanking = [...plaza.rankingHabs, ...colonial.rankingHabs]
+            .sort((a, b) => b.income - a.income)
+            .slice(0, 10);
+
+        // Pronóstico Total
+        const totalForecast = plaza.forecast + colonial.forecast;
+
+        // Fidelidad Consolidada
+        // Fidelidad Consolidada
+        const combinedClients = {};
+        Object.keys(plaza.clientCounts).forEach(cid => { combinedClients[cid] = (combinedClients[cid] || 0) + plaza.clientCounts[cid]; });
+        Object.keys(colonial.clientCounts).forEach(cid => { combinedClients[cid] = (combinedClients[cid] || 0) + colonial.clientCounts[cid]; });
+        
+        const topClientIds = Object.keys(combinedClients)
+            .sort((a, b) => combinedClients[b] - combinedClients[a])
+            .slice(0, 10);
+        
+        const clientsInfo = await Cliente.find({ _id: { $in: topClientIds } }).lean();
+        const topClients = topClientIds.map(cid => {
+            const c = clientsInfo.find(x => x._id.toString() === cid);
+            return {
+                nombre: c?.nombre || 'Cliente Desconocido',
+                documento: c?.documento || '-',
+                count: combinedClients[cid]
+            };
+        });
+
+        // Orígenes Consolidados
+        const combinedOrigins = {};
+        Object.keys(plaza.originCounts).forEach(oid => { combinedOrigins[oid] = (combinedOrigins[oid] || 0) + plaza.originCounts[oid]; });
+        Object.keys(colonial.originCounts).forEach(oid => { combinedOrigins[oid] = (combinedOrigins[oid] || 0) + colonial.originCounts[oid]; });
+
+        const topOriginIds = Object.keys(combinedOrigins)
+            .sort((a, b) => combinedOrigins[b] - combinedOrigins[a])
+            .slice(0, 10);
+        
+        const Municipio = require('../models/Municipio');
+        const originsInfo = await Municipio.find({ _id: { $in: topOriginIds } }).lean();
+        const topOrigins = topOriginIds.map(oid => {
+            const m = originsInfo.find(x => x._id.toString() === oid);
+            return {
+                nombre: m?.nombre || 'Desconocido',
+                count: combinedOrigins[oid]
+            };
+        });
+
+        res.json({
+            alerts: allAlerts,
+            rankingHabs: combinedRanking,
+            forecast: totalForecast,
+            topClients,
+            topOrigins
+        });
+
+    } catch (err) {
+        console.error('[STATS CONSOLIDADAS ERROR]', err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
