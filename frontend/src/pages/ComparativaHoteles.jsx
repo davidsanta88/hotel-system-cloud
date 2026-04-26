@@ -604,16 +604,16 @@ const ComparativaHoteles = () => {
                                 <Bell size={20} className="text-rose-500 animate-pulse" />
                                 Alertas Globales
                             </h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Eventos críticos en tiempo real</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Operatividad y Stock</p>
                         </div>
                         <span className="bg-rose-50 text-rose-600 text-[10px] font-black px-3 py-1 rounded-full border border-rose-100">
-                            {statsConsolidadas?.alerts?.length || 0} ACTIVAS
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').length} ACTIVAS
                         </span>
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                        {statsConsolidadas?.alerts?.length > 0 ? (
-                            statsConsolidadas.alerts.map((alert, idx) => (
+                        {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').length > 0 ? (
+                            (statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').map((alert, idx) => (
                                 <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors group">
                                     <div className={`p-2 rounded-xl shrink-0 ${
                                         alert.type === 'STOCK' ? 'bg-amber-100 text-amber-600' : 
@@ -634,7 +634,60 @@ const ComparativaHoteles = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-slate-300 space-y-2">
                                 <Sparkles size={40} className="opacity-20" />
-                                <p className="text-xs font-black uppercase tracking-widest">No hay alertas activas</p>
+                                <p className="text-xs font-black uppercase tracking-widest">Sin alertas operativas</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Anomalías de Precio (Diseño Limpio) */}
+                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-[400px]">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Anomalías de Precio</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Desviaciones detectadas</p>
+                        </div>
+                        <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-full border border-orange-200">
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length} CASOS
+                        </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length > 0 ? (
+                            (statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').map((alert, idx) => {
+                                const details = alert.details || {};
+                                return (
+                                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-colors">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black text-white ${alert.hotel.includes('Plaza') ? 'bg-blue-600' : 'bg-slate-700'}`}>
+                                                    {alert.hotel}
+                                                </span>
+                                                <span className="text-xs font-black text-slate-800">Hab #{details.habitacion}</span>
+                                            </div>
+                                            <span className="text-xs font-black text-orange-600">-{details.diferenciaPct}%</span>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                <span>Cobrado: <strong className="text-slate-900">${new Intl.NumberFormat().format(details.precioCobrado || 0)}</strong></span>
+                                                <span>Ref: <strong className="text-slate-500">${new Intl.NumberFormat().format(details.precioRecomendado || 0)}</strong></span>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-1 border-t border-slate-200/50">
+                                                <span className="text-[10px] font-black text-slate-600 truncate uppercase tracking-tighter">
+                                                    {details.huespedTitular}
+                                                </span>
+                                                {details.esEmpresa && (
+                                                    <span className="text-[7px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-1 rounded">Empresa</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-200">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-center">Sin anomalías de precio</p>
                             </div>
                         )}
                     </div>

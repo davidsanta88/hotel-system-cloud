@@ -1276,11 +1276,21 @@ exports.getStatsConsolidadas = async (req, res) => {
             ...plaza.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
             ...plaza.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
             ...plaza.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
-            ...plaza.alerts.priceAnomalies.map(a => ({ type: 'PRICE', msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)} para ${a.huespedes} pers.)`, hotel: a.hotel })),
+            ...plaza.alerts.priceAnomalies.map(a => ({ 
+                type: 'PRICE', 
+                msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)})`, 
+                hotel: a.hotel,
+                details: a 
+            })),
             ...colonial.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
             ...colonial.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
             ...colonial.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
-            ...colonial.alerts.priceAnomalies.map(a => ({ type: 'PRICE', msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)} para ${a.huespedes} pers.)`, hotel: a.hotel }))
+            ...colonial.alerts.priceAnomalies.map(a => ({ 
+                type: 'PRICE', 
+                msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)})`, 
+                hotel: a.hotel,
+                details: a
+            }))
         ];
 
         // Combinar Ranking
