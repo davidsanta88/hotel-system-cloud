@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote, X, DollarSign } from 'lucide-react';
+import { Save, Building2, Phone, Mail, MapPin, FileText, Info, CreditCard, Globe, Quote, X, DollarSign, ShieldAlert } from 'lucide-react';
 
 const HotelConfig = () => {
     const [config, setConfig] = useState({
