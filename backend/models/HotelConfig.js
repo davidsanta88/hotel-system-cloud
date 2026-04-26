@@ -72,6 +72,10 @@ const HotelConfigSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    toleranciaPrecio: {
+        type: Number,
+        default: 10 // 10% de tolerancia por defecto
+    },
     updatedAt: {
         type: Date,
         default: Date.now

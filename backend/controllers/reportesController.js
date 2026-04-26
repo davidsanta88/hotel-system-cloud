@@ -1223,11 +1223,36 @@ exports.getStatsConsolidadas = async (req, res) => {
                 }
             });
 
+            // 5. Alertas de Precio
+            const HotelConfig = mongoose.model('HotelConfig');
+            const hotelConfig = await HotelConfig.findOne();
+            const tolerance = (hotelConfig?.toleranciaPrecio || 10) / 100;
+
+            const priceAnomalies = [];
+            for (const r of registrosPeriodo) {
+                const hab = habs.find(h => h._id.toString() === r.habitacion?.toString());
+                if (!hab) continue;
+
+                const numHuespedes = (r.huespedes?.length || 0) + 1;
+                const recommendedPrice = hab[`precio_${Math.min(numHuespedes, 6)}`] || hab.precio_1 || 0;
+
+                if (recommendedPrice > 0 && r.total < recommendedPrice * (1 - tolerance)) {
+                    priceAnomalies.push({
+                        habitacion: hab.numero,
+                        precioCobrado: r.total,
+                        precioRecomendado: recommendedPrice,
+                        huespedes: numHuespedes,
+                        hotel: hotelLabel
+                    });
+                }
+            }
+
             return {
                 alerts: {
                     lowStock: lowStock.map(p => ({ nombre: p.nombre, stock: p.stock, hotel: hotelLabel })),
                     longStay: alertsLongStay.map(r => ({ id: r._id, habitacion: r.numero_habitacion, hotel: hotelLabel })),
-                    lateCheckouts: lateCheckouts.map(r => ({ id: r._id, habitacion: r.habitacion?.numero, hotel: hotelLabel }))
+                    lateCheckouts: lateCheckouts.map(r => ({ id: r._id, habitacion: r.habitacion?.numero, hotel: hotelLabel })),
+                    priceAnomalies
                 },
                 rankingHabs,
                 forecast: forecastReservas + forecastCheckouts,
@@ -1245,9 +1270,11 @@ exports.getStatsConsolidadas = async (req, res) => {
             ...plaza.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
             ...plaza.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
             ...plaza.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
+            ...plaza.alerts.priceAnomalies.map(a => ({ type: 'PRICE', msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)} para ${a.huespedes} pers.)`, hotel: a.hotel })),
             ...colonial.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
             ...colonial.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
-            ...colonial.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel }))
+            ...colonial.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
+            ...colonial.alerts.priceAnomalies.map(a => ({ type: 'PRICE', msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)} para ${a.huespedes} pers.)`, hotel: a.hotel }))
         ];
 
         // Combinar Ranking

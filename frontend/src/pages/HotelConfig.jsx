@@ -272,6 +272,24 @@ const HotelConfig = () => {
                             />
                         </div>
                         <p className="mt-2 text-[10px] text-indigo-500/60 font-medium italic">* Se mostrará una alerta automática al Administrador cuando el efectivo total en caja (incluyendo la base del cierre anterior) supere este valor.</p>
+                        
+                        <div className="mt-6 pt-6 border-t border-indigo-100">
+                            <label className="block text-xs font-black text-amber-500 uppercase mb-2 ml-1">Tolerancia de Variación de Precio (%)</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber-500">
+                                    <TrendingDown size={18} />
+                                </div>
+                                <input
+                                    type="number"
+                                    name="toleranciaPrecio"
+                                    value={config.toleranciaPrecio || 0}
+                                    onChange={handleChange}
+                                    className="block w-full pl-10 pr-3 py-2.5 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm font-black text-amber-700 bg-white"
+                                    placeholder="Ej: 10"
+                                />
+                            </div>
+                            <p className="mt-2 text-[10px] text-amber-600/60 font-medium italic">* Genera alertas si el precio cobrado es menor al recomendado (según # de personas) restando esta tolerancia. Ej: Si es 10% y la hab. vale $80.000, alertará si cobran menos de $72.000.</p>
+                        </div>
                     </div>
 
                     {/* SECCIÓN ADMINISTRADOR (FIRMA) */}
