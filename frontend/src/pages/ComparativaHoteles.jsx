@@ -521,6 +521,76 @@ const ComparativaHoteles = () => {
                 </div>
             </div>
 
+            {/* 4. Fidelidad de Clientes Consolidada */}
+            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-10 opacity-[0.03] -rotate-12 translate-x-1/4">
+                    <Heart size={200} />
+                </div>
+                
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-rose-50 text-rose-500 rounded-2xl">
+                                <Heart size={24} />
+                            </div>
+                            Fidelidad de Clientes Consolidada
+                        </h3>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Clientes con más visitas en ambas sedes</p>
+                    </div>
+                    <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
+                        Ver Todos los Clientes <Users size={16} />
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {statsConsolidadas?.topClients?.slice(0, 5).map((client, idx) => (
+                        <div key={idx} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 hover:border-rose-200 hover:bg-white transition-all group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-white rounded-2xl text-rose-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <Crown size={20} />
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visitas</span>
+                                    <p className="text-xl font-black text-slate-900 leading-none mt-1">{client.count}</p>
+                                </div>
+                            </div>
+                            <h4 className="font-black text-slate-800 text-sm line-clamp-1 mb-1">{client.nombre}</h4>
+                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tighter">ID: {client.documento}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 5. Ranking de Procedencia (NUEVO) */}
+            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                        <MapPin size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Ranking de Procedencia</h3>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">¿De dónde vienen nuestros clientes?</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {statsConsolidadas?.topOrigins?.slice(0, 8).map((origin, idx) => (
+                        <div key={idx} className="flex items-center gap-4 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-md transition-all group">
+                            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-slate-400 font-black text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                #{idx + 1}
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ciudad/Municipio</p>
+                                <p className="text-sm font-black text-slate-800">{origin.nombre}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{origin.count} <span className="text-[9px]">Visitas</span></p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {/* Fila de Módulos Inteligentes Consolidados */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* 1. Panel de Alertas Globales */}
@@ -544,9 +614,10 @@ const ComparativaHoteles = () => {
                                 <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors group">
                                     <div className={`p-2 rounded-xl shrink-0 ${
                                         alert.type === 'STOCK' ? 'bg-amber-100 text-amber-600' : 
-                                        alert.type === 'TIME' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
+                                        alert.type === 'TIME' ? 'bg-rose-100 text-rose-600' : 
+                                        alert.type === 'PRICE' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
                                     }`}>
-                                        {alert.type === 'STOCK' ? <Zap size={16} /> : alert.type === 'TIME' ? <Activity size={16} /> : <AlertTriangle size={16} />}
+                                        {alert.type === 'STOCK' ? <Zap size={16} /> : alert.type === 'TIME' ? <Activity size={16} /> : alert.type === 'PRICE' ? <AlertTriangle size={16} /> : <Info size={16} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2">
@@ -555,9 +626,6 @@ const ComparativaHoteles = () => {
                                         </div>
                                         <p className="text-xs font-bold text-slate-700 mt-0.5 line-clamp-2">{alert.msg}</p>
                                     </div>
-                                    <button className="p-2 text-slate-300 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-all">
-                                        <Eye size={16} />
-                                    </button>
                                 </div>
                             ))
                         ) : (
@@ -628,83 +696,13 @@ const ComparativaHoteles = () => {
                                             className={`h-full rounded-full transition-all duration-1000 ${
                                                 hab.hotel === 'Plaza' ? 'bg-primary-500' : 'bg-slate-700'
                                             }`} 
-                                            style={{ width: `${(hab.income / statsConsolidadas.rankingHabs[0].income) * 100}%` }}
+                                            style={{ width: `${(hab.income / (statsConsolidadas?.rankingHabs?.[0]?.income || 1)) * 100}%` }}
                                         />
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
-            </div>
-
-            {/* 4. Fidelidad de Clientes Consolidada */}
-            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-10 opacity-[0.03] -rotate-12 translate-x-1/4">
-                    <Heart size={200} />
-                </div>
-                
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-                    <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                            <div className="p-2 bg-rose-50 text-rose-500 rounded-2xl">
-                                <Heart size={24} />
-                            </div>
-                            Fidelidad de Clientes Consolidada
-                        </h3>
-                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Clientes con más visitas en ambas sedes</p>
-                    </div>
-                    <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
-                        Ver Todos los Clientes <Users size={16} />
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {statsConsolidadas?.topClients?.slice(0, 5).map((client, idx) => (
-                        <div key={idx} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 hover:border-rose-200 hover:bg-white transition-all group">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-3 bg-white rounded-2xl text-rose-500 shadow-sm group-hover:scale-110 transition-transform">
-                                    <Crown size={20} />
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visitas</span>
-                                    <p className="text-xl font-black text-slate-900 leading-none mt-1">{client.count}</p>
-                                </div>
-                            </div>
-                            <h4 className="font-black text-slate-800 text-sm line-clamp-1 mb-1">{client.nombre}</h4>
-                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-tighter">ID: {client.documento}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* 5. Ranking de Procedencia (NUEVO) */}
-            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
-                <div className="flex items-center gap-4 mb-8">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                        <MapPin size={24} />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Ranking de Procedencia</h3>
-                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">¿De dónde vienen nuestros clientes?</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {statsConsolidadas?.topOrigins?.slice(0, 8).map((origin, idx) => (
-                        <div key={idx} className="flex items-center gap-4 p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-md transition-all group">
-                            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-slate-400 font-black text-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                #{idx + 1}
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ciudad/Municipio</p>
-                                <p className="text-sm font-black text-slate-800">{origin.nombre}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">{origin.count} <span className="text-[9px]">Visitas</span></p>
-                            </div>
-                        </div>
-                    ))}
                 </div>
             </div>
         </div>
