@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import Swal from 'sweetalert2';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
     LineChart, Line, AreaChart, Area
@@ -657,7 +658,61 @@ const ComparativaHoteles = () => {
                             (statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').map((alert, idx) => {
                                 const details = alert.details || {};
                                 return (
-                                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-colors">
+                                    <div 
+                                        key={idx} 
+                                        onClick={() => {
+                                            const isPlaza = alert.hotel.includes('Plaza');
+                                            const baseUrl = isPlaza ? 'https://hotelbalconplaza.com' : 'https://hotelbalconcolonial.com';
+                                            
+                                            Swal.fire({
+                                                title: `<span class="text-xl font-black">Detalle de Anomalía</span>`,
+                                                html: `
+                                                    <div class="text-left space-y-3 p-2">
+                                                        <div class="flex justify-between border-b pb-2">
+                                                            <span class="text-slate-400 font-bold uppercase text-[10px]">Habitación</span>
+                                                            <span class="font-black text-slate-900">${details.habitacion} (${alert.hotel})</span>
+                                                        </div>
+                                                        <div class="flex justify-between border-b pb-2">
+                                                            <span class="text-slate-400 font-bold uppercase text-[10px]">Huésped</span>
+                                                            <span class="font-black text-slate-900">${details.huespedTitular}</span>
+                                                        </div>
+                                                        ${details.nombreEmpresa ? `
+                                                        <div class="flex justify-between border-b pb-2 text-blue-600">
+                                                            <span class="text-blue-400 font-bold uppercase text-[10px]">Empresa</span>
+                                                            <span class="font-black">${details.nombreEmpresa}</span>
+                                                        </div>
+                                                        ` : ''}
+                                                        <div class="grid grid-cols-2 gap-4 pt-2">
+                                                            <div class="bg-slate-50 p-3 rounded-2xl">
+                                                                <p class="text-[9px] font-black text-slate-400 uppercase">Cobrado</p>
+                                                                <p class="text-lg font-black text-orange-600">$${new Intl.NumberFormat().format(details.precioCobrado)}</p>
+                                                            </div>
+                                                            <div class="bg-slate-50 p-3 rounded-2xl">
+                                                                <p class="text-[9px] font-black text-slate-400 uppercase">Recomendado</p>
+                                                                <p class="text-lg font-black text-slate-400">$${new Intl.NumberFormat().format(details.precioRecomendado)}</p>
+                                                            </div>
+                                                        </div>
+                                                        <p class="text-[10px] text-slate-400 italic font-medium text-center pt-2">Desviación del ${details.diferenciaPct}% respecto al precio base.</p>
+                                                    </div>
+                                                `,
+                                                showCancelButton: true,
+                                                confirmButtonText: 'Ver Registro Completo',
+                                                cancelButtonText: 'Cerrar',
+                                                confirmButtonColor: isPlaza ? '#4f46e5' : '#334155',
+                                                customClass: {
+                                                    popup: 'rounded-[2rem] shadow-2xl border-none',
+                                                    confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3',
+                                                    cancelButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3'
+                                                }
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    const targetUrl = `${baseUrl}/mapa-habitaciones?search=${details.id}`;
+                                                    window.location.href = targetUrl;
+                                                }
+                                            });
+                                        }}
+                                        className="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                                    >
                                         <div className="flex justify-between items-center mb-2">
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-1.5 py-0.5 rounded text-[8px] font-black text-white ${alert.hotel.includes('Plaza') ? 'bg-blue-600' : 'bg-slate-700'}`}>

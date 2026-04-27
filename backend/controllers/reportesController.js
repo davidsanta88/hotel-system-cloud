@@ -1245,6 +1245,7 @@ exports.getStatsConsolidadas = async (req, res) => {
                     const pct = Math.round((diff / recommendedPrice) * 100);
                     
                     priceAnomalies.push({
+                        id: r._id,
                         habitacion: hab.numero,
                         precioCobrado: r.total,
                         precioRecomendado: recommendedPrice,
