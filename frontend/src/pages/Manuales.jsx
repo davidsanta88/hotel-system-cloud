@@ -41,7 +41,7 @@ import {
     Area 
 } from 'recharts';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import Swal from 'sweetalert2';
 
 const Manuales = () => {
@@ -89,25 +89,29 @@ const Manuales = () => {
             const primaryColor = [15, 23, 42];
 
             const getBase64ImageFromURL = (url) => {
-                return new Promise((resolve, reject) => {
+                return new Promise((resolve) => {
                     const img = new Image();
                     img.setAttribute('crossOrigin', 'anonymous');
                     img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        const dataURL = canvas.toDataURL('image/png');
-                        resolve(dataURL);
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            const dataURL = canvas.toDataURL('image/png');
+                            resolve(dataURL);
+                        } catch (e) {
+                            console.warn("Canvas export failed (CORS?):", e);
+                            resolve(null);
+                        }
                     };
                     img.onerror = () => {
-                        console.warn(`Could not load image at ${url}, skipping in PDF.`);
-                        resolve(null); // Resolve with null to not break the flow
+                        console.warn(`Could not load image at ${url}`);
+                        resolve(null);
                     };
                     img.src = url;
-                    // Timeout fallback
-                    setTimeout(() => resolve(null), 3000);
+                    setTimeout(() => resolve(null), 4000);
                 });
             };
 
@@ -124,7 +128,7 @@ const Manuales = () => {
             };
 
             if (activeTab === 'usuario') {
-                addHeader('MANUAL INTEGRAL DE USUARIO', 'Sistema de Gestión Balcón Plaza v2.7 - Operación y Administración');
+                addHeader('MANUAL INTEGRAL DE USUARIO', 'Sistema de Gestión Balcón Plaza v2.8 - Operación y Administración');
                 
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(14); doc.setFont('helvetica', 'bold');
@@ -132,14 +136,15 @@ const Manuales = () => {
                 
                 const roomMapImg = await getBase64ImageFromURL(window.location.origin + '/manual/room_map.png');
                 if (roomMapImg) {
-                    doc.addImage(roomMapImg, 'PNG', 15, 50, 180, 70);
-                } else {
-                    doc.setFontSize(10); doc.setFont('helvetica', 'italic');
-                    doc.text('[Gráfico del Mapa de Habitaciones]', 15, 60);
+                    try {
+                        doc.addImage(roomMapImg, 'PNG', 15, 50, 180, 70);
+                    } catch (e) {
+                        console.warn("doc.addImage failed:", e);
+                    }
                 }
 
-                doc.autoTable({
-                    startY: roomMapImg ? 125 : 70,
+                autoTable(doc, {
+                    startY: roomMapImg ? 125 : 55,
                     head: [['ESTADO', 'SIGNIFICADO Y ACCIÓN']],
                     body: [
                         ['VERDE (Disponible)', 'Habitación libre. Haga clic para registrar un nuevo huésped.'],
@@ -154,7 +159,7 @@ const Manuales = () => {
                 doc.addPage();
                 addHeader('PROCESO PASO A PASO: CHECK-IN', 'Guía Detallada para Recepción');
                 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: 45,
                     head: [['PASO', 'ACTIVIDAD', 'DETALLE OPERATIVO']],
                     body: [
@@ -170,10 +175,10 @@ const Manuales = () => {
                 });
 
                 doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(0,0,0);
-                doc.text('II. ESTRUCTURA DE MENÚS Y OPCIONES', 15, doc.lastAutoTable.finalY + 15);
+                doc.text('II. ESTRUCTURA DE MENÚS Y OPCIONES', 15, doc.previousAutoTable.finalY + 15);
 
-                doc.autoTable({
-                    startY: doc.lastAutoTable.finalY + 20,
+                autoTable(doc, {
+                    startY: doc.previousAutoTable.finalY + 20,
                     head: [['GRUPO', 'MÓDULO', 'FUNCIONALIDAD PRINCIPAL']],
                     body: [
                         ['Operaciones', 'Tienda / POS', 'Venta de productos y cargos directos a la habitación.'],
@@ -197,17 +202,21 @@ const Manuales = () => {
                 
                 const analyticsImg = await getBase64ImageFromURL(window.location.origin + '/manual/analytics.png');
                 if (analyticsImg) {
-                    doc.addImage(analyticsImg, 'PNG', 15, 45, 180, 80);
+                    try {
+                        doc.addImage(analyticsImg, 'PNG', 15, 45, 180, 80);
+                    } catch (e) {
+                        console.warn("doc.addImage failed:", e);
+                    }
                 }
 
                 doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(50,50,50);
                 const analText = 'Las gráficas muestran el balance entre ingresos y gastos. Una gestión eficiente busca maximizar el área azul (Ingresos) y mantener controlada el área roja (Gastos). Use los filtros de fecha para comparar temporadas.';
-                doc.text(doc.splitTextToSize(analText, 180), 15, analyticsImg ? 135 : 60);
+                doc.text(doc.splitTextToSize(analText, 180), 15, analyticsImg ? 135 : 50);
 
             } else {
                 addHeader('DOCUMENTACIÓN TÉCNICA MAESTRA', 'Ingeniería de Software y Arquitectura de Sistemas');
                 
-                doc.autoTable({
+                autoTable(doc, {
                     startY: 45,
                     head: [['COMPONENTE', 'TECNOLOGÍA', 'DESCRIPCIÓN']],
                     body: [
@@ -235,7 +244,7 @@ const Manuales = () => {
             Swal.fire({
                 icon: 'error',
                 title: 'Error de Generación',
-                text: 'No se pudo generar el PDF. Por favor, inténtalo de nuevo.'
+                text: `Detalle: ${error.message || 'Error desconocido'}`
             });
         } finally {
             setIsGenerating(false);
@@ -255,7 +264,7 @@ const Manuales = () => {
                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                         <div className="space-y-6">
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 text-primary-400 rounded-full font-black text-[10px] uppercase tracking-widest border border-primary-500/30">
-                                <Zap size={14} /> Guía Elite PRO v2.7
+                                <Zap size={14} /> Guía Elite PRO v2.8
                             </div>
                             <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none">
                                 Centro de <span className="text-primary-500">Manuales</span> Profesionales.
@@ -538,7 +547,7 @@ const Manuales = () => {
                         </div>
                         <div>
                             <h4 className="text-xl font-black text-slate-900 tracking-tight">¿Alguna duda adicional?</h4>
-                            <p className="text-slate-500 font-medium">Esta documentación se actualiza automáticamente. Última actualización: 27/04/2026 16:50</p>
+                            <p className="text-slate-500 font-medium">Esta documentación se actualiza automáticamente. Última actualización: 27/04/2026 16:55</p>
                         </div>
                     </div>
                     <div className="flex gap-4">
