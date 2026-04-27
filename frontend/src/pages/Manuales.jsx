@@ -26,7 +26,8 @@ import {
     DollarSign,
     Box,
     Clock,
-    Zap
+    Zap,
+    Loader2
 } from 'lucide-react';
 import { 
     BarChart, 
@@ -41,10 +42,12 @@ import {
 } from 'recharts';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Swal from 'sweetalert2';
 
 const Manuales = () => {
     const [activeTab, setActiveTab] = useState('usuario');
     const [expandedStep, setExpandedStep] = useState(0);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const dummyData = [
         { name: 'Lun', ingresos: 4000, gastos: 2400 },
@@ -80,142 +83,163 @@ const Manuales = () => {
     ];
 
     const downloadPDF = async () => {
-        const doc = new jsPDF();
-        const primaryColor = [15, 23, 42]; // slate-900
+        setIsGenerating(true);
+        try {
+            const doc = new jsPDF();
+            const primaryColor = [15, 23, 42];
 
-        // Función para cargar imágenes y convertirlas a Base64 para el PDF
-        const getBase64ImageFromURL = (url) => {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.setAttribute('crossOrigin', 'anonymous');
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    const dataURL = canvas.toDataURL('image/png');
-                    resolve(dataURL);
-                };
-                img.onerror = (error) => reject(error);
-                img.src = url;
+            const getBase64ImageFromURL = (url) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.setAttribute('crossOrigin', 'anonymous');
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        const dataURL = canvas.toDataURL('image/png');
+                        resolve(dataURL);
+                    };
+                    img.onerror = () => {
+                        console.warn(`Could not load image at ${url}, skipping in PDF.`);
+                        resolve(null); // Resolve with null to not break the flow
+                    };
+                    img.src = url;
+                    // Timeout fallback
+                    setTimeout(() => resolve(null), 3000);
+                });
+            };
+
+            const addHeader = (title, subtitle) => {
+                doc.setFillColor(...primaryColor); 
+                doc.rect(0, 0, 210, 35, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(20);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, 15, 18);
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'normal');
+                doc.text(subtitle, 15, 26);
+            };
+
+            if (activeTab === 'usuario') {
+                addHeader('MANUAL INTEGRAL DE USUARIO', 'Sistema de Gestión Balcón Plaza v2.7 - Operación y Administración');
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+                doc.text('I. VISUALIZACIÓN GENERAL Y MAPA', 15, 45);
+                
+                const roomMapImg = await getBase64ImageFromURL(window.location.origin + '/manual/room_map.png');
+                if (roomMapImg) {
+                    doc.addImage(roomMapImg, 'PNG', 15, 50, 180, 70);
+                } else {
+                    doc.setFontSize(10); doc.setFont('helvetica', 'italic');
+                    doc.text('[Gráfico del Mapa de Habitaciones]', 15, 60);
+                }
+
+                doc.autoTable({
+                    startY: roomMapImg ? 125 : 70,
+                    head: [['ESTADO', 'SIGNIFICADO Y ACCIÓN']],
+                    body: [
+                        ['VERDE (Disponible)', 'Habitación libre. Haga clic para registrar un nuevo huésped.'],
+                        ['ROJO (Ocupada)', 'Habitación con huésped. Haga clic para ver saldo, pagos o hacer Check-out.'],
+                        ['AMARILLO (Reservada)', 'Bloqueada por una reserva que ingresa el día de hoy.'],
+                        ['AZUL (Por Asear)', 'Check-out realizado. Requiere limpieza para volver a estar disponible.'],
+                    ],
+                    theme: 'striped',
+                    headStyles: { fillColor: [0, 163, 255] }
+                });
+
+                doc.addPage();
+                addHeader('PROCESO PASO A PASO: CHECK-IN', 'Guía Detallada para Recepción');
+                
+                doc.autoTable({
+                    startY: 45,
+                    head: [['PASO', 'ACTIVIDAD', 'DETALLE OPERATIVO']],
+                    body: [
+                        ['1', 'Selección', 'Ubique una habitación verde en el mapa y presione el botón principal.'],
+                        ['2', 'Huésped', 'Ingrese el documento. El sistema autocompleta si ya existe en la base de datos.'],
+                        ['3', 'Fechas', 'Indique la fecha de salida. El sistema calculará el total automáticamente.'],
+                        ['4', 'Pagos', 'Registre cualquier abono inicial en la pestaña de Pagos para que el saldo sea correcto.'],
+                        ['5', 'Finalizar', 'Presione "Guardar". La habitación pasará a estado OCUPADA.'],
+                    ],
+                    theme: 'grid',
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [59, 130, 246] }
+                });
+
+                doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(0,0,0);
+                doc.text('II. ESTRUCTURA DE MENÚS Y OPCIONES', 15, doc.lastAutoTable.finalY + 15);
+
+                doc.autoTable({
+                    startY: doc.lastAutoTable.finalY + 20,
+                    head: [['GRUPO', 'MÓDULO', 'FUNCIONALIDAD PRINCIPAL']],
+                    body: [
+                        ['Operaciones', 'Tienda / POS', 'Venta de productos y cargos directos a la habitación.'],
+                        ['Operaciones', 'Reservas', 'Gestión de preventas y bloqueos de calendario a futuro.'],
+                        ['Operaciones', 'Mantenimiento', 'Reporte de daños y bloqueos técnicos de habitaciones.'],
+                        ['Finanzas', 'Cuadre de Caja', 'Rendición de cuentas diaria por turno y medio de pago.'],
+                        ['Finanzas', 'Reporte Ingresos', 'Auditoría detallada de todo el dinero recibido.'],
+                        ['Finanzas', 'Rentabilidad', 'Análisis de ocupación y ganancias por cada habitación.'],
+                        ['Multi-Hotel', 'Caja Consolidada', 'Vista financiera total de todas las sedes del grupo.'],
+                        ['Multi-Hotel', 'Mapa Consolidado', 'Visualización de estados de habitaciones de todos los hoteles.'],
+                        ['Configuración', 'Usuarios / Roles', 'Administración de personal y sus permisos de acceso.'],
+                        ['Configuración', 'Info Hotel', 'Configuración de NIT, Dirección y datos de facturación.'],
+                    ],
+                    theme: 'striped',
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [15, 23, 42] }
+                });
+
+                doc.addPage();
+                addHeader('INTERPRETACIÓN DE ANALÍTICA', 'Entendiendo los Gráficos de Gestión');
+                
+                const analyticsImg = await getBase64ImageFromURL(window.location.origin + '/manual/analytics.png');
+                if (analyticsImg) {
+                    doc.addImage(analyticsImg, 'PNG', 15, 45, 180, 80);
+                }
+
+                doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(50,50,50);
+                const analText = 'Las gráficas muestran el balance entre ingresos y gastos. Una gestión eficiente busca maximizar el área azul (Ingresos) y mantener controlada el área roja (Gastos). Use los filtros de fecha para comparar temporadas.';
+                doc.text(doc.splitTextToSize(analText, 180), 15, analyticsImg ? 135 : 60);
+
+            } else {
+                addHeader('DOCUMENTACIÓN TÉCNICA MAESTRA', 'Ingeniería de Software y Arquitectura de Sistemas');
+                
+                doc.autoTable({
+                    startY: 45,
+                    head: [['COMPONENTE', 'TECNOLOGÍA', 'DESCRIPCIÓN']],
+                    body: [
+                        ['Frontend', 'React + Vite', 'Single Page Application con renderizado eficiente y Tailwind CSS.'],
+                        ['Backend', 'Node.js + Express', 'API RESTful con autenticación JWT y middleware de seguridad.'],
+                        ['Database', 'MongoDB Atlas', 'Base de datos NoSQL escalable orientada a documentos.'],
+                        ['Media', 'Cloudinary', 'Servicio cloud para optimización y entrega de imágenes.'],
+                        ['Seguridad', 'BCrypt + Helmet', 'Protección de datos sensibles y encabezados de seguridad HTTP.'],
+                    ],
+                    theme: 'striped',
+                    headStyles: { fillColor: [37, 99, 235] }
+                });
+            }
+
+            doc.save(`Manual_Elite_Pro_Balcon_${activeTab.toUpperCase()}.pdf`);
+            Swal.fire({
+                icon: 'success',
+                title: 'Descarga Iniciada',
+                text: 'El manual se ha generado correctamente.',
+                timer: 2000,
+                showConfirmButton: false
             });
-        };
-
-        const addHeader = (title, subtitle) => {
-            doc.setFillColor(...primaryColor); 
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(20);
-            doc.setFont('helvetica', 'bold');
-            doc.text(title, 15, 18);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.text(subtitle, 15, 26);
-        };
-
-        if (activeTab === 'usuario') {
-            addHeader('MANUAL INTEGRAL DE USUARIO', 'Sistema de Gestión Balcón Plaza v2.6 - Operación y Administración');
-            
-            // 1. INTRODUCCIÓN CON IMAGEN
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-            doc.text('I. VISUALIZACIÓN GENERAL Y MAPA', 15, 45);
-            
-            try {
-                const roomMapImg = await getBase64ImageFromURL('/manual/room_map.png');
-                doc.addImage(roomMapImg, 'PNG', 15, 50, 180, 70);
-            } catch (e) { console.error('Error loading image', e); }
-
-            doc.autoTable({
-                startY: 125,
-                head: [['ESTADO', 'SIGNIFICADO Y ACCIÓN']],
-                body: [
-                    ['VERDE (Disponible)', 'Habitación libre. Haga clic para registrar un nuevo huésped.'],
-                    ['ROJO (Ocupada)', 'Habitación con huésped. Haga clic para ver saldo, pagos o hacer Check-out.'],
-                    ['AMARILLO (Reservada)', 'Bloqueada por una reserva que ingresa el día de hoy.'],
-                    ['AZUL (Por Asear)', 'Check-out realizado. Requiere limpieza para volver a estar disponible.'],
-                ],
-                theme: 'striped',
-                headStyles: { fillColor: [0, 163, 255] }
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Generación',
+                text: 'No se pudo generar el PDF. Por favor, inténtalo de nuevo.'
             });
-
-            // 2. PASO A PASO CHECK-IN
-            doc.addPage();
-            addHeader('PROCESO PASO A PASO: CHECK-IN', 'Guía Detallada para Recepción');
-            
-            doc.autoTable({
-                startY: 45,
-                head: [['PASO', 'ACTIVIDAD', 'DETALLE OPERATIVO']],
-                body: [
-                    ['1', 'Selección', 'Ubique una habitación verde en el mapa y presione el botón principal.'],
-                    ['2', 'Huésped', 'Ingrese el documento. El sistema autocompleta si ya existe en la base de datos.'],
-                    ['3', 'Fechas', 'Indique la fecha de salida. El sistema calculará el total automáticamente.'],
-                    ['4', 'Pagos', 'Registre cualquier abono inicial en la pestaña de Pagos para que el saldo sea correcto.'],
-                    ['5', 'Finalizar', 'Presione "Guardar". La habitación pasará a estado OCUPADA.'],
-                ],
-                theme: 'grid',
-                styles: { fontSize: 9 },
-                headStyles: { fillColor: [59, 130, 246] }
-            });
-
-            // 3. TODOS LOS MENÚS Y OPCIONES
-            doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(0,0,0);
-            doc.text('II. ESTRUCTURA DE MENÚS Y OPCIONES', 15, doc.lastAutoTable.finalY + 15);
-
-            doc.autoTable({
-                startY: doc.lastAutoTable.finalY + 20,
-                head: [['GRUPO', 'MÓDULO', 'FUNCIONALIDAD PRINCIPAL']],
-                body: [
-                    ['Operaciones', 'Tienda / POS', 'Venta de productos y cargos directos a la habitación.'],
-                    ['Operaciones', 'Reservas', 'Gestión de preventas y bloqueos de calendario a futuro.'],
-                    ['Operaciones', 'Mantenimiento', 'Reporte de daños y bloqueos técnicos de habitaciones.'],
-                    ['Finanzas', 'Cuadre de Caja', 'Rendición de cuentas diaria por turno y medio de pago.'],
-                    ['Finanzas', 'Reporte Ingresos', 'Auditoría detallada de todo el dinero recibido.'],
-                    ['Finanzas', 'Rentabilidad', 'Análisis de ocupación y ganancias por cada habitación.'],
-                    ['Multi-Hotel', 'Caja Consolidada', 'Vista financiera total de todas las sedes del grupo.'],
-                    ['Multi-Hotel', 'Mapa Consolidado', 'Visualización de estados de habitaciones de todos los hoteles.'],
-                    ['Configuración', 'Usuarios / Roles', 'Administración de personal y sus permisos de acceso.'],
-                    ['Configuración', 'Info Hotel', 'Configuración de NIT, Dirección y datos de facturación.'],
-                ],
-                theme: 'striped',
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [15, 23, 42] }
-            });
-
-            // 4. ANALÍTICA CON IMAGEN
-            doc.addPage();
-            addHeader('INTERPRETACIÓN DE ANALÍTICA', 'Entendiendo los Gráficos de Gestión');
-            
-            try {
-                const analyticsImg = await getBase64ImageFromURL('/manual/analytics.png');
-                doc.addImage(analyticsImg, 'PNG', 15, 45, 180, 80);
-            } catch (e) { console.error('Error loading image', e); }
-
-            doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(50,50,50);
-            const analText = 'Las gráficas muestran el balance entre ingresos y gastos. Una gestión eficiente busca maximizar el área azul (Ingresos) y mantener controlada el área roja (Gastos). Use los filtros de fecha para comparar temporadas.';
-            doc.text(doc.splitTextToSize(analText, 180), 15, 135);
-
-        } else {
-            // MANUAL TÉCNICO
-            addHeader('DOCUMENTACIÓN TÉCNICA MAESTRA', 'Ingeniería de Software y Arquitectura de Sistemas');
-            
-            doc.autoTable({
-                startY: 45,
-                head: [['COMPONENTE', 'TECNOLOGÍA', 'DESCRIPCIÓN']],
-                body: [
-                    ['Frontend', 'React + Vite', 'Single Page Application con renderizado eficiente y Tailwind CSS.'],
-                    ['Backend', 'Node.js + Express', 'API RESTful con autenticación JWT y middleware de seguridad.'],
-                    ['Database', 'MongoDB Atlas', 'Base de datos NoSQL escalable orientada a documentos.'],
-                    ['Media', 'Cloudinary', 'Servicio cloud para optimización y entrega de imágenes.'],
-                    ['Seguridad', 'BCrypt + Helmet', 'Protección de datos sensibles y encabezados de seguridad HTTP.'],
-                ],
-                theme: 'striped',
-                headStyles: { fillColor: [37, 99, 235] }
-            });
+        } finally {
+            setIsGenerating(false);
         }
-
-        doc.save(`Manual_Elite_Pro_Balcon_${activeTab.toUpperCase()}.pdf`);
     };
 
     return (
@@ -231,7 +255,7 @@ const Manuales = () => {
                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                         <div className="space-y-6">
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/20 text-primary-400 rounded-full font-black text-[10px] uppercase tracking-widest border border-primary-500/30">
-                                <Zap size={14} /> Guía Elite PRO v2.6
+                                <Zap size={14} /> Guía Elite PRO v2.7
                             </div>
                             <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none">
                                 Centro de <span className="text-primary-500">Manuales</span> Profesionales.
@@ -242,9 +266,11 @@ const Manuales = () => {
                             <div className="flex flex-wrap gap-4 pt-4">
                                 <button 
                                     onClick={downloadPDF}
-                                    className="flex items-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-100 transition-all transform hover:scale-105 active:scale-95 shadow-xl"
+                                    disabled={isGenerating}
+                                    className="flex items-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-100 transition-all transform hover:scale-105 active:scale-95 shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Download size={20} /> Descargar Manual PRO
+                                    {isGenerating ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+                                    {isGenerating ? 'Generando...' : 'Descargar Manual PRO'}
                                 </button>
                                 <div className="flex p-1 bg-white/10 rounded-2xl backdrop-blur-md border border-white/10">
                                     <button 
@@ -512,7 +538,7 @@ const Manuales = () => {
                         </div>
                         <div>
                             <h4 className="text-xl font-black text-slate-900 tracking-tight">¿Alguna duda adicional?</h4>
-                            <p className="text-slate-500 font-medium">Esta documentación se actualiza automáticamente. Última actualización: 27/04/2026 16:45</p>
+                            <p className="text-slate-500 font-medium">Esta documentación se actualiza automáticamente. Última actualización: 27/04/2026 16:50</p>
                         </div>
                     </div>
                     <div className="flex gap-4">
