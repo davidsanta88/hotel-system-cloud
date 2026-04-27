@@ -32,7 +32,10 @@ import {
     Crown,
     ShieldCheck,
     User,
-    Building2
+    Building2,
+    Clock,
+    CheckCircle,
+    Info
 } from 'lucide-react';
 import { format, subDays, startOfMonth, differenceInDays, parseISO } from 'date-fns';
 
