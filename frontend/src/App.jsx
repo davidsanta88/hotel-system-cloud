@@ -43,6 +43,7 @@ import ReporteIngresos from './pages/ReporteIngresos';
 import ReporteIngresosConsolidado from './pages/ReporteIngresosConsolidado';
 import CalendarioIngresos from './pages/CalendarioIngresos';
 import RentabilidadHabitaciones from './pages/RentabilidadHabitaciones';
+import Manuales from './pages/Manuales';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -116,6 +117,7 @@ const AppRoutes = () => {
                 <Route path="calendario-ingresos" element={<PrivateRoute code="calendario_ingresos"><CalendarioIngresos /></PrivateRoute>} />
                 <Route path="rentabilidad-habitaciones" element={<PrivateRoute code="rentabilidad"><RentabilidadHabitaciones /></PrivateRoute>} />
                 <Route path="config" element={<PrivateRoute code="configuracion"><HotelConfig /></PrivateRoute>} />
+                <Route path="manuales" element={<Manuales />} />
             </Route>
             <Route path="/checkin" element={<CheckinPublico />} />
         </Routes>

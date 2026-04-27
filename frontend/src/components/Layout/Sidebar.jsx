@@ -32,7 +32,8 @@ import {
     Mail,
     ExternalLink,
     Award,
-    Calendar
+    Calendar,
+    Book
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -111,6 +112,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 {name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
                 { name: 'Información Hotel', path: '/config', icon: <Building2 size={20} />, code: 'configuracion' },
                 { name: 'Notificaciones', path: '/notificaciones', icon: <Bell size={20} />, code: 'notificaciones' }
+            ]
+        },
+        {
+            title: 'Ayuda y Soporte',
+            items: [
+                { name: 'Manuales Sistema', path: '/manuales', icon: <Book size={20} /> }
             ]
         }
     ];
