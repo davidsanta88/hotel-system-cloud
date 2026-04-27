@@ -640,116 +640,116 @@ const ComparativaHoteles = () => {
                         )}
                     </div>
                 </div>
+            </div>
 
-                {/* Anomalías de Precio (Diseño Limpio) */}
-                <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col h-[400px]">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Anomalías de Precio</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Desviaciones detectadas</p>
-                        </div>
-                        <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-full border border-orange-200">
-                            {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length} CASOS
-                        </span>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                        {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length > 0 ? (
-                            (statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').map((alert, idx) => {
-                                const details = alert.details || {};
-                                return (
-                                    <div 
-                                        key={idx} 
-                                        onClick={() => {
-                                            const isPlaza = alert.hotel.includes('Plaza');
-                                            const baseUrl = isPlaza ? 'https://hotelbalconplaza.com' : 'https://hotelbalconcolonial.com';
-                                            
-                                            Swal.fire({
-                                                title: `<span class="text-xl font-black">Detalle de Anomalía</span>`,
-                                                html: `
-                                                    <div class="text-left space-y-3 p-2">
-                                                        <div class="flex justify-between border-b pb-2">
-                                                            <span class="text-slate-400 font-bold uppercase text-[10px]">Habitación</span>
-                                                            <span class="font-black text-slate-900">${details.habitacion} (${alert.hotel})</span>
-                                                        </div>
-                                                        <div class="flex justify-between border-b pb-2">
-                                                            <span class="text-slate-400 font-bold uppercase text-[10px]">Huésped</span>
-                                                            <span class="font-black text-slate-900">${details.huespedTitular}</span>
-                                                        </div>
-                                                        ${details.nombreEmpresa ? `
-                                                        <div class="flex justify-between border-b pb-2 text-blue-600">
-                                                            <span class="text-blue-400 font-bold uppercase text-[10px]">Empresa</span>
-                                                            <span class="font-black">${details.nombreEmpresa}</span>
-                                                        </div>
-                                                        ` : ''}
-                                                        <div class="grid grid-cols-2 gap-4 pt-2">
-                                                            <div class="bg-slate-50 p-3 rounded-2xl">
-                                                                <p class="text-[9px] font-black text-slate-400 uppercase">Cobrado</p>
-                                                                <p class="text-lg font-black text-orange-600">$${new Intl.NumberFormat().format(details.precioCobrado)}</p>
-                                                            </div>
-                                                            <div class="bg-slate-50 p-3 rounded-2xl">
-                                                                <p class="text-[9px] font-black text-slate-400 uppercase">Recomendado</p>
-                                                                <p class="text-lg font-black text-slate-400">$${new Intl.NumberFormat().format(details.precioRecomendado)}</p>
-                                                            </div>
-                                                        </div>
-                                                        <p class="text-[10px] text-slate-400 italic font-medium text-center pt-2">Desviación del ${details.diferenciaPct}% respecto al precio base.</p>
-                                                    </div>
-                                                `,
-                                                showCancelButton: true,
-                                                confirmButtonText: 'Ver Registro Completo',
-                                                cancelButtonText: 'Cerrar',
-                                                confirmButtonColor: isPlaza ? '#4f46e5' : '#334155',
-                                                customClass: {
-                                                    popup: 'rounded-[2rem] shadow-2xl border-none',
-                                                    confirmButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3',
-                                                    cancelButton: 'rounded-xl font-black uppercase tracking-widest text-xs px-6 py-3'
-                                                }
-                                            }).then((result) => {
-                                                if (result.isConfirmed) {
-                                                    const targetUrl = `${baseUrl}/mapa-habitaciones?search=${details.id}`;
-                                                    window.location.href = targetUrl;
-                                                }
-                                            });
-                                        }}
-                                        className="p-4 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:bg-white hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-                                    >
-                                        <div className="flex justify-between items-center mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black text-white ${alert.hotel.includes('Plaza') ? 'bg-blue-600' : 'bg-slate-700'}`}>
-                                                    {alert.hotel}
-                                                </span>
-                                                <span className="text-xs font-black text-slate-800">Hab #{details.habitacion}</span>
-                                            </div>
-                                            <span className="text-xs font-black text-orange-600">-{details.diferenciaPct}%</span>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                                <span>Cobrado: <strong className="text-slate-900">${new Intl.NumberFormat().format(details.precioCobrado || 0)}</strong></span>
-                                                <span>Ref: <strong className="text-slate-500">${new Intl.NumberFormat().format(details.precioRecomendado || 0)}</strong></span>
-                                            </div>
-                                            <div className="flex items-center justify-between pt-1 border-t border-slate-200/50">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-tighter">
-                                                        {details.huespedTitular}
-                                                    </span>
-                                                    {details.nombreEmpresa && (
-                                                        <span className="text-[8px] font-bold text-blue-500 uppercase tracking-widest">{details.nombreEmpresa}</span>
-                                                    )}
-                                                </div>
-                                                <span className="text-[8px] font-bold text-slate-400">{details.fecha ? format(parseISO(details.fecha), 'dd/MM/yy') : '-'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-200">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-center">Sin anomalías de precio</p>
+            {/* Nueva Sección de Anomalías de Precio - Pantalla Completa abajo */}
+            <div className="mt-8 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-orange-100 text-orange-600 rounded-2xl">
+                                <AlertTriangle size={24} />
                             </div>
-                        )}
+                            Auditoría de Anomalías de Precio
+                        </h3>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Reporte detallado de desviaciones vs precios base recomendados</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="px-4 py-2 bg-orange-50 rounded-2xl border border-orange-100">
+                            <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest leading-none">Casos Detectados</p>
+                            <p className="text-xl font-black text-orange-600">{(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length}</p>
+                        </div>
                     </div>
                 </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-separate border-spacing-y-2">
+                        <thead>
+                            <tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                                <th className="px-6 py-4">Hotel</th>
+                                <th className="px-6 py-4">Fecha</th>
+                                <th className="px-6 py-4">Hab</th>
+                                <th className="px-6 py-4">Huésped</th>
+                                <th className="px-6 py-4">Empresa</th>
+                                <th className="px-6 py-4 text-right">Cobrado</th>
+                                <th className="px-6 py-4 text-right">Referencia</th>
+                                <th className="px-6 py-4 text-center">Desviación</th>
+                                <th className="px-6 py-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').length > 0 ? (
+                                (statsConsolidadas?.alerts || []).filter(a => a.type === 'PRICE').map((alert, idx) => {
+                                    const details = alert.details || {};
+                                    return (
+                                        <tr key={idx} className="bg-slate-50/50 hover:bg-white hover:shadow-md transition-all group rounded-2xl">
+                                            <td className="px-6 py-4 first:rounded-l-2xl">
+                                                <span className={`px-3 py-1 rounded-xl text-[10px] font-black text-white ${alert.hotel.includes('Plaza') ? 'bg-blue-600 shadow-lg shadow-blue-100' : 'bg-slate-700 shadow-lg shadow-slate-100'}`}>
+                                                    {alert.hotel}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-slate-500 text-xs">
+                                                {details.fecha ? format(parseISO(details.fecha), 'dd/MM/yyyy') : '-'}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-black text-slate-900 text-sm">#{details.habitacion}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-slate-700 text-xs uppercase tracking-tight">{details.huespedTitular}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400">{details.huespedes} personas</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {details.nombreEmpresa ? (
+                                                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                                                        {details.nombreEmpresa}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-300 italic text-[10px] font-bold">Particular</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="font-black text-slate-900 text-sm">${new Intl.NumberFormat().format(details.precioCobrado || 0)}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="font-bold text-slate-400 text-sm">${new Intl.NumberFormat().format(details.precioRecomendado || 0)}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-xl text-xs font-black shadow-sm">
+                                                    -{details.diferenciaPct}%
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right last:rounded-r-2xl">
+                                                <button 
+                                                    onClick={() => {
+                                                        const isPlaza = alert.hotel.includes('Plaza');
+                                                        const baseUrl = isPlaza ? 'https://hotelbalconplaza.com' : 'https://hotelbalconcolonial.com';
+                                                        window.location.href = `${baseUrl}/mapa-habitaciones?search=${details.id}`;
+                                                    }}
+                                                    className="p-2 bg-white text-slate-400 hover:text-indigo-600 rounded-xl border border-slate-100 hover:border-indigo-100 transition-all group-hover:scale-110 shadow-sm"
+                                                    title="Ver en Mapa"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="9" className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center justify-center text-slate-300 space-y-3">
+                                            <ShieldCheck size={48} className="opacity-20" />
+                                            <p className="text-sm font-black uppercase tracking-widest">No se han detectado anomalías de precio en este periodo</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
                 {/* 2. Pronóstico de Ingresos */}
                 <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-[2.5rem] p-8 text-white shadow-xl shadow-primary-100 relative overflow-hidden group">
