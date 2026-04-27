@@ -99,41 +99,109 @@ const Manuales = () => {
         };
 
         if (activeTab === 'usuario') {
-            addHeader('Guía de Operación Estructurada', 'Hotel Balcón Plaza - Sistema de Gestión');
+            addHeader('MANUAL INTEGRAL DE USUARIO', 'Guía Maestra de Operaciones - Hotel Balcón Plaza');
             
             let y = 50;
-            const sections = [
-                { title: '1. MAPA DE HABITACIONES (VISUAL)', content: 'El mapa es el corazón operativo. \n- Verde: Libre. \n- Rojo: Ocupada. \n- Amarillo: Reservada. \n- Azul: Limpieza Pendiente.' },
-                { title: '2. PROCESO DE CHECK-IN', content: '1. Seleccione hab. verde. \n2. Ingrese titular (Doc/Nombre). \n3. Defina noches y tarifa. \n4. Guardar.' },
-                { title: '3. VENTAS Y CONSUMOS', content: 'Use el módulo "Tienda" para cargar productos al folio del huésped. Esto se sumará automáticamente a su saldo final.' },
-                { title: '4. CIERRE DE DÍA', content: 'Vaya a Cuadre de Caja, valide los ingresos recibidos (Efectivo, Transf, Tarjeta) y cierre el turno para asegurar la integridad contable.' }
-            ];
-
-            sections.forEach(s => {
+            const drawSection = (title, contentLines) => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setFillColor(241, 245, 249);
+                doc.rect(15, y - 5, 180, 10, 'F');
                 doc.setTextColor(15, 23, 42);
-                doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-                doc.text(s.title, 20, y); y += 10;
-                doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-                const splitContent = doc.splitTextToSize(s.content, 170);
-                doc.text(splitContent, 20, y); y += (splitContent.length * 6) + 15;
-            });
+                doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+                doc.text(title, 20, y + 2);
+                y += 15;
+                doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+                contentLines.forEach(line => {
+                    const splitText = doc.splitTextToSize(line, 170);
+                    doc.text(splitText, 20, y);
+                    y += (splitText.length * 5) + 2;
+                    if (y > 275) { doc.addPage(); y = 20; }
+                });
+                y += 5;
+            };
+
+            drawSection('1. MÓDULO: MAPA DE HABITACIONES (CENTRO DE CONTROL)', [
+                'El mapa visual es la herramienta principal del recepcionista. Muestra el estado de disponibilidad en tiempo real.',
+                'ESTADOS VISUALES:',
+                '• VERDE (Disponible): Lista para recibir un nuevo huésped.',
+                '• ROJO (Ocupada): Tiene un registro activo. Muestra nombre del huésped y saldo pendiente.',
+                '• AMARILLO (Reservada): Hay una reserva programada para ingresar HOY.',
+                '• AZUL (Por Asear): La habitación requiere limpieza tras un check-out.',
+                'ACCIONES RÁPIDAS:',
+                '- Clic en icono de escoba: Cambia estado entre Sucia y Limpia sin entrar a detalles.',
+                '- Icono de LogOut: Permite realizar un Check-out rápido si no hay saldos complejos.'
+            ]);
+
+            drawSection('2. PROCESO DETALLADO DE CHECK-IN (INGRESO)', [
+                'PASO 1: Identificación. Haga clic en una habitación verde.',
+                'PASO 2: Documentación. Ingrese el número de documento del titular. El sistema buscará si ya existe en la base de datos.',
+                'PASO 3: Registro de Acompañantes. Es fundamental para reportes de ley. Use el botón "Agregar Acompañante".',
+                'PASO 4: Finanzas. Verifique el valor de la noche. Si el cliente pagó por adelantado, regístrelo en la pestaña de "Pagos/Abonos" inmediatamente.',
+                'PASO 5: Guardar. Al confirmar, la habitación se bloqueará automáticamente.'
+            ]);
+
+            drawSection('3. MÓDULO: TIENDA, POS E INVENTARIOS', [
+                'Este módulo gestiona la venta de snacks, bebidas y servicios adicionales.',
+                'CÓMO CARGAR CONSUMOS:',
+                '1. Ingrese al módulo "Tienda".',
+                '2. Seleccione los productos deseados (verá fotos y stock disponible).',
+                '3. Opción A (Cargo a Habitación): Seleccione la habitación ocupada. El total se sumará al folio del huésped.',
+                '4. Opción B (Venta Directa): Seleccione medio de pago y finalice. Ideal para clientes externos o pagos inmediatos.',
+                'CONTROL DE INVENTARIO:',
+                'Cada venta descuenta automáticamente del stock. En el módulo "Inventario" puede ajustar existencias y ver alertas de bajo stock.'
+            ]);
+
+            drawSection('4. GESTIÓN DE RESERVAS A FUTURO', [
+                'Permite agendar estancias para fechas posteriores.',
+                '• Crear Reserva: Ingrese fechas, habitación deseada y datos del cliente. El sistema bloquea la habitación para esas fechas.',
+                '• Confirmación: Una reserva confirmada asegura el cupo pero no genera un folio de consumo hasta que se realice el "Check-in".',
+                '• Conversión: El día del ingreso, busque la reserva en la lista y haga clic en "Realizar Check-in" para transferir todos los datos al mapa visual.'
+            ]);
+
+            drawSection('5. CAJA, EGRESOS Y REPORTES FINANCIEROS', [
+                '• Cuadre de Caja: Al finalizar cada turno, el recepcionista debe totalizar el efectivo y medios electrónicos recibidos.',
+                '• Gastos: Registre cualquier salida de dinero (compras de insumos, servicios, etc.) para que el balance sea real.',
+                '• Reporte de Ingresos: Permite auditar qué se recibió, cuándo y por quién. Útil para conciliación bancaria.',
+                '• Rentabilidad: Muestra qué habitaciones generan más ingresos y su porcentaje de ocupación mensual.'
+            ]);
+
+            drawSection('6. MANTENIMIENTO Y ASEO', [
+                '• Aseo Diario: Lista de tareas para las camareras. Al terminar el aseo, el estado cambia a "Limpia" en el mapa.',
+                '• Mantenimiento: Reporte de daños (ej. bombillo quemado, fuga de agua). Bloquea la habitación si el daño impide su uso comercial.',
+                '• Auditoría de Limpieza: Supervisión aleatoria para asegurar los estándares de calidad del hotel.'
+            ]);
 
         } else {
-            addHeader('Documentación Técnica de Ingeniería', 'Arquitectura NoSQL y Micro-integraciones');
+            addHeader('MANUAL TÉCNICO Y DE ARQUITECTURA', 'Ingeniería de Software - Hotel Balcón System');
+            
             let y = 50;
-            const techSections = [
-                { title: 'A. STACK TECNOLÓGICO', content: 'Frontend: React v18 (Vite build engine), TailwindCSS v3.\nBackend: Node.js (Express framework), Mongoose ODM.' },
-                { title: 'B. ESTRUCTURA DE LA BASE DE DATOS', content: 'MongoDB Atlas en cluster global. Índices optimizados para búsquedas por número de documento y fechas de registro.' },
-                { title: 'C. FLUJO DE AUTENTICACIÓN', content: 'JWT persistido en LocalStorage. Middleware de verificación intercepta peticiones a /api/* para validar claims de rol.' }
-            ];
-            techSections.forEach(s => {
-                doc.setTextColor(15, 23, 42);
-                doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-                doc.text(s.title, 20, y); y += 10;
-                doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-                const splitContent = doc.splitTextToSize(s.content, 170);
-                doc.text(splitContent, 20, y); y += (splitContent.length * 6) + 15;
-            });
+            const drawTechSection = (title, content) => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setTextColor(37, 99, 235);
+                doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+                doc.text(title, 20, y);
+                y += 8;
+                doc.setTextColor(71, 85, 105);
+                doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+                const splitText = doc.splitTextToSize(content, 170);
+                doc.text(splitText, 20, y);
+                y += (splitText.length * 5) + 12;
+            };
+
+            drawTechSection('A. ARQUITECTURA DEL LADO DEL CLIENTE (FRONTEND)', 
+                'Desarrollado sobre React 18 con Vite. Utiliza React Router 6 para navegación SPA. El estado de autenticación se gestiona mediante un AuthContext global que persiste el JWT en LocalStorage.');
+            
+            drawTechSection('B. SERVICIOS Y API (BACKEND)', 
+                'Arquitectura basada en Node.js y Express. Se implementan middlewares de seguridad: Helmet (encabezados), RateLimit (DoS), MongoSanitize (Inyección). La comunicación es 100% JSON sobre HTTPS.');
+            
+            drawTechSection('C. MODELADO DE DATOS (NOSQL)', 
+                'Esquemas definidos en Mongoose. Las relaciones principales (Habitación -> Registro -> Venta) se manejan mediante referencias de ObjectId y Populate para optimizar el rendimiento de lectura.');
+            
+            drawTechSection('D. SISTEMA DE PERMISOS (RBAC)', 
+                'Cada usuario posee un objeto de permisos. El frontend valida estos permisos mediante el código único de cada módulo (ej. "cuadre_caja"). Si el usuario no tiene permiso de ver (v: true), la ruta se bloquea automáticamente.');
+            
+            drawTechSection('E. INTEGRACIONES DE TERCEROS', 
+                '• Cloudinary: Almacenamiento y optimización de imágenes.\n• MongoDB Atlas: Base de datos en la nube con escalabilidad automática.\n• SweetAlert2: Manejo de experiencia de usuario en notificaciones.');
         }
         doc.save(`Manual_Completo_Balcon_${activeTab.toUpperCase()}.pdf`);
     };
