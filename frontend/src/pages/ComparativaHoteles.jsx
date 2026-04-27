@@ -608,20 +608,19 @@ const ComparativaHoteles = () => {
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Operatividad y Stock</p>
                         </div>
                         <span className="bg-rose-50 text-rose-600 text-[10px] font-black px-3 py-1 rounded-full border border-rose-100">
-                            {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').length} ACTIVAS
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE' && a.type !== 'TIME').length} ACTIVAS
                         </span>
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                        {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').length > 0 ? (
-                            (statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE').map((alert, idx) => (
+                        {(statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE' && a.type !== 'TIME').length > 0 ? (
+                            (statsConsolidadas?.alerts || []).filter(a => a.type !== 'PRICE' && a.type !== 'TIME').map((alert, idx) => (
                                 <div key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors group">
                                     <div className={`p-2 rounded-xl shrink-0 ${
                                         alert.type === 'STOCK' ? 'bg-amber-100 text-amber-600' : 
-                                        alert.type === 'TIME' ? 'bg-rose-100 text-rose-600' : 
-                                        alert.type === 'PRICE' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
+                                        alert.type === 'PAGO' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
                                     }`}>
-                                        {alert.type === 'STOCK' ? <Zap size={16} /> : alert.type === 'TIME' ? <Activity size={16} /> : alert.type === 'PRICE' ? <AlertTriangle size={16} /> : <Info size={16} />}
+                                        {alert.type === 'STOCK' ? <Zap size={16} /> : alert.type === 'PAGO' ? <DollarSign size={16} /> : <Info size={16} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2">
@@ -706,6 +705,106 @@ const ComparativaHoteles = () => {
                             </div>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* Sección de Auditoría de Tiempos (Check-outs Vencidos) */}
+            <div className="mt-8 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <div className="p-2 bg-rose-100 text-rose-600 rounded-2xl">
+                                <Clock size={24} />
+                            </div>
+                            Auditoría de Tiempos (Check-outs Vencidos)
+                        </h3>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">Huéspedes que han superado su hora de salida programada</p>
+                    </div>
+                    <div className="px-4 py-2 bg-rose-50 rounded-2xl border border-rose-100 text-right">
+                        <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest leading-none">Vencimientos Hoy</p>
+                        <p className="text-xl font-black text-rose-600">{(statsConsolidadas?.alerts || []).filter(a => a.type === 'TIME').length}</p>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-separate border-spacing-y-2">
+                        <thead>
+                            <tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                                <th className="px-6 py-4">Hotel</th>
+                                <th className="px-6 py-4">Check-out Programado</th>
+                                <th className="px-6 py-4">Hab</th>
+                                <th className="px-6 py-4">Huésped</th>
+                                <th className="px-6 py-4">Empresa</th>
+                                <th className="px-6 py-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(statsConsolidadas?.alerts || []).filter(a => a.type === 'TIME').length > 0 ? (
+                                (statsConsolidadas?.alerts || []).filter(a => a.type === 'TIME').map((alert, idx) => {
+                                    const details = alert.details || {};
+                                    return (
+                                        <tr key={idx} className="bg-slate-50/50 hover:bg-white hover:shadow-md transition-all group rounded-2xl">
+                                            <td className="px-6 py-4 first:rounded-l-2xl">
+                                                <span className={`px-3 py-1 rounded-xl text-[10px] font-black text-white ${alert.hotel.includes('Plaza') ? 'bg-blue-600 shadow-lg shadow-blue-100' : 'bg-slate-700 shadow-lg shadow-slate-100'}`}>
+                                                    {alert.hotel}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black text-rose-600 bg-rose-50 px-2 py-1 rounded-lg w-fit">
+                                                        {details.fechaSalidaProgramada ? format(parseISO(details.fechaSalidaProgramada), 'dd/MM/yyyy HH:mm') : '-'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-black text-slate-900 text-sm">#{details.habitacion}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-black text-slate-700 text-xs uppercase tracking-tight">{details.huespedTitular}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {details.nombreEmpresa ? (
+                                                    <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">
+                                                        {details.nombreEmpresa}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-300 italic text-[10px] font-bold">Particular</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right last:rounded-r-2xl">
+                                                <button 
+                                                    onClick={() => {
+                                                        const currentHost = window.location.hostname;
+                                                        const targetIsPlaza = alert.hotel.includes('Plaza');
+                                                        const isPlazaHost = currentHost.includes('plaza') || currentHost === 'localhost';
+                                                        if (targetIsPlaza === isPlazaHost) {
+                                                            navigate(`/mapa-habitaciones?search=${details.id}`);
+                                                        } else {
+                                                            const baseUrl = targetIsPlaza ? 'https://hotelbalconplaza.com' : 'https://hotelbalconcolonial.com';
+                                                            window.location.href = `${baseUrl}/mapa-habitaciones?search=${details.id}`;
+                                                        }
+                                                    }}
+                                                    className="p-2 bg-white text-slate-400 hover:text-indigo-600 rounded-xl border border-slate-100 hover:border-indigo-100 transition-all group-hover:scale-110 shadow-sm"
+                                                    title="Ver en Mapa"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center justify-center text-slate-300 space-y-3">
+                                            <CheckCircle size={48} className="opacity-20 text-emerald-500" />
+                                            <p className="text-sm font-black uppercase tracking-widest">Todos los check-outs están al día</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

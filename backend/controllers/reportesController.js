@@ -444,7 +444,19 @@ exports.getDetalleIngresos = async (req, res) => {
         }).populate('items.producto', 'nombre').populate('empleado', 'nombre');
 
         ventas.forEach(venta => {
-                    ingresos.push({
+                    alerts.push({
+                        hotel: hotelLabel,
+                        type: 'TIME',
+                        msg: `Check-out vencido: Hab #${hab.numero}`,
+                        details: {
+                            id: r._id,
+                            habitacion: hab.numero,
+                            fechaSalidaProgramada: r.fechaSalida,
+                            huespedTitular: r.cliente?.nombre || 'Desconocido',
+                            nombreEmpresa: r.cliente?.empresa_id?.nombre || null,
+                            esEmpresa: !!r.cliente?.empresa_id
+                        }
+                    });    ingresos.push({
                         fecha: venta.fecha,
                         tipo: 'VENTA',
                         descripcion: `Venta de productos`,
@@ -1165,7 +1177,9 @@ exports.getStatsConsolidadas = async (req, res) => {
             const lateCheckouts = await Registro.find({
                 estado: 'activo',
                 fechaSalida: { $lt: new Date() }
-            }).populate('habitacion', 'numero').lean();
+            }).populate('habitacion', 'numero')
+              .populate({ path: 'cliente', populate: { path: 'empresa_id' } })
+              .lean();
 
             // 2. Ranking Habitaciones
             const registrosPeriodo = await Registro.find({
@@ -1264,7 +1278,19 @@ exports.getStatsConsolidadas = async (req, res) => {
                 alerts: {
                     lowStock: lowStock.map(p => ({ nombre: p.nombre, stock: p.stock, hotel: hotelLabel })),
                     longStay: alertsLongStay.map(r => ({ id: r._id, habitacion: r.numero_habitacion, hotel: hotelLabel })),
-                    lateCheckouts: lateCheckouts.map(r => ({ id: r._id, habitacion: r.habitacion?.numero, hotel: hotelLabel })),
+                    lateCheckouts: lateCheckouts.map(r => ({ 
+                        id: r._id, 
+                        habitacion: r.habitacion?.numero, 
+                        hotel: hotelLabel,
+                        details: {
+                            id: r._id,
+                            habitacion: r.habitacion?.numero,
+                            fechaSalidaProgramada: r.fechaSalida,
+                            huespedTitular: r.cliente?.nombre || 'Desconocido',
+                            nombreEmpresa: r.cliente?.empresa_id?.nombre || null,
+                            esEmpresa: !!r.cliente?.empresa_id
+                        }
+                    })),
                     priceAnomalies
                 },
                 rankingHabs,
@@ -1282,7 +1308,7 @@ exports.getStatsConsolidadas = async (req, res) => {
         const allAlerts = [
             ...plaza.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
             ...plaza.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
-            ...plaza.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
+            ...plaza.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel, details: a.details })),
             ...plaza.alerts.priceAnomalies.map(a => ({ 
                 type: 'PRICE', 
                 msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)})`, 
@@ -1291,7 +1317,7 @@ exports.getStatsConsolidadas = async (req, res) => {
             })),
             ...colonial.alerts.lowStock.map(a => ({ type: 'STOCK', msg: `Bajo stock: ${a.nombre} (${a.stock})`, hotel: a.hotel })),
             ...colonial.alerts.longStay.map(a => ({ type: 'PAGO', msg: `Hab #${a.habitacion} ocupada > 3 días sin pagos`, hotel: a.hotel })),
-            ...colonial.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel })),
+            ...colonial.alerts.lateCheckouts.map(a => ({ type: 'TIME', msg: `Check-out vencido: Hab #${a.habitacion}`, hotel: a.hotel, details: a.details })),
             ...colonial.alerts.priceAnomalies.map(a => ({ 
                 type: 'PRICE', 
                 msg: `Hab #${a.habitacion}: Cobrado $${new Intl.NumberFormat().format(a.precioCobrado)} (Ref: $${new Intl.NumberFormat().format(a.precioRecomendado)})`, 
