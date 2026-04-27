@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const restauranteController = require('../controllers/restauranteController');
-const auth = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 
 // Todas las rutas protegidas por auth
-router.use(auth);
+router.use(verifyToken);
 
 router.get('/mesas', restauranteController.getMesas);
 router.post('/mesas/seed', restauranteController.seedMesas);
