@@ -756,7 +756,7 @@ const ComparativaHoteles = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 font-bold text-slate-500 text-xs">
-                                                {details.fecha ? format(parseISO(details.fecha), 'dd/MM/yyyy') : '-'}
+                                                {details.fecha ? format(parseISO(details.fecha), 'dd/MM/yyyy HH:mm') : '-'}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="font-black text-slate-900 text-sm">#{details.habitacion}</span>

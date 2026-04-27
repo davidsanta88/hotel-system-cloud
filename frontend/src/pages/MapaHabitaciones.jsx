@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { 
     Hotel, 
@@ -41,6 +41,8 @@ const MapaHabitaciones = () => {
     const [selectedReserva, setSelectedReserva] = useState(null);
     const navigate = useNavigate();
 
+    const location = useLocation();
+
     const fetchMapa = async () => {
         if (!updating) setLoading(true);
         try {
@@ -72,6 +74,18 @@ const MapaHabitaciones = () => {
         const interval = setInterval(fetchMapa, 60000); // 1 min refresh
         return () => clearInterval(interval);
     }, []);
+
+    // Manejar redirección desde Alertas/Anomalías
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const searchId = queryParams.get('search');
+        if (searchId) {
+            setSelectedRegistroId(searchId);
+            setShowDetailsModal(true);
+            // Limpiar el query param para no reabrir al recargar
+            navigate(location.pathname, { replace: true });
+        }
+    }, [location.search]);
 
     const toggleLimpieza = async (habId, currentStatus) => {
         setUpdating(habId);

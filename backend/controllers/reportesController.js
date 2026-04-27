@@ -1255,7 +1255,7 @@ exports.getStatsConsolidadas = async (req, res) => {
                         nombreEmpresa: r.cliente?.empresa_id?.nombre || null,
                         esEmpresa: !!r.cliente?.empresa_id,
                         diferenciaPct: pct,
-                        fecha: r.fecha_ingreso
+                        fecha: r.fechaEntrada
                     });
                 }
             }
