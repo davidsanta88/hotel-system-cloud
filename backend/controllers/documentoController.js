@@ -1,12 +1,21 @@
 const DocumentoHotel = require('../models/DocumentoHotel');
 const cloudinary = require('../config/cloudinary');
+const path = require('path');
 
-const streamUpload = (buffer, isRaw = false) => {
+const streamUpload = (buffer, isRaw = false, originalName = '') => {
     return new Promise((resolve, reject) => {
+        const fileExt = path.extname(originalName);
+        const fileName = path.basename(originalName, fileExt);
+        
         const options = { 
             folder: 'documentos_hotel', 
-            resource_type: isRaw ? 'raw' : 'auto' 
+            resource_type: isRaw ? 'raw' : 'auto'
         };
+
+        // Si es raw, necesitamos la extensión en el public_id para que se descargue correctamente
+        if (isRaw && originalName) {
+            options.public_id = `${fileName}_${Date.now()}${fileExt}`;
+        }
         
         const stream = cloudinary.uploader.upload_stream(
             options,
@@ -36,7 +45,7 @@ exports.uploadDocumento = async (req, res) => {
 
         const { nombre, tipo, observacion } = req.body;
         const isRaw = !req.file.mimetype.startsWith('image/');
-        const result = await streamUpload(req.file.buffer, isRaw);
+        const result = await streamUpload(req.file.buffer, isRaw, req.file.originalname);
 
         const nuevoDoc = new DocumentoHotel({
             nombre: nombre || req.file.originalname,

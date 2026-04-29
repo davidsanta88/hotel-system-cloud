@@ -120,8 +120,14 @@ const DocumentosHotel = () => {
         if (!url) return '#';
         if (url.includes('cloudinary.com')) {
             // Insertar fl_attachment para forzar descarga
-            // Ejemplo: .../image/upload/v123... -> .../image/upload/fl_attachment/v123...
-            return url.replace('/upload/', '/upload/fl_attachment/');
+            let finalUrl = url.replace('/upload/', '/upload/fl_attachment/');
+            
+            // Si la URL no termina en la extensión y no es un recurso 'raw', 
+            // Cloudinary permite añadirla al final para servir el tipo correcto
+            if (!finalUrl.toLowerCase().endsWith('.pdf') && !finalUrl.includes('/raw/')) {
+                finalUrl += '.pdf';
+            }
+            return finalUrl;
         }
         return url;
     };
@@ -188,7 +194,7 @@ const DocumentosHotel = () => {
                                             rel="noopener noreferrer"
                                             className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"
                                             title="Descargar"
-                                            download={doc.nombre}
+                                            download={doc.nombre.toLowerCase().endsWith('.pdf') ? doc.nombre : `${doc.nombre}.pdf`}
                                         >
                                             <Download size={18} />
                                         </a>
