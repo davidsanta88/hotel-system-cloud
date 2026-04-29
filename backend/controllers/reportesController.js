@@ -8,6 +8,7 @@ const Usuario = require('../models/Usuario');
 const Cliente = require('../models/Cliente');
 const CierreCaja = require('../models/CierreCaja');
 const CategoriaGasto = require('../models/CategoriaGasto');
+const HotelConfig = require('../models/HotelConfig');
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
 
@@ -36,7 +37,8 @@ const getColonialModels = async () => {
         Producto: conn.models.Producto || conn.model('Producto', Producto.schema),
         TipoHabitacion: conn.models.TipoHabitacion || conn.model('TipoHabitacion', require('../models/TipoHabitacion').schema),
         EstadoHabitacion: conn.models.EstadoHabitacion || conn.model('EstadoHabitacion', require('../models/EstadoHabitacion').schema),
-        TipoRegistro: conn.models.TipoRegistro || conn.model('TipoRegistro', require('../models/TipoRegistro').schema)
+        TipoRegistro: conn.models.TipoRegistro || conn.model('TipoRegistro', require('../models/TipoRegistro').schema),
+        HotelConfig: conn.models.HotelConfig || conn.model('HotelConfig', HotelConfig.schema)
     };
 };
 
@@ -1160,7 +1162,7 @@ exports.getStatsConsolidadas = async (req, res) => {
         const next7Days = moment().add(7, 'days').endOf('day').toDate();
 
         const fetchHotelStats = async (models, hotelLabel) => {
-            const { Registro, Venta, Habitacion, Producto, Reserva, Cliente } = models;
+            const { Registro, Venta, Habitacion, Producto, Reserva, Cliente, HotelConfig: HotelConfigModel } = models;
             
             // 1. Alertas
             const lowStock = await Producto.find({ $expr: { $lte: ["$stock", "$stockMinimo"] } }).lean();
@@ -1242,8 +1244,7 @@ exports.getStatsConsolidadas = async (req, res) => {
             });
 
             // 5. Alertas de Precio
-            const HotelConfig = mongoose.model('HotelConfig');
-            const hotelConfig = await HotelConfig.findOne();
+            const hotelConfig = await HotelConfigModel.findOne();
             const tolerance = (hotelConfig?.toleranciaPrecio || 10) / 100;
 
             const priceAnomalies = [];
@@ -1300,7 +1301,7 @@ exports.getStatsConsolidadas = async (req, res) => {
             };
         };
 
-        const plaza = await fetchHotelStats({ Registro, Venta, Habitacion, Producto, Reserva, Cliente }, 'Plaza');
+        const plaza = await fetchHotelStats({ Registro, Venta, Habitacion, Producto, Reserva, Cliente, HotelConfig: HotelConfig }, 'Plaza');
         const colonialModels = await getColonialModels();
         const colonial = await fetchHotelStats(colonialModels, 'Colonial');
 
