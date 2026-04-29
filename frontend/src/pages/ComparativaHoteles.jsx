@@ -35,7 +35,8 @@ import {
     Building2,
     Clock,
     CheckCircle,
-    Info
+    Info,
+    FileText
 } from 'lucide-react';
 import { format, subDays, startOfMonth, differenceInDays, parseISO, addDays } from 'date-fns';
 
