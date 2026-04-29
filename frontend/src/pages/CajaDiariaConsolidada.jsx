@@ -96,7 +96,16 @@ const CajaDiariaConsolidada = () => {
             map.set(item.label, existing);
         });
 
-        return Array.from(map.values());
+        // Convertir map a array y ordenar por fecha descendente (más reciente primero)
+        return Array.from(map.values()).sort((a, b) => {
+            const [dA, mA] = a.label.split('/').map(Number);
+            const [dB, mB] = b.label.split('/').map(Number);
+            
+            // Asumimos el año actual para la comparación si no cruzamos años
+            // o simplemente comparamos por mes y luego por día
+            if (mA !== mB) return mB - mA;
+            return dB - dA;
+        });
     }, [data]);
 
     const totals = useMemo(() => {

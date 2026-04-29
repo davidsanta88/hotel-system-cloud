@@ -35,7 +35,9 @@ import {
     Calendar,
     Book,
     Coffee,
-    UtensilsCrossed
+    UtensilsCrossed,
+    Truck,
+    FileCheck
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -61,6 +63,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Reservas a Futuro', path: '/reservas', icon: <CalendarCheck size={20} />, code: 'reservas' },
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
                 { name: 'Empresas', path: '/empresas', icon: <Building2 size={20} />, code: 'empresas' },
+                { name: 'Proveedores', path: '/proveedores', icon: <Truck size={20} />, code: 'empresas' },
                 { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' },
                 { name: 'Solicitudes Reserva', path: '/solicitudes', icon: <Bell size={20} />, code: 'solicitudes' },
                 { name: 'Restaurante y Café', path: '/restaurante', icon: <UtensilsCrossed size={20} />, code: 'restaurante' },
@@ -115,6 +118,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Personal (Usuarios)', path: '/usuarios', icon: <UserCog size={20} />, code: 'usuarios' },
                 {name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
                 { name: 'Información Hotel', path: '/config', icon: <Building2 size={20} />, code: 'configuracion' },
+                { name: 'Documentos Hotel', path: '/documentos-hotel', icon: <FileCheck size={20} />, code: 'configuracion' },
                 { name: 'Notificaciones', path: '/notificaciones', icon: <Bell size={20} />, code: 'notificaciones' }
             ]
         },
