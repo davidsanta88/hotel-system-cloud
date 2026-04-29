@@ -16,31 +16,64 @@ const moment = require('moment-timezone');
 const COLONIAL_URI = 'mongodb+srv://admin:HotelColonial2026@cluster0.d1nbr5v.mongodb.net/HotelColonialDB?retryWrites=true&w=majority';
 
 let colonialConn = null;
-
 const getColonialConnection = async () => {
     if (colonialConn && colonialConn.readyState === 1) return colonialConn;
-    colonialConn = await mongoose.createConnection(COLONIAL_URI);
+    colonialConn = await mongoose.createConnection(COLONIAL_URI).asPromise();
     return colonialConn;
+};
+
+let plazaConn = null;
+const getPlazaConnection = async () => {
+    if (plazaConn && plazaConn.readyState === 1) return plazaConn;
+    const PLAZA_URI = 'mongodb+srv://adminhotel:hotel2026@cluster0.zsiq9ye.mongodb.net/HotelDB?retryWrites=true&w=majority';
+    plazaConn = await mongoose.createConnection(PLAZA_URI).asPromise();
+    return plazaConn;
 };
 
 const getColonialModels = async () => {
     const conn = await getColonialConnection();
     return {
-        Venta: conn.models.Venta || conn.model('Venta', Venta.schema),
-        Registro: conn.models.Registro || conn.model('Registro', Registro.schema),
-        Gasto: conn.models.Gasto || conn.model('Gasto', Gasto.schema),
-        Reserva: conn.models.Reserva || conn.model('Reserva', Reserva.schema),
-        Cliente: conn.models.Cliente || conn.model('Cliente', Cliente.schema),
-        Habitacion: conn.models.Habitacion || conn.model('Habitacion', Habitacion.schema),
-        Usuario: conn.models.Usuario || conn.model('Usuario', Usuario.schema),
-        CategoriaGasto: conn.models.CategoriaGasto || conn.model('CategoriaGasto', CategoriaGasto.schema),
-        Producto: conn.models.Producto || conn.model('Producto', Producto.schema),
-        TipoHabitacion: conn.models.TipoHabitacion || conn.model('TipoHabitacion', require('../models/TipoHabitacion').schema),
-        EstadoHabitacion: conn.models.EstadoHabitacion || conn.model('EstadoHabitacion', require('../models/EstadoHabitacion').schema),
-        TipoRegistro: conn.models.TipoRegistro || conn.model('TipoRegistro', require('../models/TipoRegistro').schema),
-        HotelConfig: conn.models.HotelConfig || conn.model('HotelConfig', HotelConfig.schema)
+        CierreCaja: conn.model('CierreCaja', require('../models/CierreCaja').schema),
+        Venta: conn.model('Venta', require('../models/Venta').schema),
+        Registro: conn.model('Registro', require('../models/Registro').schema),
+        Gasto: conn.model('Gasto', require('../models/Gasto').schema),
+        CategoriaGasto: conn.model('CategoriaGasto', require('../models/CategoriaGasto').schema),
+        Habitacion: conn.model('Habitacion', require('../models/Habitacion').schema),
+        EstadoHabitacion: conn.model('EstadoHabitacion', require('../models/EstadoHabitacion').schema),
+        TipoHabitacion: conn.model('TipoHabitacion', require('../models/TipoHabitacion').schema),
+        Reserva: conn.model('Reserva', require('../models/Reserva').schema),
+        Cliente: conn.model('Cliente', require('../models/Cliente').schema),
+        Producto: conn.model('Producto', require('../models/Producto').schema),
+        HotelConfig: conn.model('HotelConfig', require('../models/HotelConfig').schema),
+        Usuario: conn.model('Usuario', require('../models/Usuario').schema),
+        Municipio: conn.model('Municipio', require('../models/Municipio').schema),
+        TipoRegistro: conn.model('TipoRegistro', require('../models/TipoRegistro').schema),
+        Empresa: conn.model('Empresa', require('../models/Empresa').schema)
     };
 };
+
+const getPlazaModels = async () => {
+    const conn = await getPlazaConnection();
+    return {
+        CierreCaja: conn.model('CierreCaja', require('../models/CierreCaja').schema),
+        Venta: conn.model('Venta', require('../models/Venta').schema),
+        Registro: conn.model('Registro', require('../models/Registro').schema),
+        Gasto: conn.model('Gasto', require('../models/Gasto').schema),
+        CategoriaGasto: conn.model('CategoriaGasto', require('../models/CategoriaGasto').schema),
+        Habitacion: conn.model('Habitacion', require('../models/Habitacion').schema),
+        EstadoHabitacion: conn.model('EstadoHabitacion', require('../models/EstadoHabitacion').schema),
+        TipoHabitacion: conn.model('TipoHabitacion', require('../models/TipoHabitacion').schema),
+        Reserva: conn.model('Reserva', require('../models/Reserva').schema),
+        Cliente: conn.model('Cliente', require('../models/Cliente').schema),
+        Producto: conn.model('Producto', require('../models/Producto').schema),
+        HotelConfig: conn.model('HotelConfig', require('../models/HotelConfig').schema),
+        Usuario: conn.model('Usuario', require('../models/Usuario').schema),
+        Municipio: conn.model('Municipio', require('../models/Municipio').schema),
+        TipoRegistro: conn.model('TipoRegistro', require('../models/TipoRegistro').schema),
+        Empresa: conn.model('Empresa', require('../models/Empresa').schema)
+    };
+};
+
 
 exports.getReporteVentas = async (req, res) => {
     try {
@@ -1139,7 +1172,9 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
             });
         };
 
-        const plazaRooms = await fetchHotelData({ Habitacion, Registro, Reserva, Cliente, Venta }, 'Hotel Plaza');
+        const plazaModels = await getPlazaModels();
+        const plazaRooms = await fetchHotelData(plazaModels, 'Hotel Plaza');
+        
         const colonialModels = await getColonialModels();
         const colonialRooms = await fetchHotelData(colonialModels, 'Hotel Colonial');
 
