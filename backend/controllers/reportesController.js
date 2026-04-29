@@ -1345,9 +1345,13 @@ exports.getStatsConsolidadas = async (req, res) => {
             .sort((a, b) => combinedClients[b] - combinedClients[a])
             .slice(0, 10);
         
-        const clientsInfo = await Cliente.find({ _id: { $in: topClientIds } }).lean();
+        // Fetch clients from both DBs
+        const plazaClients = await plazaModels.Cliente.find({ _id: { $in: topClientIds } }).lean();
+        const colonialClients = await colonialModels.Cliente.find({ _id: { $in: topClientIds } }).lean();
+        const allClientsInfo = [...plazaClients, ...colonialClients];
+
         const topClients = topClientIds.map(cid => {
-            const c = clientsInfo.find(x => x._id.toString() === cid);
+            const c = allClientsInfo.find(x => x._id.toString() === cid);
             return {
                 nombre: c?.nombre || 'Cliente Desconocido',
                 documento: c?.documento || '-',
