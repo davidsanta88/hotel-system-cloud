@@ -127,15 +127,6 @@ const DocumentosHotel = () => {
         return labels[tipo] || tipo;
     };
 
-    const getDownloadUrl = (url) => {
-        if (!url) return '';
-        // Forzar descarga en Cloudinary agregando fl_attachment
-        if (url.includes('cloudinary.com') && !url.includes('fl_attachment')) {
-            return url.replace('/upload/', '/upload/fl_attachment/');
-        }
-        return url;
-    };
-
     return (
         <div className="space-y-6 animate-fade-in pb-10">
             {/* Header */}
@@ -182,12 +173,11 @@ const DocumentosHotel = () => {
                                     </div>
                                     <div className="flex gap-1">
                                         <a 
-                                            href={getDownloadUrl(doc.url)} 
-                                            download={`${doc.nombre}.pdf`}
+                                            href={doc.url} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors flex items-center gap-2"
-                                            title="Descargar Documento"
+                                            className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"
+                                            title="Ver / Descargar"
                                         >
                                             <Download size={18} />
                                         </a>

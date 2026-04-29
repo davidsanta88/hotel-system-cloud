@@ -623,12 +623,36 @@ const CuadreCaja = () => {
 
             {/* Transaction List */}
             <div className="card shadow-xl border-none overflow-hidden">
-                <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-sm font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
                         <Clock size={16} /> Historial de Movimientos Detallado
+                        <span className="ml-2 text-[10px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full font-bold">{filteredTransacciones.length} registros</span>
                     </h2>
+                    {/* Totales en encabezado */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-1.5">
+                            <TrendingUp size={14} className="text-emerald-600" />
+                            <span className="text-[10px] font-black text-emerald-500 uppercase">Ingresos</span>
+                            <span className="text-sm font-black text-emerald-700">${formatCurrency(data.resumen.ingresos_totales)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-3 py-1.5">
+                            <TrendingDown size={14} className="text-red-500" />
+                            <span className="text-[10px] font-black text-red-400 uppercase">Egresos</span>
+                            <span className="text-sm font-black text-red-600">${formatCurrency(data.resumen.egresos_totales)}</span>
+                        </div>
+                        <div className={`flex items-center gap-2 border rounded-xl px-3 py-1.5 ${
+                            data.resumen.balance_final >= 0 
+                            ? 'bg-slate-800 border-slate-700' 
+                            : 'bg-red-700 border-red-600'
+                        }`}>
+                            <Receipt size={14} className="text-white" />
+                            <span className="text-[10px] font-black text-white/70 uppercase">Balance</span>
+                            <span className="text-sm font-black text-white">${formatCurrency(data.resumen.balance_final)}</span>
+                        </div>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
+                    <div className="max-h-[520px] overflow-y-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-white border-b border-gray-100 text-gray-400">
@@ -770,7 +794,35 @@ const CuadreCaja = () => {
                             })
                         )}
                         </tbody>
+                        {/* Totales pegados al pie de la tabla */}
+                        {!loading && filteredTransacciones.length > 0 && (
+                            <tfoot className="sticky bottom-0 z-10">
+                                <tr className="bg-slate-900 text-white">
+                                    <td colSpan="6" className="px-4 py-3 text-right">
+                                        <div className="flex items-center justify-end gap-6 text-xs font-black uppercase tracking-wider">
+                                            <span className="text-slate-400">Totales del período:</span>
+                                            <span className="flex items-center gap-1 text-emerald-400">
+                                                <TrendingUp size={13} /> Ingresos: ${formatCurrency(data.resumen.ingresos_totales)}
+                                            </span>
+                                            <span className="flex items-center gap-1 text-red-400">
+                                                <TrendingDown size={13} /> Egresos: ${formatCurrency(data.resumen.egresos_totales)}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                                        <span className={`text-sm font-black ${
+                                            data.resumen.balance_final >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                        }`}>
+                                            {data.resumen.balance_final >= 0 ? '+' : ''}
+                                            ${formatCurrency(data.resumen.balance_final)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3"></td>
+                                </tr>
+                            </tfoot>
+                        )}
                     </table>
+                    </div>
                 </div>
 
                 {!loading && (
