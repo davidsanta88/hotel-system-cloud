@@ -8,6 +8,7 @@ const Venta = require('../models/Venta');
 const TipoHabitacion = require('../models/TipoHabitacion');
 const EstadoHabitacion = require('../models/EstadoHabitacion');
 const Cliente = require('../models/Cliente'); // Necesario para populate en mapa-visual
+const moment = require('moment-timezone');
  
 // Helper para subir buffer a Cloudinary
 const streamUpload = (buffer) => {
@@ -49,8 +50,7 @@ exports.getHabitaciones = async (req, res) => {
 exports.getMapaVisual = async (req, res) => {
     try {
         // Ajustar 'hoy' a la zona horaria de Colombia (UTC-5) para determinar el día actual del hotel
-        const hoy = new Date(Date.now() - (5 * 60 * 60 * 1000));
-        hoy.setUTCHours(0, 0, 0, 0);
+        const hoy = moment.tz("America/Bogota").startOf('day').toDate();
 
         // 1. Obtener datos base
         console.log('[DEBUG] Consultando base de datos...');
@@ -98,10 +98,8 @@ exports.getMapaVisual = async (req, res) => {
                                         (r.habitaciones && r.habitaciones.some(rh => rh.habitacion && rh.habitacion.toString() === idHab));
                         if (!tieneHab) return false;
 
-                        const entrada = new Date(r.fecha_entrada);
-                        const salida = new Date(r.fecha_salida);
-                        entrada.setUTCHours(0,0,0,0);
-                        salida.setUTCHours(0,0,0,0);
+                        const entrada = moment.tz(r.fecha_entrada, "America/Bogota").startOf('day').toDate();
+                        const salida = moment.tz(r.fecha_salida, "America/Bogota").startOf('day').toDate();
                         return hoy.getTime() >= entrada.getTime() && hoy.getTime() < salida.getTime();
                     } catch (e) { return false; }
                 });
@@ -111,9 +109,9 @@ exports.getMapaVisual = async (req, res) => {
                     .filter(r => {
                         const tieneHab = (r.habitacion && r.habitacion.toString() === idHab) || 
                                         (r.habitaciones && r.habitaciones.some(rh => rh.habitacion && rh.habitacion.toString() === idHab));
-                        return tieneHab && new Date(r.fecha_entrada) >= hoy;
+                        return tieneHab && moment.tz(r.fecha_entrada, "America/Bogota").toDate() >= hoy;
                     })
-                    .sort((a, b) => new Date(a.fecha_entrada) - new Date(b.fecha_entrada))
+                    .sort((a, b) => moment.tz(a.fecha_entrada, "America/Bogota").toDate() - moment.tz(b.fecha_entrada, "America/Bogota").toDate())
                     .slice(0, 5)
                     .map(r => ({
                         id: r._id,
@@ -136,8 +134,8 @@ exports.getMapaVisual = async (req, res) => {
                         
                         let totalEstancia = registroActivo.total || 0;
                         if (totalEstancia <= 0 && registroActivo.fechaEntrada && registroActivo.fechaSalida) {
-                            const inDate = new Date(registroActivo.fechaEntrada);
-                            const outDate = new Date(registroActivo.fechaSalida);
+                            const inDate = moment.tz(registroActivo.fechaEntrada, "America/Bogota").toDate();
+                            const outDate = moment.tz(registroActivo.fechaSalida, "America/Bogota").toDate();
                             if (!isNaN(inDate) && !isNaN(outDate)) {
                                 const diffDays = Math.max(Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24)), 1);
                                 const numHuespedes = Math.min(Math.max((registroActivo.huespedes || []).length, 1), 6);

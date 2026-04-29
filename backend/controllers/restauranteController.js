@@ -2,6 +2,7 @@ const Mesa = require('../models/Mesa');
 const Comanda = require('../models/Comanda');
 const Registro = require('../models/Registro');
 const Producto = require('../models/Producto');
+const moment = require('moment-timezone');
 
 // Obtener todas las mesas
 exports.getMesas = async (req, res) => {
@@ -147,8 +148,8 @@ exports.getHistorial = async (req, res) => {
         
         if (inicio && fin) {
             query.fechaCierre = { 
-                $gte: new Date(inicio), 
-                $lte: new Date(new Date(fin).setHours(23, 59, 59)) 
+                $gte: moment.tz(inicio, "America/Bogota").startOf('day').toDate(), 
+                $lte: moment.tz(fin, "America/Bogota").endOf('day').toDate() 
             };
         }
 

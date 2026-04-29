@@ -116,6 +116,16 @@ const DocumentosHotel = () => {
         }
     };
 
+    const getDownloadUrl = (url) => {
+        if (!url) return '#';
+        if (url.includes('cloudinary.com')) {
+            // Insertar fl_attachment para forzar descarga
+            // Ejemplo: .../image/upload/v123... -> .../image/upload/fl_attachment/v123...
+            return url.replace('/upload/', '/upload/fl_attachment/');
+        }
+        return url;
+    };
+
     const getTipoLabel = (tipo) => {
         const labels = {
             'CEDULA': 'Cédula de Ciudadanía',
@@ -173,11 +183,12 @@ const DocumentosHotel = () => {
                                     </div>
                                     <div className="flex gap-1">
                                         <a 
-                                            href={doc.url} 
+                                            href={getDownloadUrl(doc.url)} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"
-                                            title="Ver / Descargar"
+                                            title="Descargar"
+                                            download={doc.nombre}
                                         >
                                             <Download size={18} />
                                         </a>

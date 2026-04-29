@@ -138,10 +138,8 @@ exports.getResumenGeneral = async (req, res) => {
         const alertas_stock = await Producto.countDocuments({ $expr: { $lte: ["$stock", "$stockMinimo"] } });
         
         // Calcular límites de hoy en hora local (Colombia -05:00)
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); // Formato YYYY-MM-DD
-        const hoy = new Date(`${dateStr}T00:00:00-05:00`);
-        const mañana = new Date(`${dateStr}T23:59:59.999-05:00`);
+        const hoy = moment.tz("America/Bogota").startOf('day').toDate();
+        const mañana = moment.tz("America/Bogota").endOf('day').toDate();
 
         const registros_hoy = await Registro.countDocuments({ fechaCreacion: { $gte: hoy, $lte: mañana } });
         
@@ -410,11 +408,8 @@ exports.getIngresosHospedaje = async (req, res) => {
 exports.getDetalleIngresos = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : new Date();
-        if (!inicio) startDate.setHours(0,0,0,0);
-        
-        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : new Date();
-        if (!fin) endDate.setHours(23,59,59,999);
+        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : moment.tz("America/Bogota").startOf('day').toDate();
+        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : moment.tz("America/Bogota").endOf('day').toDate();
 
         // 1. Pagos de Registros (Hospedajes)
         const pagosRegistros = await Registro.find({
@@ -534,11 +529,8 @@ exports.getDetalleIngresos = async (req, res) => {
 exports.getDetalleIngresosConsolidado = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : new Date();
-        if (!inicio) startDate.setHours(0,0,0,0);
-        
-        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : new Date();
-        if (!fin) endDate.setHours(23,59,59,999);
+        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : moment.tz("America/Bogota").startOf('day').toDate();
+        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : moment.tz("America/Bogota").endOf('day').toDate();
 
         // Helper function to fetch from a set of models
         const fetchFromModels = async (models, hotelLabel) => {
@@ -662,12 +654,8 @@ exports.getDetalleIngresosConsolidado = async (req, res) => {
 exports.getCuadreCaja = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        // Map string to exact local boundaries to prevent UTC mismatch
-        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : new Date();
-        if (!inicio) startDate.setHours(0,0,0,0);
-        
-        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : new Date();
-        if (!fin) endDate.setHours(23,59,59,999);
+        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : moment.tz("America/Bogota").startOf('day').toDate();
+        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : moment.tz("America/Bogota").endOf('day').toDate();
 
         // 1. Pagos de Registros (Hospedajes)
         const pagosRegistros = await Registro.find({
@@ -844,10 +832,10 @@ exports.getReporteHuespedes = async (req, res) => {
         const totalHuespedes = report[0]?.totalHuespedes || 0;
         
         // Calcular número de días para el promedio
-        const start = inicio ? new Date(`${inicio}T00:00:00`) : new Date();
-        const end = fin ? new Date(`${fin}T00:00:00`) : new Date();
+        const start = inicio ? moment.tz(inicio, "America/Bogota").startOf('day').toDate() : moment.tz("America/Bogota").startOf('day').toDate();
+        const end = fin ? moment.tz(fin, "America/Bogota").endOf('day').toDate() : moment.tz("America/Bogota").endOf('day').toDate();
         const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
         const promedioHuespedes = diffDays > 0 ? (totalHuespedes / diffDays) : totalHuespedes;
 
@@ -917,8 +905,8 @@ exports.getIngresosCalendario = async (req, res) => {
 exports.getRentabilidadHabitaciones = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
-        const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
+        const startDate = inicio ? moment.tz(inicio, "America/Bogota").startOf('day').toDate() : moment.tz("America/Bogota").subtract(30, 'days').startOf('day').toDate();
+        const endDate = fin ? moment.tz(fin, "America/Bogota").endOf('day').toDate() : moment.tz("America/Bogota").endOf('day').toDate();
 
         // Calcular das del periodo para promedio diario
         const diffDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
@@ -1030,8 +1018,8 @@ exports.getIngresosCalendarioConsolidado = async (req, res) => {
 exports.getRentabilidadConsolidada = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
-        const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
+        const startDate = inicio ? moment.tz(inicio, "America/Bogota").startOf('day').toDate() : moment.tz("America/Bogota").subtract(30, 'days').startOf('day').toDate();
+        const endDate = fin ? moment.tz(fin, "America/Bogota").endOf('day').toDate() : moment.tz("America/Bogota").endOf('day').toDate();
 
         const diffDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)));
 
@@ -1092,7 +1080,7 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
                 Venta.find({ registro: { $exists: true } }).lean(),
                 Reserva.find({ 
                     estado: 'Pendiente',
-                    fecha_entrada: { $gte: moment().startOf('day').toDate() }
+                    fecha_entrada: { $gte: moment.tz("America/Bogota").startOf('day').toDate() }
                 }).sort({ fecha_entrada: 1 }).lean()
             ]);
 
@@ -1192,9 +1180,9 @@ exports.getMapaHabitacionesConsolidado = async (req, res) => {
 exports.getStatsConsolidadas = async (req, res) => {
     try {
         const { inicio, fin } = req.query;
-        const startDate = inicio ? moment.tz(`${inicio}T00:00:00`, "America/Bogota").toDate() : moment().subtract(30, 'days').startOf('day').toDate();
-        const endDate = fin ? moment.tz(`${fin}T23:59:59`, "America/Bogota").toDate() : moment().endOf('day').toDate();
-        const next7Days = moment().add(7, 'days').endOf('day').toDate();
+        const startDate = inicio ? moment.tz(inicio, "America/Bogota").startOf('day').toDate() : moment.tz("America/Bogota").subtract(30, 'days').startOf('day').toDate();
+        const endDate = fin ? moment.tz(fin, "America/Bogota").endOf('day').toDate() : moment.tz("America/Bogota").endOf('day').toDate();
+        const next7Days = moment.tz("America/Bogota").add(7, 'days').endOf('day').toDate();
 
         const fetchHotelStats = async (models, hotelLabel) => {
             const { Registro, Venta, Habitacion, Producto, Reserva, Cliente, HotelConfig: HotelConfigModel } = models;
@@ -1203,7 +1191,7 @@ exports.getStatsConsolidadas = async (req, res) => {
             const lowStock = await Producto.find({ $expr: { $lte: ["$stock", "$stockMinimo"] } }).lean();
             const longStayNoPayment = await Registro.find({ 
                 estado: 'activo',
-                fechaEntrada: { $lte: moment().subtract(3, 'days').toDate() }
+                fechaEntrada: { $lte: moment.tz("America/Bogota").subtract(3, 'days').toDate() }
             }).lean();
             // Filtrar los que de verdad no tienen pagos significativos (ej: pagos sum < total*0.1 o algo simple)
             const alertsLongStay = longStayNoPayment.filter(r => {
@@ -1213,7 +1201,7 @@ exports.getStatsConsolidadas = async (req, res) => {
 
             const lateCheckouts = await Registro.find({
                 estado: 'activo',
-                fechaSalida: { $lt: new Date() }
+                fechaSalida: { $lt: moment.tz("America/Bogota").toDate() }
             }).populate('habitacion', 'numero')
               .populate({ path: 'cliente', populate: { path: 'empresa_id' } })
               .lean();
@@ -1244,13 +1232,13 @@ exports.getStatsConsolidadas = async (req, res) => {
             // 3. Pronóstico
             const reservasFuturas = await Reserva.find({
                 estado: 'Pendiente',
-                fecha_entrada: { $gte: new Date(), $lte: next7Days }
+                fecha_entrada: { $gte: moment.tz("America/Bogota").toDate(), $lte: next7Days }
             }).lean();
             const forecastReservas = reservasFuturas.reduce((sum, r) => sum + (r.valor_total || 0), 0);
             
             const checkoutsProximos = await Registro.find({
                 estado: 'activo',
-                fechaSalida: { $gte: new Date(), $lte: next7Days }
+                fechaSalida: { $gte: moment.tz("America/Bogota").toDate(), $lte: next7Days }
             }).lean();
             const forecastCheckouts = checkoutsProximos.reduce((sum, r) => {
                 const totalPagado = (r.pagos || []).reduce((s, p) => s + p.monto, 0);

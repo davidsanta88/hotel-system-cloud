@@ -1,10 +1,15 @@
 const DocumentoHotel = require('../models/DocumentoHotel');
 const cloudinary = require('../config/cloudinary');
 
-const streamUpload = (buffer) => {
+const streamUpload = (buffer, isRaw = false) => {
     return new Promise((resolve, reject) => {
+        const options = { 
+            folder: 'documentos_hotel', 
+            resource_type: isRaw ? 'raw' : 'auto' 
+        };
+        
         const stream = cloudinary.uploader.upload_stream(
-            { folder: 'documentos_hotel', resource_type: 'auto' },
+            options,
             (error, result) => {
                 if (result) resolve(result);
                 else reject(error);
@@ -30,7 +35,8 @@ exports.uploadDocumento = async (req, res) => {
         }
 
         const { nombre, tipo, observacion } = req.body;
-        const result = await streamUpload(req.file.buffer);
+        const isRaw = !req.file.mimetype.startsWith('image/');
+        const result = await streamUpload(req.file.buffer, isRaw);
 
         const nuevoDoc = new DocumentoHotel({
             nombre: nombre || req.file.originalname,

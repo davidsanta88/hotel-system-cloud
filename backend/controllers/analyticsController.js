@@ -124,8 +124,8 @@ exports.getStats = async (req, res) => {
         
         if (inicio && fin) {
             query.timestamp = { 
-                $gte: new Date(inicio + 'T00:00:00Z'), 
-                $lte: new Date(fin + 'T23:59:59Z') 
+                $gte: new Date(`${inicio}T00:00:00-05:00`), 
+                $lte: new Date(`${fin}T23:59:59-05:00`) 
             };
         }
 
@@ -133,7 +133,7 @@ exports.getStats = async (req, res) => {
         const dailyVisits = await Visit.aggregate([
             { $match: query },
             { $group: { 
-                _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp", timezone: "-05:00" } },
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp", timezone: "America/Bogota" } },
                 visitas: { $sum: 1 }
             }},
             { $sort: { "_id": 1 } },
@@ -177,12 +177,9 @@ exports.getStats = async (req, res) => {
         ]);
 
         // 5. Total Hoy vs Ayer (Local Colombia)
-        const dateStrToday = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-        const startToday = new Date(`${dateStrToday}T00:00:00-05:00`);
-        
-        const yesterdayDate = new Date(startToday);
-        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-        const startYesterday = new Date(yesterdayDate.toISOString().split('T')[0] + 'T00:00:00-05:00');
+        const moment = require('moment-timezone');
+        const startToday = moment.tz("America/Bogota").startOf('day').toDate();
+        const startYesterday = moment.tz("America/Bogota").subtract(1, 'day').startOf('day').toDate();
 
         const [todayCount, yesterdayCount, recentVisits] = await Promise.all([
             Visit.countDocuments({ timestamp: { $gte: startToday } }),

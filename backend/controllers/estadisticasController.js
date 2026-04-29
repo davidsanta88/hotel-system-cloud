@@ -1,6 +1,7 @@
 const Habitacion = require('../models/Habitacion');
 const Registro = require('../models/Registro');
 const Venta = require('../models/Venta');
+const moment = require('moment-timezone');
 
 const TipoHabitacion = require('../models/TipoHabitacion');
 const EstadoHabitacion = require('../models/EstadoHabitacion');
@@ -35,20 +36,23 @@ const estadisticasController = {
             const revpar = adr * (occupancyRate / 100);
 
             // 4. Ingresos Mensuales (Últimos 6 meses)
-            const sixMonthsAgo = new Date();
-            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
-            sixMonthsAgo.setDate(1);
-            sixMonthsAgo.setHours(0,0,0,0);
+            const sixMonthsAgo = moment.tz("America/Bogota").subtract(5, 'months').startOf('month').toDate();
 
             const ventasAgregadas = await Venta.aggregate([
                 { $match: { fecha: { $gte: sixMonthsAgo } } },
-                { $group: { _id: { year: { $year: "$fecha" }, month: { $month: "$fecha" } }, total: { $sum: "$total" } } }
+                { $group: { _id: { 
+                    year: { $year: { date: "$fecha", timezone: "America/Bogota" } }, 
+                    month: { $month: { date: "$fecha", timezone: "America/Bogota" } } 
+                }, total: { $sum: "$total" } } }
             ]);
 
             const registrosAgregados = await Registro.aggregate([
                 { $unwind: "$pagos" },
                 { $match: { "pagos.fecha": { $gte: sixMonthsAgo } } },
-                { $group: { _id: { year: { $year: "$pagos.fecha" }, month: { $month: "$pagos.fecha" } }, total: { $sum: "$pagos.monto" } } }
+                { $group: { _id: { 
+                    year: { $year: { date: "$pagos.fecha", timezone: "America/Bogota" } }, 
+                    month: { $month: { date: "$pagos.fecha", timezone: "America/Bogota" } } 
+                }, total: { $sum: "$pagos.monto" } } }
             ]);
 
             // Consolidar ultimos 6 meses
