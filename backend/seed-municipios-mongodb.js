@@ -6,8 +6,8 @@ require('dotenv').config();
 
 const seed = async () => {
     try {
-        const URI = 'mongodb+srv://adminhotel:hotel2026@cluster0.zsiq9ye.mongodb.net/HotelDB?retryWrites=true&w=majority';
-        await mongoose.connect(URI);
+        const mongoURI = 'mongodb+srv://adminhotel:hotel2026@cluster0.zsiq9ye.mongodb.net/HotelDB?retryWrites=true&w=majority';
+        await mongoose.connect(mongoURI);
         console.log('Connected to MongoDB Atlas');
 
         const rawPath = path.join(__dirname, 'municipios_raw.txt');
