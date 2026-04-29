@@ -37,21 +37,21 @@ import {
     CheckCircle,
     Info
 } from 'lucide-react';
-import { format, subDays, startOfMonth, differenceInDays, parseISO } from 'date-fns';
+import { format, subDays, startOfMonth, differenceInDays, parseISO, addDays } from 'date-fns';
 
 const PERIODOS = [
     { label: 'Hoy', getDates: () => ({ inicio: format(new Date(), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
     { label: '7 días', getDates: () => ({ inicio: format(subDays(new Date(), 6), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
     { label: '30 días', getDates: () => ({ inicio: format(subDays(new Date(), 29), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
-    { label: 'Este mes', getDates: () => ({ inicio: format(startOfMonth(new Date()), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
+    { label: 'Este mes', getDates: () => ({ inicio: format(startOfMonth(new Date()), 'yyyy-MM-dd'), fin: format(addDays(new Date(), 1), 'yyyy-MM-dd') }) },
     { label: '90 días', getDates: () => ({ inicio: format(subDays(new Date(), 89), 'yyyy-MM-dd'), fin: format(new Date(), 'yyyy-MM-dd') }) },
 ];
 
 const ComparativaHoteles = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [dates, setDates] = useState(PERIODOS[4].getDates()); // 90 días por defecto
-    const [periodoActivo, setPeriodoActivo] = useState(4);
+    const [periodoActivo, setPeriodoActivo] = useState(3);
+    const [dates, setDates] = useState(PERIODOS[3].getDates());
     const [statsConsolidadas, setStatsConsolidadas] = useState(null);
 
     useEffect(() => {
@@ -185,6 +185,14 @@ const ComparativaHoteles = () => {
                         </h1>
                         <p className="text-slate-400 text-sm font-medium mt-1 uppercase tracking-wider">Análisis entre Hotel Plaza y Hotel Colonial</p>
                     </div>
+                    
+                    <button 
+                        onClick={() => navigate('/caja-diaria-consolidada')}
+                        className="hidden md:flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                    >
+                        <FileText size={18} />
+                        Ver Detalle Diario
+                    </button>
                     
                     <div className="flex flex-col sm:flex-row gap-3">
                         {/* Períodos rápidos */}
