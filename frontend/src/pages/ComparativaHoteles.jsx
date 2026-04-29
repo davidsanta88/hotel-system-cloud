@@ -189,7 +189,7 @@ const ComparativaHoteles = () => {
                     
                     <button 
                         onClick={() => navigate('/caja-diaria-consolidada')}
-                        className="hidden md:flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+                        className="flex items-center justify-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 w-full md:w-auto"
                     >
                         <FileText size={18} />
                         Ver Detalle Diario

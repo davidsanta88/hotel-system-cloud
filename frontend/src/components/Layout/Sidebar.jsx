@@ -93,6 +93,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             title: 'Gestión Multi-Hotel',
             items: [
                 { name: 'Caja Consolidada', path: '/reporte-ingresos-consolidado', icon: <Building2 size={20} />, code: 'reporte_ingresos_consolidado' },
+                { name: 'Detalle Diario Consolidado', path: '/caja-diaria-consolidada', icon: <TrendingUp size={20} />, code: 'comparativa' },
                 { name: 'Mapa Consolidado', path: '/mapa-habitaciones-consolidado', icon: <Hotel size={20} />, code: 'mapa_habitaciones_consolidado' },
                 { name: 'Flujo Caja Consolidado', path: '/calendario-ingresos?mode=consolidated', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
                 { name: 'Rentabilidad Consolidada', path: '/rentabilidad-habitaciones?mode=consolidated', icon: <Award size={20} />, code: 'rentabilidad' },
