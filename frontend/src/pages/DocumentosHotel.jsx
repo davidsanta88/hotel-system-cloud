@@ -119,6 +119,9 @@ const DocumentosHotel = () => {
     const getDownloadUrl = (url) => {
         if (!url) return '#';
         if (url.includes('cloudinary.com')) {
+            // Si la URL ya está firmada (contiene /s--), no la tocamos para no romper la firma
+            if (url.includes('/s--')) return url;
+
             // Insertar fl_attachment para forzar descarga
             let finalUrl = url.replace('/upload/', '/upload/fl_attachment/');
             
