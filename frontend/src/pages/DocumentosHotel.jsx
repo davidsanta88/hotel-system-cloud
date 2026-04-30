@@ -116,23 +116,39 @@ const DocumentosHotel = () => {
         }
     };
 
-    const getDownloadUrl = (url) => {
-        if (!url) return '#';
-        if (url.includes('cloudinary.com')) {
-            // Si la URL ya está firmada (contiene /s--), no la tocamos para no romper la firma
-            if (url.includes('/s--')) return url;
-
-            // Insertar fl_attachment para forzar descarga
-            let finalUrl = url.replace('/upload/', '/upload/fl_attachment/');
+    const handleDownload = async (url, filename) => {
+        if (!url) return;
+        
+        try {
+            // Mostrar un pequeño aviso de descarga
+            const toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            });
             
-            // Si la URL no termina en la extensión y no es un recurso 'raw', 
-            // Cloudinary permite añadirla al final para servir el tipo correcto
-            if (!finalUrl.toLowerCase().endsWith('.pdf') && !finalUrl.includes('/raw/')) {
-                finalUrl += '.pdf';
-            }
-            return finalUrl;
+            toast.fire({
+                icon: 'info',
+                title: 'Iniciando descarga...'
+            });
+
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename.toLowerCase().endsWith('.pdf') ? filename : `${filename}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            console.error('Download error:', error);
+            // Si falla el fetch (por CORS), abrimos en pestaña nueva como fallback
+            window.open(url, '_blank');
         }
-        return url;
     };
 
     const getTipoLabel = (tipo) => {
@@ -191,16 +207,13 @@ const DocumentosHotel = () => {
                                         <FileCheck size={24} />
                                     </div>
                                     <div className="flex gap-1">
-                                        <a 
-                                            href={getDownloadUrl(doc.url)} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
+                                        <button 
+                                            onClick={() => handleDownload(doc.url, doc.nombre)} 
                                             className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"
                                             title="Descargar"
-                                            download={doc.nombre.toLowerCase().endsWith('.pdf') ? doc.nombre : `${doc.nombre}.pdf`}
                                         >
                                             <Download size={18} />
-                                        </a>
+                                        </button>
                                         <button 
                                             onClick={() => handleDelete(doc._id)}
                                             className="p-2 hover:bg-rose-50 text-rose-600 rounded-lg transition-colors"

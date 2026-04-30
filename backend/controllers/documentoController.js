@@ -33,51 +33,7 @@ const streamUpload = (buffer, isRaw = false, originalName = '') => {
 exports.getDocumentos = async (req, res) => {
     try {
         const documentos = await DocumentoHotel.find().sort({ createdAt: -1 });
-        
-        // Generar URLs firmadas para asegurar acceso si la cuenta tiene restricciones
-        const docsConUrlsFirmadas = documentos.map(doc => {
-            const docObj = doc.toObject();
-            
-            // Usar public_id y resource_type almacenados si existen (más robusto)
-            if (doc.public_id) {
-                // Sanitizar nombre para el attachment (quitar extensión y caracteres especiales)
-                let cleanName = doc.nombre.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, '_');
-                const resourceType = doc.resource_type || (doc.formato?.toLowerCase() === 'pdf' ? 'image' : 'auto');
-
-                docObj.url = cloudinary.url(doc.public_id, {
-                    resource_type: resourceType,
-                    version: doc.version && doc.version !== '1' ? doc.version : undefined,
-                    secure: true,
-                    sign_url: true,
-                    flags: `attachment:${cleanName}`
-                });
-            } else {
-                // Fallback: Extraer de la URL (para registros antiguos)
-                const urlParts = doc.url.split('/');
-                const uploadIndex = urlParts.indexOf('upload');
-                
-                if (uploadIndex !== -1) {
-                    const resourceType = urlParts[uploadIndex - 1]; 
-                    const versionPart = urlParts[uploadIndex + 1];
-                    const hasVersion = versionPart && versionPart.startsWith('v') && !isNaN(versionPart.substring(1));
-                    const publicIdWithFolder = urlParts.slice(uploadIndex + (hasVersion ? 2 : 1)).join('/');
-                    
-                    const cleanName = doc.nombre.replace(/[^a-zA-Z0-9]/g, '_');
-
-                    docObj.url = cloudinary.url(publicIdWithFolder, {
-                        resource_type: resourceType,
-                        secure: true,
-                        sign_url: true,
-                        version: hasVersion ? versionPart.substring(1) : undefined,
-                        flags: resourceType !== 'raw' ? `attachment:${cleanName}` : undefined
-                    });
-                }
-            }
-            
-            return docObj;
-        });
-
-        res.json(docsConUrlsFirmadas);
+        res.json(documentos);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener documentos', error: error.message });
     }
@@ -91,7 +47,7 @@ exports.uploadDocumento = async (req, res) => {
 
         const { nombre, tipo, observacion, entidad_id } = req.body;
         
-        // PDFs se tratan como imágenes en Cloudinary para permitir fl_attachment (descarga forzada)
+        // PDFs se tratan como imágenes en Cloudinary para permitir fl_attachment si se requiere luego
         const isPDF = req.file.mimetype === 'application/pdf';
         const isImage = req.file.mimetype.startsWith('image/');
         const isRaw = !isImage && !isPDF;
