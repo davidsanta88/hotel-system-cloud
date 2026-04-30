@@ -569,8 +569,6 @@ const Registros = () => {
                             </button>
                         </div>
                     </div>
-                </div>    </div>
-                </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <button 
