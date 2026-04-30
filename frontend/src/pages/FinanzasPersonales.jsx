@@ -13,7 +13,8 @@ import {
     Settings,
     DollarSign,
     X,
-    CheckCircle2
+    CheckCircle2,
+    ClipboardList
 } from 'lucide-react';
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, 
