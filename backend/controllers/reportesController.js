@@ -219,10 +219,11 @@ exports.getResumenGeneral = async (req, res) => {
 
         // 5. Historial financiero (últimos 7 días)
         const sieteDiasAtras = moment.tz("America/Bogota").subtract(7, 'days').startOf('day').toDate();
+        const finDeHoy = moment.tz("America/Bogota").endOf('day').toDate();
         
         const historial_ingresos = await Registro.aggregate([
             { $unwind: "$pagos" },
-            { $match: { "pagos.fecha": { $gte: sieteDiasAtras, $lte: mañana } } },
+            { $match: { "pagos.fecha": { $gte: sieteDiasAtras, $lte: finDeHoy } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$pagos.fecha", timezone: "-05:00" } },
@@ -232,7 +233,7 @@ exports.getResumenGeneral = async (req, res) => {
         ]);
 
         const historial_ventas = await Venta.aggregate([
-            { $match: { fecha: { $gte: sieteDiasAtras, $lte: mañana } } },
+            { $match: { fecha: { $gte: sieteDiasAtras, $lte: finDeHoy } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha", timezone: "-05:00" } },
@@ -242,7 +243,7 @@ exports.getResumenGeneral = async (req, res) => {
         ]);
 
         const historial_egresos = await Gasto.aggregate([
-            { $match: { fecha: { $gte: sieteDiasAtras, $lte: mañana } } },
+            { $match: { fecha: { $gte: sieteDiasAtras, $lte: finDeHoy } } },
             {
                 $lookup: {
                     from: 'categoriagastos',
@@ -251,8 +252,8 @@ exports.getResumenGeneral = async (req, res) => {
                     as: 'cat'
                 }
             },
-            { $unwind: "$cat" },
-            { $match: { "cat.tipo": "Gasto" } },
+            { $unwind: { path: "$cat", preserveNullAndEmptyArrays: true } },
+            { $match: { $or: [{ "cat.tipo": "Gasto" }, { "cat": { $exists: false } }] } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha", timezone: "-05:00" } },
@@ -261,7 +262,7 @@ exports.getResumenGeneral = async (req, res) => {
             }
         ]);
 
-        // Unificar historial por día
+        // Unificar historial por día asegurando que no falte ningún día
         const chartData = [];
         for (let i = 6; i >= 0; i--) {
             const dateStr = moment.tz("America/Bogota").subtract(i, 'days').format('YYYY-MM-DD');
@@ -270,7 +271,7 @@ exports.getResumenGeneral = async (req, res) => {
             chartData.push({ fecha: dateStr, ingresos: ing, egresos: egr });
         }
 
-        // 6. Top productos vendidos
+        // 6. Top productos vendidos (Simplificado para asegurar que traiga datos)
         const top_productos = await Venta.aggregate([
             { $unwind: "$items" },
             {
@@ -280,16 +281,22 @@ exports.getResumenGeneral = async (req, res) => {
                     total: { $sum: "$items.cantidad" }
                 }
             },
+            { $match: { total: { $gt: 0 } } },
             { $sort: { total: -1 } },
             { $limit: 5 }
         ]);
 
-        // 7. Mantenimientos pendientes y llegadas próximas
+        // 7. Mantenimientos y Llegadas (Rango corregido para próximos días)
         const mantenimientos_pendientes = await Mantenimiento.countDocuments({ estado: { $ne: 'Completado' } });
+        const mananaInicio = moment.tz("America/Bogota").add(1, 'day').startOf('day').toDate();
+        const pasadoMananaFin = moment.tz("America/Bogota").add(2, 'days').endOf('day').toDate();
+
         const llegadas_proximas = await Reserva.find({ 
-            fechaEntrada: { $gte: mañana, $lte: moment.tz("America/Bogota").add(2, 'days').endOf('day').toDate() },
+            fechaEntrada: { $gte: mananaInicio, $lte: pasadoMananaFin },
             estado: { $ne: 'cancelado' }
-        }).limit(5);
+        }).sort({ fechaEntrada: 1 }).limit(5);
+
+        console.log(`[DASHBOARD] Stats calculadas: Ingresos Hoy: ${ingresos_hoy}, Top Prods: ${top_productos.length}, Historial: ${chartData.length}`);
 
         res.json({
             hab_disponibles,
@@ -304,7 +311,11 @@ exports.getResumenGeneral = async (req, res) => {
                 ventas: mapped_ventas
             },
             historial: chartData,
-            top_productos,
+            top_productos: top_productos.map(p => ({
+                id: p._id,
+                nombre: p.nombre || 'Producto sin nombre',
+                total: p.total
+            })),
             mantenimientos_pendientes,
             llegadas_proximas: llegadas_proximas.map(r => ({
                 id: r._id,
