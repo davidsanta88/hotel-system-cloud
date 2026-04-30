@@ -303,44 +303,98 @@ const Rooms = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Gestión de Habitaciones</h1>
-                    <p className="text-sm text-gray-500">Administra el inventario y estado de las habitaciones</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary-50 text-primary-600 rounded-2xl">
+                        <Hotel size={28} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">Gestión de Habitaciones</h1>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Control de Inventario y Estados</p>
+                    </div>
                 </div>
                 <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
                     <div className="relative flex-grow">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
                         <input 
                             type="text" 
-                            placeholder="Buscar habitación..." 
-                            className="input-field pl-10 py-2 w-full"
+                            placeholder="Buscar por #, tipo o estado..." 
+                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold focus:ring-2 focus:ring-primary-500/20 transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                    <div className="flex bg-slate-100 p-1 rounded-2xl">
                         <button 
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-500'}`}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
                             title="Vista de Lista"
                         >
                             <List size={20} />
                         </button>
                         <button 
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary-600' : 'text-gray-500'}`}
+                            className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-400 hover:text-slate-600'}`}
                             title="Vista de Grid"
                         >
                             <LayoutGrid size={20} />
                         </button>
                     </div>
                     {canEdit && (
-                        <button onClick={() => openModal()} className="btn-primary flex items-center justify-center space-x-2 whitespace-nowrap">
+                        <button onClick={() => openModal()} className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-200">
                             <Plus size={18} />
                             <span>Nueva Habitación</span>
                         </button>
                     )}
+                </div>
+            </div>
+
+            {/* Widgets de Resumen Operativo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 group hover:shadow-md transition-all">
+                    <div className="w-14 h-14 bg-slate-50 text-slate-600 rounded-[1.25rem] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Hotel size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Habitaciones</p>
+                        <p className="text-3xl font-black text-slate-900 tracking-tighter">{rooms.length}</p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 group hover:shadow-md transition-all">
+                    <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-[1.25rem] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Zap size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Disponibles</p>
+                        <p className="text-3xl font-black text-emerald-600 tracking-tighter">
+                            {rooms.filter(r => r.estado_nombre?.toLowerCase() === 'disponible').length}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 group hover:shadow-md transition-all">
+                    <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-[1.25rem] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Users size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupadas</p>
+                        <p className="text-3xl font-black text-rose-600 tracking-tighter">
+                            {rooms.filter(r => r.estado_nombre?.toLowerCase() === 'ocupada').length}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 group hover:shadow-md transition-all">
+                    <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-[1.25rem] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Brush size={24} />
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">En Aseo / Mant.</p>
+                        <p className="text-3xl font-black text-amber-600 tracking-tighter">
+                            {rooms.filter(r => ['por asear', 'sucio', 'aseo', 'mantenimiento'].includes(r.estado_nombre?.toLowerCase())).length}
+                        </p>
+                    </div>
                 </div>
             </div>
 
