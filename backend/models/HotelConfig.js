@@ -64,6 +64,14 @@ const HotelConfigSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    logoUrl: {
+        type: String,
+        default: '/logo.jpg'
+    },
+    backgroundUrl: {
+        type: String,
+        default: '/hotel_noche.jpg'
+    },
     checklistAuditoria: {
         type: [String],
         default: ['Baños', 'Paredes', 'Vidrios', 'Balcones', 'Camas', 'Pisos', 'Iluminación']

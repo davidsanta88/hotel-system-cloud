@@ -134,10 +134,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             {/* Branding Header */}
             <div className="p-5 border-b border-slate-800/50 bg-slate-950/30 flex items-center gap-3">
                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow-inner">
-                    <img src="/logo.jpg" alt="Logo" className="w-full h-full object-contain" />
+                    <img src={hotelConfig?.logoUrl || "/logo.jpg"} alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <div className="flex flex-col">
-                    <span className="text-xs font-black text-slate-100 uppercase tracking-tighter leading-tight">Balcón Plaza</span>
+                <div className="flex flex-col overflow-hidden">
+                    <span className="text-xs font-black text-slate-100 uppercase tracking-tighter leading-tight truncate">
+                        {hotelConfig?.nombre || 'Hotel Balcón Plaza'}
+                    </span>
                     <span className="text-[10px] font-bold text-primary-500 uppercase tracking-widest">Administración</span>
                 </div>
             </div>
@@ -188,11 +190,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
             <div className="p-4 border-t border-slate-800 bg-slate-950 mt-auto space-y-2">
                 <a
-                    href="https://www.hotelbalconcolonial.com/login"
+                    href={switchHotelUrl}
                     className="flex w-full items-center space-x-3 px-4 py-3 text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all border border-transparent hover:border-blue-500/20"
                 >
                     <ExternalLink size={20} />
-                    <span className="font-bold text-sm">Ir a Hotel Colonial</span>
+                    <span className="font-bold text-sm">{switchHotelLabel}</span>
                 </a>
 
                 <button

@@ -10,7 +10,7 @@ const Reserva = require('../models/Reserva');
 const Cliente = require('../models/Cliente');
 
 // Configuración para la conexión al Hotel Colonial
-const COLONIAL_URI = 'mongodb+srv://admin:HotelColonial2026@cluster0.d1nbr5v.mongodb.net/HotelColonialDB?retryWrites=true&w=majority';
+const COLONIAL_URI = process.env.COLONIAL_MONGODB_URI || 'mongodb+srv://admin:HotelColonial2026@cluster0.d1nbr5v.mongodb.net/HotelColonialDB?retryWrites=true&w=majority';
 
 // Variable para mantener la conexión
 let colonialConn = null;

@@ -160,8 +160,8 @@ const Landing = () => {
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: '🏨 Hotel Balcón Plaza',
-                    text: '✨ ¡Descubre el corazón de Belalcázar! Hospédate en el Hotel Balcón Plaza y vive una experiencia cafetera inolvidable. ☕⛰️ ¡Mira sus habitaciones!',
+                    title: `🏨 ${hotelInfo.nombre}`,
+                    text: `✨ ¡Descubre el corazón de ${hotelInfo.direccion?.toLowerCase()?.includes('antioquia') ? 'Santa Fe de Antioquia' : 'Belalcázar'}! Hospédate en ${hotelInfo.nombre} y vive una experiencia inolvidable. ☕⛰️ ¡Mira sus habitaciones!`,
                     url: window.location.href,
                 });
             } catch (err) {
@@ -260,12 +260,12 @@ const Landing = () => {
                 
                 {/* Header / Logo (Top Left) */}
                 <div className="absolute top-6 lg:top-8 left-6 lg:left-8 flex items-center gap-3 lg:gap-4 group z-[60]">
-                    <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full overflow-hidden ring-2 ring-accent-400/50 shadow-2xl transition-transform group-hover:scale-110 duration-500">
-                        <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+                    <div className="w-10 h-10 lg:w-14 lg:h-14 rounded-full overflow-hidden ring-2 ring-accent-400/50 shadow-2xl transition-transform group-hover:scale-110 duration-500 bg-white/10 flex items-center justify-center">
+                        <img src={hotelInfo.logoUrl || "/logo.jpg"} alt="Logo" className="w-full h-full object-cover" />
                     </div>
                     <div className="text-left">
-                        <p className="text-white font-black text-lg lg:text-xl leading-tight tracking-wider drop-shadow-md">{hotelInfo.nombre.toUpperCase()}</p>
-                        <p className="text-accent-500 text-[8px] lg:text-[10px] font-black tracking-[0.3em] uppercase drop-shadow-sm">{hotelInfo.direccion.split(',').pop().trim()}</p>
+                        <p className="text-white font-black text-lg lg:text-xl leading-tight tracking-wider drop-shadow-md">{(hotelInfo.nombre || 'HOTEL BALCÓN PLAZA').toUpperCase()}</p>
+                        <p className="text-accent-500 text-[8px] lg:text-[10px] font-black tracking-[0.3em] uppercase drop-shadow-sm">{hotelInfo.direccion?.split(',').pop().trim() || 'Colombia'}</p>
                     </div>
                 </div>
 

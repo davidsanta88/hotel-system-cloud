@@ -78,7 +78,7 @@ const Login = () => {
             
             {/* Fondo con imagen de hotel desenfocada */}
             <div className="absolute inset-0 opacity-40">
-                <img src="/hotel_noche.jpg" alt="Background" className="w-full h-full object-cover blur-sm" />
+                <img src={hotelInfo.backgroundUrl || "/hotel_noche.jpg"} alt="Background" className="w-full h-full object-cover blur-sm" />
                 <div className="absolute inset-0 bg-black/60" />
             </div>
 
@@ -95,10 +95,10 @@ const Login = () => {
                     
                     {/* Logo y Título */}
                     <div className="flex flex-col items-center mb-8">
-                        <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-primary-500/30 mb-4 shadow-2xl">
-                            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+                        <div className="w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-primary-500/30 mb-4 shadow-2xl bg-white/10 flex items-center justify-center">
+                            <img src={hotelInfo.logoUrl || "/logo.jpg"} alt="Logo" className="w-full h-full object-cover" />
                         </div>
-                        <h1 className="text-white text-3xl font-black tracking-tight">Iniciar Sesión</h1>
+                        <h1 className="text-white text-3xl font-black tracking-tight">{hotelInfo.nombre || 'Iniciar Sesión'}</h1>
                         <p className="text-accent-400/60 text-xs font-bold uppercase tracking-[0.2em] mt-2">Panel Administrativo</p>
                     </div>
 

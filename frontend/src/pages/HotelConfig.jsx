@@ -296,6 +296,76 @@ const HotelConfig = () => {
                     <div className="md:col-span-2 mt-4">
                         <div className="flex items-center gap-2 mb-4">
                             <div className="h-px flex-1 bg-slate-100"></div>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Identidad Visual (Branding)</span>
+                            <div className="h-px flex-1 bg-slate-100"></div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Logo del Hotel */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <label className="block text-xs font-black text-slate-400 uppercase mb-4 ml-1">Logo del Hotel</label>
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-32 h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner relative group">
+                                        <img src={config.logoUrl || "/logo.jpg"} alt="Logo Preview" className="w-full h-full object-contain p-2" />
+                                    </div>
+                                    <input
+                                        type="file"
+                                        id="logo-upload"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append('image', file);
+                                            try {
+                                                Swal.fire({ title: 'Subiendo logo...', didOpen: () => Swal.showLoading() });
+                                                const res = await api.post('/productos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                                setConfig(prev => ({ ...prev, logoUrl: res.data.imageUrl }));
+                                                Swal.fire('Éxito', 'Logo subido correctamente', 'success');
+                                            } catch (err) { Swal.fire('Error', 'No se pudo subir el logo', 'error'); }
+                                        }}
+                                    />
+                                    <label htmlFor="logo-upload" className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-all">
+                                        Cambiar Logo
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Fondo de Login */}
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <label className="block text-xs font-black text-slate-400 uppercase mb-4 ml-1">Fondo de Pantalla (Login)</label>
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner relative group">
+                                        <img src={config.backgroundUrl || "/hotel_noche.jpg"} alt="Background Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                    <input
+                                        type="file"
+                                        id="bg-upload"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const formData = new FormData();
+                                            formData.append('image', file);
+                                            try {
+                                                Swal.fire({ title: 'Subiendo fondo...', didOpen: () => Swal.showLoading() });
+                                                const res = await api.post('/productos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                                setConfig(prev => ({ ...prev, backgroundUrl: res.data.imageUrl }));
+                                                Swal.fire('Éxito', 'Fondo subido correctamente', 'success');
+                                            } catch (err) { Swal.fire('Error', 'No se pudo subir el fondo', 'error'); }
+                                        }}
+                                    />
+                                    <label htmlFor="bg-upload" className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-all">
+                                        Cambiar Fondo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-4 mt-8">
+                            <div className="h-px flex-1 bg-slate-100"></div>
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Datos del Firmante (Administrador)</span>
                             <div className="h-px flex-1 bg-slate-100"></div>
                         </div>

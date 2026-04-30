@@ -6,9 +6,20 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [hotelConfig, setHotelConfig] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const res = await api.get('/hotel-config');
+                setHotelConfig(res.data);
+            } catch (err) {
+                console.error("Error al cargar config global:", err);
+            }
+        };
+        fetchConfig();
+
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
 
@@ -64,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, logout, loading, hotelConfig, setHotelConfig }}>
             {children}
         </AuthContext.Provider>
     );
