@@ -120,6 +120,9 @@ app.use('/api/checkin-digital', (req, res, next) => {
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/hotel-config', require('./routes/hotelConfig'));
 
+// Permitir descarga de documentos sin pasar por el verifyToken global (se validará opcionalmente en el controlador)
+app.get('/api/documentos-hotel/download/:id', require('./controllers/documentoController').downloadDocumento);
+
 // 2. PROTECTED ROUTES (Require Token)
 app.use('/api', verifyToken);
 
