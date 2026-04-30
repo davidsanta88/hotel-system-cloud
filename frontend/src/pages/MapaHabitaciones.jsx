@@ -415,14 +415,16 @@ const MapaHabitaciones = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 gap-2">
                 {filteredHabitaciones.map((hab) => {
                     const styles = getStatusStyles(hab.estadoVisual);
-                    
+                    const isCheckoutToday = hab.detalleEstado?.salida && moment().isSame(moment.utc(hab.detalleEstado.salida), 'day');
+                    const isHighBalance = (hab.detalleEstado?.saldo || 0) > 250000;
+
                     return (
                         <div 
                             key={hab.id}
                             onClick={() => handleRoomClick(hab)}
                             className={`group relative transition-all duration-300 transform hover:-translate-y-1 cursor-pointer`}
                         >
-                            <div className={`h-full bg-white rounded-2xl shadow-sm border-2 ${styles.border} overflow-hidden flex flex-col`}>
+                            <div className={`h-full bg-white rounded-2xl shadow-sm border-2 ${isCheckoutToday ? 'border-orange-400 ring-2 ring-orange-100 ring-offset-1' : styles.border} overflow-hidden flex flex-col`}>
                                 {/* Card Header / Icon area */}
                                 <div className={`p-2 ${styles.bg} flex flex-col items-center justify-center space-y-1 relative`}>
                                     {/* Botón de cambio de estado de limpieza rápido */}
@@ -472,12 +474,19 @@ const MapaHabitaciones = () => {
                                         <Hotel size={20} strokeWidth={2.5} />
                                     </div>
                                     <h2 className="text-base font-black text-gray-950 tracking-tighter text-center leading-none">Hab {hab.numero}</h2>
-                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${styles.badge}`}>
-                                        {hab.estadoVisual.replace('_', ' ')}
-                                        {isDirty(hab.estadoLimpieza) && hab.estadoVisual === 'ocupada' && (
-                                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" title="Requiere aseo"></span>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${styles.badge}`}>
+                                            {hab.estadoVisual.replace('_', ' ')}
+                                            {isDirty(hab.estadoLimpieza) && hab.estadoVisual === 'ocupada' && (
+                                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" title="Requiere aseo"></span>
+                                            )}
+                                        </span>
+                                        {isCheckoutToday && (
+                                            <span className="flex items-center gap-1 px-1.5 py-0.5 bg-orange-500 text-white text-[8px] font-black uppercase rounded-md animate-pulse">
+                                                <Clock size={8} /> Salida Hoy
+                                            </span>
                                         )}
-                                    </span>
+                                    </div>
                                 </div>
 
                                 {/* Card Body */}
@@ -515,19 +524,22 @@ const MapaHabitaciones = () => {
                                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] font-bold text-gray-500">
                                                     <div className="flex items-center gap-1"><LogIn size={10} /> {moment.utc(hab.detalleEstado.entrada).format('DD/MM')}</div>
                                                     <div className="flex items-center gap-1"><LogOut size={10} /> {moment.utc(hab.detalleEstado.salida).format('DD/MM')}</div>
-                                                    <div className="col-span-2 pt-1 mt-1 border-t border-gray-100 flex justify-between text-[8px] uppercase tracking-tighter">
-                                                        <span className={hab.detalleEstado.esEstimado ? 'text-amber-600 italic font-bold' : ''}>
-                                                            Aloj. + Consumos {hab.detalleEstado.esEstimado ? '(EST.)' : ''}:
-                                                        </span>
-                                                        <span className="font-black text-gray-700">${formatCurrency(hab.detalleEstado.totalGeneral || 0)}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-1 mt-1 pt-1 border-t border-gray-100">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[7px] text-gray-400 uppercase font-black">Total</span>
+                                                        <span className="text-[9px] font-black text-gray-700">${formatCurrency(hab.detalleEstado.totalGeneral || 0)}</span>
                                                     </div>
-                                                    <div className="col-span-2 flex justify-between text-[8px] uppercase tracking-tighter">
-                                                        <span>Abonado:</span>
-                                                        <span className="font-black text-emerald-600">${formatCurrency(hab.detalleEstado.pagado || 0)}</span>
+                                                    <div className="flex flex-col text-right">
+                                                        <span className="text-[7px] text-gray-400 uppercase font-black">Pagado</span>
+                                                        <span className="text-[9px] font-black text-emerald-600">${formatCurrency(hab.detalleEstado.pagado || 0)}</span>
                                                     </div>
                                                 </div>
-                                                <div className={`mt-1 p-1.5 rounded-lg flex justify-between items-center text-[10px] font-black ${ (hab.detalleEstado.saldo || 0) > 0 ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                    <div className="flex items-center gap-1"><DollarSign size={10} /> SALDO:</div>
+                                                <div className={`mt-1 p-1.5 rounded-lg flex justify-between items-center text-[10px] font-black ${ (hab.detalleEstado.saldo || 0) > 0 ? (isHighBalance ? 'bg-red-600 text-white ring-2 ring-red-200' : 'bg-red-100 text-red-700 animate-pulse') : 'bg-emerald-100 text-emerald-700'}`}>
+                                                    <div className="flex items-center gap-1">
+                                                        {isHighBalance ? <AlertCircle size={10} /> : <DollarSign size={10} />} 
+                                                        SALDO:
+                                                    </div>
                                                     <div>${formatCurrency(hab.detalleEstado.saldo || 0)}</div>
                                                 </div>
                                             </div>
@@ -544,16 +556,19 @@ const MapaHabitaciones = () => {
                                         
                                         <div className="space-y-0.5">
                                             {hab.reservasFuturas && hab.reservasFuturas.length > 0 ? (
-                                                hab.reservasFuturas.slice(0, 3).map((res) => (
-                                                    <div key={res.id} className="text-[8px] flex justify-between items-center bg-gray-50/70 p-1 rounded-md border border-transparent hover:border-gray-200 transition-colors">
-                                                        <div className="truncate font-black text-gray-800 uppercase tracking-tight max-w-[50px]" title={res.cliente}>
-                                                            {res.cliente}
+                                                hab.reservasFuturas.slice(0, 3).map((res) => {
+                                                    const isTomorrow = moment().add(1, 'day').isSame(moment.utc(res.entrada), 'day');
+                                                    return (
+                                                        <div key={res.id} className={`text-[8px] flex justify-between items-center ${isTomorrow ? 'bg-blue-50 border-blue-100' : 'bg-gray-50/70 border-transparent'} p-1 rounded-md border hover:border-gray-200 transition-colors`}>
+                                                            <div className="truncate font-black text-gray-800 uppercase tracking-tight max-w-[50px]" title={res.cliente}>
+                                                                {res.cliente}
+                                                            </div>
+                                                            <div className={`flex items-center gap-0.5 font-black px-1 py-0.5 rounded-sm ${isTomorrow ? 'bg-blue-500 text-white animate-pulse' : 'text-primary-600 bg-primary-50'}`}>
+                                                                {isTomorrow ? 'MAÑANA' : moment.utc(res.entrada).format('DD/MM')}
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-0.5 font-black text-primary-600 bg-primary-50 px-1 py-0.5 rounded-sm">
-                                                            {moment.utc(res.entrada).format('DD/MM')}
-                                                        </div>
-                                                    </div>
-                                                ))
+                                                    );
+                                                })
                                             ) : (
                                                 <div className="text-[7px] text-gray-400 font-bold italic text-center py-0.5 bg-gray-50/30 rounded-md border border-dashed border-gray-100">
                                                     Sin reservas
