@@ -230,6 +230,8 @@ const MapaHabitacionesConsolidado = () => {
 
         return {
             total, ocupadas, ocupacionTotal,
+            plazaOcupadas, plazaTotal: plaza.length,
+            colonialOcupadas, colonialTotal: colonial.length,
             plazaPerc, colonialPerc,
             ingresosHoy,
             disponibilidadPorTipo,
@@ -403,18 +405,24 @@ const MapaHabitacionesConsolidado = () => {
                     </div>
                     <div className="space-y-4">
                         <div className="space-y-1.5">
-                            <div className="flex justify-between text-[10px] font-black uppercase">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase">
                                 <span className="text-gray-600">Hotel Plaza</span>
-                                <span className="text-indigo-600">{stats.plazaPerc.toFixed(1)}%</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-indigo-600">{stats.plazaPerc.toFixed(1)}%</span>
+                                    <span className="text-[9px] text-gray-400 font-bold lowercase tracking-normal">({stats.plazaOcupadas} de {stats.plazaTotal})</span>
+                                </div>
                             </div>
                             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${stats.plazaPerc}%` }}></div>
                             </div>
                         </div>
                         <div className="space-y-1.5">
-                            <div className="flex justify-between text-[10px] font-black uppercase">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase">
                                 <span className="text-gray-600">Hotel Colonial</span>
-                                <span className="text-slate-600">{stats.colonialPerc.toFixed(1)}%</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-slate-600 font-bold">{stats.colonialPerc.toFixed(1)}%</span>
+                                    <span className="text-[9px] text-gray-400 font-bold lowercase tracking-normal">({stats.colonialOcupadas} de {stats.colonialTotal})</span>
+                                </div>
                             </div>
                             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <div className="h-full bg-slate-500 rounded-full transition-all duration-1000" style={{ width: `${stats.colonialPerc}%` }}></div>
