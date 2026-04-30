@@ -3,7 +3,7 @@ import api from '../services/api';
 import Swal from 'sweetalert2';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-    LineChart, Line, AreaChart, Area
+    LineChart, Line, AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
 import { 
     TrendingUp, 
@@ -36,7 +36,9 @@ import {
     Clock,
     CheckCircle,
     Info,
-    FileText
+    FileText,
+    PieChart as PieChartIcon,
+    BarChart3
 } from 'lucide-react';
 import { format, subDays, startOfMonth, differenceInDays, parseISO, addDays } from 'date-fns';
 
@@ -92,19 +94,14 @@ const ComparativaHoteles = () => {
         </div>
     );
 
-    // Prepare chart data by merging labels from both hotels
     const allLabels = Array.from(new Set([
         ...(data?.plaza?.history?.map(p => p.label) || []),
         ...(data?.colonial?.history?.map(c => c.label) || [])
     ])).sort((a, b) => {
-        // Sort labels correctly (DD/MM or Month names)
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        
         if (months.includes(a) && months.includes(b)) {
             return months.indexOf(a) - months.indexOf(b);
         }
-        
-        // DD/MM sorting
         try {
             const [da, ma] = a.split('/').map(Number);
             const [db, mb] = b.split('/').map(Number);
@@ -136,7 +133,6 @@ const ComparativaHoteles = () => {
     const plazaExpenses = data?.plaza?.history?.reduce((acc, curr) => acc + curr.egresos, 0) || 0;
     const colonialExpenses = data?.colonial?.history?.reduce((acc, curr) => acc + curr.egresos, 0) || 0;
 
-    // Totales Consolidados
     const totalGlobalIngresos = totalPlaza + totalColonial;
     const totalGlobalEgresos = plazaExpenses + colonialExpenses;
     const totalGlobalTienda = shopPlaza + shopColonial;
@@ -147,7 +143,6 @@ const ComparativaHoteles = () => {
     const totalGlobalMargen = totalGlobalIngresos - totalGlobalEgresos;
     const globalMargenPercent = totalGlobalIngresos > 0 ? (totalGlobalMargen / totalGlobalIngresos) * 100 : 0;
     
-    // Cálculo de Promedio Diario
     const diffDays = Math.max(1, differenceInDays(parseISO(dates.fin), parseISO(dates.inicio)) + 1);
     const globalDailyAvg = totalGlobalIngresos / diffDays;
     const globalExpensesAvg = totalGlobalEgresos / diffDays;
@@ -164,17 +159,17 @@ const ComparativaHoteles = () => {
     const globalFreePercent = globalTotalHabitaciones > 0 ? (globalDisponibles / globalTotalHabitaciones) * 100 : 0;
     const globalAseoPercent = globalTotalHabitaciones > 0 ? (globalAseo / globalTotalHabitaciones) * 100 : 0;
     
-    // Totales de Caja Consolidados
-    const globalCashEfectivo = (data?.plaza?.cash?.efectivo || 0) + (data?.colonial?.cash?.efectivo || 0);
-    const globalCashNequi = (data?.plaza?.cash?.nequi || 0) + (data?.colonial?.cash?.nequi || 0);
-    const globalCashBancolombia = (data?.plaza?.cash?.bancolombia || 0) + (data?.colonial?.cash?.bancolombia || 0);
-    const globalCashTotal = (data?.plaza?.cash?.efectivo || 0) + (data?.colonial?.cash?.efectivo || 0);
+    const incomeMixData = [
+        { name: 'Hotel Plaza', value: totalPlaza, color: '#2563eb' },
+        { name: 'Hotel Colonial', value: totalColonial, color: '#6366f1' }
+    ];
+
+    const globalCashTotal = (data?.plaza?.cash?.efectivo || 0) + (data?.colonial?.cash?.efectivo || 0) + (data?.plaza?.cash?.nequi || 0) + (data?.colonial?.cash?.nequi || 0) + (data?.plaza?.cash?.bancolombia || 0) + (data?.colonial?.cash?.bancolombia || 0);
     const globalCashBase = (data?.plaza?.cash?.base || 0) + (data?.colonial?.cash?.base || 0);
     const globalCashTotalConBase = globalCashTotal + globalCashBase;
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
-            {/* Header */}
             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div>
@@ -188,7 +183,7 @@ const ComparativaHoteles = () => {
                     </div>
                     
                     <button 
-                        onClick={() => navigate('/caja-diaria-consolidada')}
+                        onClick={() => window.location.href = '/caja-diaria-consolidada'}
                         className="flex items-center justify-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 w-full md:w-auto"
                     >
                         <FileText size={18} />
@@ -196,7 +191,6 @@ const ComparativaHoteles = () => {
                     </button>
                     
                     <div className="flex flex-col sm:flex-row gap-3">
-                        {/* Períodos rápidos */}
                         <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
                             {PERIODOS.map((p, i) => (
                                 <button
@@ -208,7 +202,6 @@ const ComparativaHoteles = () => {
                                 </button>
                             ))}
                         </div>
-                        {/* Fechas personalizadas */}
                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
                             <Calendar size={14} className="text-slate-400" />
                             <input type="date" className="bg-transparent text-[10px] font-bold border-none focus:ring-0 text-slate-700 p-0 w-24"
@@ -224,161 +217,111 @@ const ComparativaHoteles = () => {
                 </div>
             </div>
 
-
-            {/* Consolidado General */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* 1. Ingresos Globales */}
-                <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Ingresos Globales</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(totalGlobalIngresos)}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <DollarSign size={24} />
-                        </div>
+            {/* --- SECCIÓN INTELIGENTE: PULSO DE LA CADENA --- */}
+            <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-10">
+                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                        <Activity size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Pulso de la Cadena</h3>
+                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-1">Análisis Comparativo Directo</p>
                     </div>
                 </div>
 
-                {/* 1b. Ventas Tienda Global */}
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Ventas Tienda Global</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(totalGlobalTienda)}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <Zap size={24} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                <BarChart3 size={16} /> Rendimiento de Ventas
+                            </h4>
+                            <div className="flex gap-4">
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase">
+                                    <div className="w-2 h-2 rounded-full bg-[#2563eb]" /> Plaza
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase">
+                                    <div className="w-2 h-2 rounded-full bg-[#6366f1]" /> Colonial
+                                </div>
+                            </div>
+                        </div>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={[
+                                    { name: 'Total Ingresos', plaza: totalPlaza, colonial: totalColonial },
+                                    { name: 'Ventas Tienda', plaza: shopPlaza, colonial: shopColonial },
+                                    { name: 'Gastos', plaza: plazaExpenses, colonial: colonialExpenses }
+                                ]}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
+                                    <YAxis hide />
+                                    <Tooltip 
+                                        cursor={{fill: '#f8fafc'}}
+                                        contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                        formatter={(val) => `$${new Intl.NumberFormat().format(val)}`}
+                                    />
+                                    <Bar dataKey="plaza" fill="#2563eb" radius={[8, 8, 0, 0]} barSize={35} />
+                                    <Bar dataKey="colonial" fill="#6366f1" radius={[8, 8, 0, 0]} barSize={35} />
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
-                </div>
 
-                {/* 2. Egresos Globales */}
-                <div className="bg-gradient-to-br from-rose-600 to-rose-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-rose-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Egresos Globales</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(totalGlobalEgresos)}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <ArrowDownRight size={24} />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                        <div>
+                            <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2 mb-6">
+                                <PieChartIcon size={16} /> Mix de Ingresos
+                            </h4>
+                            <div className="h-[200px] relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={incomeMixData}
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {incomeMixData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip formatter={(val) => `$${new Intl.NumberFormat().format(val)}`} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase">Ingresos</span>
+                                    <span className="text-lg font-black text-slate-900 tracking-tighter">
+                                        {((totalPlaza / (totalGlobalIngresos || 1)) * 100).toFixed(0)}% <span className="text-[9px] text-primary-600">PZ</span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* 3. Ganancia Global */}
-                <div className={`p-8 rounded-[2.5rem] border shadow-sm ${totalGlobalMargen >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${totalGlobalMargen >= 0 ? 'text-emerald-600/60' : 'text-rose-600/60'}`}>Ganancia Global</p>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${totalGlobalMargen >= 0 ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
-                            {globalMargenPercent.toFixed(1)}%
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h4 className={`text-3xl font-black ${totalGlobalMargen >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            ${new Intl.NumberFormat().format(totalGlobalMargen)}
-                        </h4>
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totalGlobalMargen >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                            {totalGlobalMargen >= 0 ? <TrendingUp size={24} /> : <ArrowDownRight size={24} />}
-                        </div>
-                    </div>
-                </div>
+                        <div className="flex flex-col justify-center space-y-8">
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupación Plaza</span>
+                                    <span className="text-sm font-black text-blue-600">{((data?.plaza?.rooms?.ocupadas / (data?.plaza?.rooms?.total || 1)) * 100).toFixed(1)}%</span>
+                                </div>
+                                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                    <div className="h-full bg-blue-600 rounded-full" style={{ width: `${(data?.plaza?.rooms?.ocupadas / (data?.plaza?.rooms?.total || 1)) * 100}%` }} />
+                                </div>
+                            </div>
 
-                {/* 4. Promedio Ingreso Diario */}
-                <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Promedio Ingreso Diario</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(Math.round(globalDailyAvg))}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <Activity size={24} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* 5. Gasto Promedio Diario */}
-                <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-100">
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Gasto Promedio Diario</p>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(Math.round(globalExpensesAvg))}</h4>
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <ArrowDownRight size={24} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* 6. Ganancia Promedio Diario */}
-                <div className={`p-8 rounded-[2.5rem] border shadow-sm ${globalProfitAvg >= 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-rose-50 border-rose-100'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${globalProfitAvg >= 0 ? 'text-indigo-600/60' : 'text-rose-600/60'}`}>Ganancia Promedio Diario</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h4 className={`text-3xl font-black ${globalProfitAvg >= 0 ? 'text-indigo-700' : 'text-rose-700'}`}>
-                            ${new Intl.NumberFormat().format(Math.round(globalProfitAvg))}
-                        </h4>
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${globalProfitAvg >= 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-rose-100 text-rose-600'}`}>
-                            {globalProfitAvg >= 0 ? <TrendingUp size={24} /> : <ArrowDownRight size={24} />}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Fila 2: Operativo */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Libres Totales</p>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">
-                            {globalFreePercent.toFixed(1)}% Disponibles
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-emerald-600">{globalDisponibles}</h4>
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
-                            <Zap size={24} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Ocupadas Totales</p>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">
-                            {globalOccupancyPercent.toFixed(1)}% Ocupación
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-rose-600">{globalOcupadas}</h4>
-                        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
-                            <Users size={24} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. En Aseo Totales</p>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
-                            {globalAseoPercent.toFixed(1)}% En Aseo
-                        </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-3xl font-black text-amber-600">{globalAseo}</h4>
-                        <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
-                            <Brush size={24} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* 7. Total en Caja (+Base) Global */}
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-indigo-200/50 border border-indigo-400/20 relative overflow-hidden">
-                    {/* Decoración */}
-                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
-                    
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2 relative z-10">Total en Caja (+Base)</p>
-                    <div className="flex items-center justify-between relative z-10">
-                        <h4 className="text-4xl font-black tracking-tighter drop-shadow-sm">
-                            ${new Intl.NumberFormat().format(globalCashTotalConBase)}
-                        </h4>
-                        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-inner">
-                            <Lock size={28} />
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ocupación Colonial</span>
+                                    <span className="text-sm font-black text-indigo-600">{((data?.colonial?.rooms?.ocupadas / (data?.colonial?.rooms?.total || 1)) * 100).toFixed(1)}%</span>
+                                </div>
+                                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                    <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${(data?.colonial?.rooms?.ocupadas / (data?.colonial?.rooms?.total || 1)) * 100}%` }} />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Main KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <HotelCard 
                     hotelName="Hotel Balcón Plaza"
