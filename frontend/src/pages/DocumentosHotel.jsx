@@ -134,8 +134,9 @@ const DocumentosHotel = () => {
                 title: 'Procesando descarga segura...'
             });
 
-            // Usar el nuevo endpoint de proxy en el backend
-            const response = await api.get(`/documentos-hotel/download/${docId}`, {
+            // Usar el nuevo endpoint de proxy en el backend con token en query como fallback
+            const token = localStorage.getItem('token');
+            const response = await api.get(`/documentos-hotel/download/${docId}?token=${token}`, {
                 responseType: 'blob'
             });
             
