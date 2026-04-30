@@ -42,10 +42,10 @@ exports.getComparativeStats = async (req, res) => {
         const { inicio, fin } = req.query;
         
         // Plaza Stats (Current DB)
+        const plazaRooms = await getRoomCounts(Habitacion);
         const plazaData = await getStatsFromDB({
             Venta, Registro, Gasto
-        }, inicio, fin);
-        const plazaRooms = await getRoomCounts(Habitacion);
+        }, inicio, fin, plazaRooms.total);
 
         // Cash Balances (From last closure to now)
         const plazaCash = await getCashBalance({
@@ -54,8 +54,7 @@ exports.getComparativeStats = async (req, res) => {
 
         // Colonial Stats
         const colonialModels = await getColonialModels();
-        const colonialData = await getStatsFromDB(colonialModels, inicio, fin);
-        const colonialRooms = await getRoomCounts(colonialModels.Habitacion);
+        const colonialData = await getStatsFromDB(colonialModels, inicio, fin, colonialRooms.total);
         const colonialCash = await getCashBalance(colonialModels);
 
         res.json({
@@ -181,7 +180,7 @@ async function getRoomCounts(HabitacionModel) {
     }
 }
 
-async function getStatsFromDB(models, startDateStr, endDateStr) {
+async function getStatsFromDB(models, startDateStr, endDateStr, totalRooms = 1) {
     const { Venta, Registro, Gasto } = models;
     
     const moment = require('moment-timezone');
@@ -240,28 +239,60 @@ async function getStatsFromDB(models, startDateStr, endDateStr) {
         }
     ]);
 
+    // 4. Ocupación (Cálculo por día)
+    let occupancyMap = new Map();
+    if (!useMonthly) {
+        const registrosParaOcupacion = await Registro.find({
+            $or: [
+                { fechaEntrada: { $lte: endDate }, fechaSalida: { $gte: startDate } },
+                { estado: 'activo' }
+            ]
+        }).select('fechaEntrada fechaSalida').lean();
+
+        let current = moment.tz(startDate, "America/Bogota").startOf('day');
+        const endRange = moment.tz(endDate, "America/Bogota").endOf('day');
+
+        while (current.isBefore(endRange)) {
+            const dateKey = current.format('YYYY-MM-DD');
+            const dS = current.toDate();
+            const dE = moment(current).endOf('day').toDate();
+
+            const count = registrosParaOcupacion.filter(r => {
+                const inD = r.fechaEntrada;
+                const outD = r.fechaSalida || new Date();
+                return inD <= dE && outD >= dS;
+            }).length;
+
+            occupancyMap.set(dateKey, (count / (totalRooms || 1)) * 100);
+            current.add(1, 'day');
+        }
+    }
+
     // Merge results
     const resultsMap = new Map();
 
     const addToMap = (stats, key) => {
         stats.forEach(s => {
-            const entry = resultsMap.get(s._id) || { ingresos: 0, egresos: 0, ventasTienda: 0 };
-            if (key === 'ingresos_tienda') {
+            const entry = resultsMap.get(s._id) || { ingresos: 0, egresos: 0, hospedaje: 0, tienda: 0, otros: 0 };
+            if (key === 'tienda') {
                 entry.ingresos += s.total;
-                entry.ventasTienda += s.total;
+                entry.tienda += s.total;
             }
-            else if (key === 'ingresos') entry.ingresos += s.total;
+            else if (key === 'hospedaje') {
+                entry.ingresos += s.total;
+                entry.hospedaje += s.total;
+            }
             else if (key === 'gastos_mixed') {
                 entry.ingresos += s.totalIngreso || 0;
+                entry.otros += s.totalIngreso || 0;
                 entry.egresos += s.totalGasto || 0;
             }
-            else entry.egresos += s.total;
             resultsMap.set(s._id, entry);
         });
     };
 
-    addToMap(ventaStats, 'ingresos_tienda');
-    addToMap(registroStats, 'ingresos');
+    addToMap(ventaStats, 'tienda');
+    addToMap(registroStats, 'hospedaje');
     addToMap(gastoStats, 'gastos_mixed');
 
     // Convert to sorted array
@@ -285,10 +316,14 @@ async function getStatsFromDB(models, startDateStr, endDateStr) {
         
         return {
             label,
+            fullDate: k,
             ingresos: data.ingresos,
+            hospedaje: data.hospedaje,
+            tienda: data.tienda,
+            otros: data.otros,
             egresos: data.egresos,
-            ventasTienda: data.ventasTienda,
-            margen: data.ingresos - data.egresos
+            margen: data.ingresos - data.egresos,
+            ocupacion: occupancyMap.get(k) || 0
         };
     });
 }

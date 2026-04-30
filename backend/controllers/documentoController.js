@@ -40,16 +40,16 @@ exports.getDocumentos = async (req, res) => {
             
             // Usar public_id y resource_type almacenados si existen (más robusto)
             if (doc.public_id && doc.resource_type) {
-                const cleanName = doc.nombre.replace(/[^a-zA-Z0-9]/g, '_');
-                // Asegurar que el nombre tenga la extensión para la descarga
-                const downloadName = cleanName.toLowerCase().endsWith('.pdf') ? cleanName : `${cleanName}.pdf`;
-                
+                // Sanitizar nombre para el attachment (quitar extensión y caracteres especiales)
+                let cleanName = doc.nombre.replace(/\.[^/.]+$/, ""); 
+                cleanName = cleanName.replace(/[^a-zA-Z0-9]/g, '_');
+
                 docObj.url = cloudinary.url(doc.public_id, {
                     resource_type: doc.resource_type,
+                    version: doc.version,
                     secure: true,
                     sign_url: true,
-                    // 'flags: attachment' solo funciona para imágenes/videos (no para raw)
-                    flags: doc.resource_type !== 'raw' ? `attachment:${downloadName}` : undefined
+                    flags: `attachment:${cleanName}`
                 });
             } else {
                 // Fallback: Extraer de la URL (para registros antiguos)
@@ -88,7 +88,7 @@ exports.uploadDocumento = async (req, res) => {
             return res.status(400).json({ message: 'No se subió ningún archivo' });
         }
 
-        const { nombre, tipo, observacion } = req.body;
+        const { nombre, tipo, observacion, entidad_id } = req.body;
         
         // PDFs se tratan como imágenes en Cloudinary para permitir fl_attachment (descarga forzada)
         const isPDF = req.file.mimetype === 'application/pdf';
@@ -103,6 +103,8 @@ exports.uploadDocumento = async (req, res) => {
             url: result.secure_url,
             public_id: result.public_id,
             resource_type: result.resource_type,
+            version: result.version,
+            entidad_id: entidad_id,
             observacion
         });
 
