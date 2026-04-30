@@ -41,7 +41,12 @@ import {
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
-    const { user, logout } = useContext(AuthContext);
+    const { user, logout, hotelConfig } = useContext(AuthContext);
+
+    // Determinar a qué hotel redirigir en el botón de cambio
+    const isColonial = hotelConfig?.nombre?.toLowerCase()?.includes('colonial');
+    const switchHotelLabel = isColonial ? 'Ir al Plaza' : 'Ir al Colonial';
+    const switchHotelUrl = isColonial ? 'https://www.hotelbalconplaza.com/login' : 'https://www.hotelbalconcolonial.com/login';
 
     const hasPermission = (code) => {
         if (!code) return true;
