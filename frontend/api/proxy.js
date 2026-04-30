@@ -70,12 +70,28 @@ export default async function handler(req, res) {
         }
         res.setHeader('X-Proxy-Target', targetUrl);
 
-        if (isUpload || (response.headers['content-type'] && response.headers['content-type'].includes('image'))) {
-             // Si es una imagen o se marcó como upload, devolver como Buffer
+        const contentType = response.headers['content-type'] || '';
+        const isBinary = isUpload || 
+                         contentType.includes('image') || 
+                         contentType.includes('pdf') || 
+                         contentType.includes('octet-stream') ||
+                         contentType.includes('zip') ||
+                         contentType.includes('msword') ||
+                         contentType.includes('officedocument');
+
+        if (isBinary) {
+             // Si es un binario, devolver como Buffer
              const bufferResponse = await axios({
                  ...axiosConfig,
                  responseType: 'arraybuffer'
              });
+             
+             // Re-establecer cabeceras del binario original
+             res.setHeader('Content-Type', contentType);
+             if (response.headers['content-disposition']) {
+                 res.setHeader('Content-Disposition', response.headers['content-disposition']);
+             }
+             
              return res.status(bufferResponse.status).send(Buffer.from(bufferResponse.data));
         }
 
