@@ -129,7 +129,7 @@ const Manuales = () => {
             };
 
             if (activeTab === 'usuario') {
-                addHeader('MANUAL INTEGRAL DE USUARIO', 'Sistema de Gestión Balcón Plaza v3.0 - Operación y Administración');
+                addHeader('MANUAL INTEGRAL DE USUARIO', 'Sistema de Gestión Balcón Plaza v3.5 - Operación y Administración');
                 
                 doc.setTextColor(0, 0, 0);
                 doc.setFontSize(14); doc.setFont('helvetica', 'bold');
@@ -161,6 +161,33 @@ const Manuales = () => {
                     theme: 'striped',
                     headStyles: { fillColor: [0, 163, 255] }
                 });
+
+                doc.addPage();
+                addHeader('GESTIÓN MULTI-HOTEL Y ANALÍTICA', 'Control Centralizado de la Cadena');
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+                doc.text('1. Comparativa de Hoteles (Business Intelligence)', 15, 45);
+                
+                doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                const biText = 'Este módulo permite comparar el rendimiento de Hotel Plaza vs Hotel Colonial en tiempo real. Incluye gráficas de "Pulso de la Cadena", Mix de Ingresos y Velocímetros de Ocupación.';
+                doc.text(doc.splitTextToSize(biText, 180), 15, 52);
+
+                autoTable(doc, {
+                    startY: 65,
+                    head: [['MÉTRICA', 'DESCRIPCIÓN', 'VALOR ESTRATÉGICO']],
+                    body: [
+                        ['Liquidez Maestra', 'Suma total de efectivo y bases de ambos hoteles.', 'Control de flujo de caja global.'],
+                        ['Mix de Ingresos', 'Distribución porcentual de ventas por sede.', 'Identificación de la sede líder.'],
+                        ['Pulso de Ventas', 'Comparativa directa de Ingresos vs Egresos.', 'Detección de desviaciones financieras.'],
+                    ],
+                    theme: 'grid',
+                    headStyles: { fillColor: [79, 70, 229] }
+                });
+
+                doc.text('2. Consolidado de Reservas', 15, doc.lastAutoTable.finalY + 15);
+                const resText = 'Centraliza todas las reservas futuras. Use el filtro de "Estado" para gestionar confirmaciones y el indicador de "Deuda" para asegurar cobros antes del Check-in.';
+                doc.text(doc.splitTextToSize(resText, 180), 15, doc.lastAutoTable.finalY + 22);
 
                 doc.addPage();
                 addHeader('PROCESO PASO A PASO: CHECK-IN', 'Guía Detallada para Recepción');
@@ -195,10 +222,10 @@ const Manuales = () => {
                         ['Finanzas', 'Cuadre de Caja', 'Rendición de cuentas diaria por turno y medio de pago.'],
                         ['Finanzas', 'Reporte Ingresos', 'Auditoría detallada de todo el dinero recibido.'],
                         ['Finanzas', 'Rentabilidad', 'Análisis de ocupación y ganancias por cada habitación.'],
-                        ['Multi-Hotel', 'Caja Consolidada', 'Vista financiera total de todas las sedes del grupo.'],
-                        ['Multi-Hotel', 'Mapa Consolidado', 'Visualización de estados de habitaciones de todos los hoteles.'],
-                        ['Configuración', 'Usuarios / Roles', 'Administración de personal y sus permisos de acceso.'],
-                        ['Configuración', 'Info Hotel', 'Configuración de NIT, Dirección y datos de facturación.'],
+                        ['Multi-Hotel', 'Liquidez Cadena', 'Vista financiera total (Efectivo+Base) de todas las sedes.'],
+                        ['Multi-Hotel', 'Comparativa', 'Análisis BI Plaza vs Colonial con gráficas avanzadas.'],
+                        ['Multi-Hotel', 'Consolidado Res.', 'Gestión centralizada de reservas y control de abonos.'],
+                        ['Configuración', 'Documentos', 'Almacenamiento digital de contratos, RUT y certificados.'],
                     ],
                     theme: 'striped',
                     styles: { fontSize: 8 },
@@ -218,7 +245,7 @@ const Manuales = () => {
                 }
 
                 doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(50,50,50);
-                const analText = 'Las gráficas muestran el balance entre ingresos y gastos. Una gestión eficiente busca maximizar el área azul (Ingresos) y mantener controlada el área roja (Gastos). Use los filtros de fecha para comparar temporadas.';
+                const analText = 'Las gráficas muestran el balance entre ingresos y gastos. En la nueva sección "Comparativa", el Mix de Ingresos ayuda a entender la dependencia de la cadena sobre una sede específica.';
                 doc.text(doc.splitTextToSize(analText, 180), 15, analyticsImg ? 135 : 50);
 
             } else {
