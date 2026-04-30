@@ -59,75 +59,85 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     const menuGroups = [
         {
-            title: 'Recepción y Operaciones',
+            title: 'Control y Operatividad',
             items: [
                 { name: 'Dashboard Inicio', path: '/dashboard', icon: <LayoutDashboard size={20} />, code: 'dashboard' },
                 { name: 'Mapa de Habitaciones', path: '/mapa-habitaciones', icon: <Hotel size={20} />, code: 'registros' },
-                { name: 'Tienda / POS', path: '/tienda', icon: <ShoppingStore size={20} />, code: 'tienda' },
-                { name: 'Productos Tienda', path: '/inventario', icon: <Package size={20} />, code: 'inventario' },
-                { name: 'Reservas a Futuro', path: '/reservas', icon: <CalendarCheck size={20} />, code: 'reservas' },
-                { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
-                { name: 'Empresas', path: '/empresas', icon: <Building2 size={20} />, code: 'empresas' },
-                { name: 'Proveedores', path: '/proveedores', icon: <Truck size={20} />, code: 'empresas' },
-                { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' },
+                { name: 'Check-in Digital QR', path: '/checkin-digital', icon: <QrCode size={20} />, code: 'checkin_digital' },
                 { name: 'Solicitudes Reserva', path: '/solicitudes', icon: <Bell size={20} />, code: 'solicitudes' },
-                { name: 'Restaurante y Café', path: '/restaurante', icon: <UtensilsCrossed size={20} />, code: 'restaurante' },
-                { name: 'Mantenimiento', path: '/mantenimiento', icon: <Wrench size={20} />, code: 'mantenimiento' },
-                { name: 'Aseo Diario', path: '/aseo', icon: <Brush size={20} />, code: 'aseo' },
-                { name: 'Auditoría Limpieza', path: '/auditoria-limpieza', icon: <ShieldCheck size={20} />, code: 'auditoria_limpieza' }
             ]
         },
         {
-            title: 'Recepción y Reservas',
+            title: 'Huéspedes y Reservas',
             items: [
-                { name: 'Check-in Digital QR', path: '/checkin-digital', icon: <QrCode size={20} />, code: 'checkin_digital' }
-            ]
-        },
-        {
-            title: 'Administración y Tesorería',
-            items: [
-                { name: 'Notas y Alertas', path: '/notas', icon: <StickyNote size={20} />, code: 'notas' },
-                { name: 'Reportes', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
-                { name: 'Cuadre de Caja', path: '/cuadre-caja', icon: <Wallet size={20} />, code: 'cuadre_caja' },
-                { name: 'Reporte de Caja', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reporte_ingresos' },
-                { name: 'Calendario Flujo Caja', path: '/calendario-ingresos', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
-                { name: 'Rentabilidad Habitaciones', path: '/rentabilidad-habitaciones', icon: <Award size={20} />, code: 'rentabilidad' },
+                { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
                 { name: 'Cotizaciones', path: '/cotizaciones', icon: <FileText size={20} />, code: 'cotizaciones' },
+                { name: 'Empresas', path: '/empresas', icon: <Building2 size={20} />, code: 'empresas' },
                 { name: 'Invitación Religiosa', path: '/invitacion-religiosa', icon: <Mail size={20} />, code: 'invitacion' },
+                { name: 'Reservas a Futuro', path: '/reservas', icon: <CalendarCheck size={20} />, code: 'reservas' },
             ]
         },
         {
-            title: 'Gestión Multi-Hotel',
+            title: 'Servicios y Puntos de Venta',
+            items: [
+                { name: 'Productos Tienda', path: '/inventario', icon: <Package size={20} />, code: 'inventario' },
+                { name: 'Restaurante y Café', path: '/restaurante', icon: <UtensilsCrossed size={20} />, code: 'restaurante' },
+                { name: 'Tienda / POS', path: '/tienda', icon: <ShoppingStore size={20} />, code: 'tienda' },
+            ]
+        },
+        {
+            title: 'Mantenimiento y Limpieza',
+            items: [
+                { name: 'Aseo Diario', path: '/aseo', icon: <Brush size={20} />, code: 'aseo' },
+                { name: 'Auditoría Limpieza', path: '/auditoria-limpieza', icon: <ShieldCheck size={20} />, code: 'auditoria_limpieza' },
+                { name: 'Mantenimiento', path: '/mantenimiento', icon: <Wrench size={20} />, code: 'mantenimiento' },
+            ]
+        },
+        {
+            title: 'Administración y Finanzas',
+            items: [
+                { name: 'Calendario Flujo Caja', path: '/calendario-ingresos', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
+                { name: 'Cuadre de Caja', path: '/cuadre-caja', icon: <Wallet size={20} />, code: 'cuadre_caja' },
+                { name: 'Gastos e Ingresos', path: '/gastos', icon: <TrendingDown size={20} />, code: 'gastos' },
+                { name: 'Notas y Alertas', path: '/notas', icon: <StickyNote size={20} />, code: 'notas' },
+                { name: 'Proveedores', path: '/proveedores', icon: <Truck size={20} />, code: 'empresas' },
+                { name: 'Rentabilidad Habitaciones', path: '/rentabilidad-habitaciones', icon: <Award size={20} />, code: 'rentabilidad' },
+                { name: 'Reporte de Caja', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reporte_ingresos' },
+                { name: 'Reportes y Estadísticas', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
+            ]
+        },
+        {
+            title: 'Gestión Multi-Hotel (Consolidados)',
             items: [
                 { name: 'Caja Consolidada', path: '/reporte-ingresos-consolidado', icon: <Building2 size={20} />, code: 'reporte_ingresos_consolidado' },
-                { name: 'Detalle Diario Consolidado', path: '/caja-diaria-consolidada', icon: <TrendingUp size={20} />, code: 'comparativa' },
-                { name: 'Mapa Consolidado', path: '/mapa-habitaciones-consolidado', icon: <Hotel size={20} />, code: 'mapa_habitaciones_consolidado' },
-                { name: 'Flujo Caja Consolidado', path: '/calendario-ingresos?mode=consolidated', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
-                { name: 'Rentabilidad Consolidada', path: '/rentabilidad-habitaciones?mode=consolidated', icon: <Award size={20} />, code: 'rentabilidad' },
-                { name: 'Consolidado Reservas', path: '/reservas-consolidadas', icon: <Building2 size={20} />, code: 'reservas_consolidadas' },
                 { name: 'Comparativa Hoteles', path: '/comparativa', icon: <LayoutDashboard size={20} />, code: 'comparativa' },
+                { name: 'Consolidado Reservas', path: '/reservas-consolidadas', icon: <Building2 size={20} />, code: 'reservas_consolidadas' },
+                { name: 'Detalle Diario Consolidado', path: '/caja-diaria-consolidada', icon: <TrendingUp size={20} />, code: 'comparativa' },
+                { name: 'Flujo Caja Consolidado', path: '/calendario-ingresos?mode=consolidated', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
+                { name: 'Mapa Consolidado', path: '/mapa-habitaciones-consolidado', icon: <Hotel size={20} />, code: 'mapa_habitaciones_consolidado' },
+                { name: 'Rentabilidad Consolidada', path: '/rentabilidad-habitaciones?mode=consolidated', icon: <Award size={20} />, code: 'rentabilidad' },
             ]
         },
         {
             title: 'Configuraciones',
             items: [
-                { name: 'Zonas y Habitación', path: '/habitaciones', icon: <Hotel size={20} />, code: 'habitaciones' },
-                { name: 'Tipos de Habitación', path: '/tipos-habitaciones', icon: <Bed size={20} />, code: 'tipos_habitaciones' },
-                { name: 'Estados de Hab.', path: '/estados-habitaciones', icon: <Bed size={20} />, code: 'estados_habitaciones' },
-                { name: 'O. Lugares', path: '/municipios', icon: <MapPin size={20} />, code: 'municipios' },
-                { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },
-                { name: 'Cat. Productos', path: '/categorias-productos', icon: <Package size={20} />, code: 'categorias_productos' },
                 { name: 'Cat. Gastos/Ingresos', path: '/categorias-gastos', icon: <Package size={20} />, code: 'categorias_gastos' },
-                { name: 'Tipos de Registro', path: '/tipos-registro', icon: <ClipboardList size={20} />, code: 'tipos_registro' },
-                { name: 'Personal (Usuarios)', path: '/usuarios', icon: <UserCog size={20} />, code: 'usuarios' },
-                {name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
-                { name: 'Información Hotel', path: '/config', icon: <Building2 size={20} />, code: 'configuracion' },
+                { name: 'Cat. Productos', path: '/categorias-productos', icon: <Package size={20} />, code: 'categorias_productos' },
                 { name: 'Documentos Hotel', path: '/documentos-hotel', icon: <FileCheck size={20} />, code: 'configuracion' },
-                { name: 'Notificaciones', path: '/notificaciones', icon: <Bell size={20} />, code: 'notificaciones' }
+                { name: 'Estados de Habitación', path: '/estados-habitaciones', icon: <Bed size={20} />, code: 'estados_habitaciones' },
+                { name: 'Información Hotel', path: '/config', icon: <Building2 size={20} />, code: 'configuracion' },
+                { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },
+                { name: 'Notificaciones', path: '/notificaciones', icon: <Bell size={20} />, code: 'notificaciones' },
+                { name: 'Origen / Municipios', path: '/municipios', icon: <MapPin size={20} />, code: 'municipios' },
+                { name: 'Personal (Usuarios)', path: '/usuarios', icon: <UserCog size={20} />, code: 'usuarios' },
+                { name: 'Roles y Permisos', path: '/roles', icon: <ShieldCheck size={20} />, code: 'roles_permisos' },
+                { name: 'Tipos de Habitación', path: '/tipos-habitaciones', icon: <Bed size={20} />, code: 'tipos_habitaciones' },
+                { name: 'Tipos de Registro', path: '/tipos-registro', icon: <ClipboardList size={20} />, code: 'tipos_registro' },
+                { name: 'Zonas y Habitaciones', path: '/habitaciones', icon: <Hotel size={20} />, code: 'habitaciones' },
             ]
         },
         {
-            title: 'Ayuda y Soporte',
+            title: 'Ayuda',
             items: [
                 { name: 'Manuales Sistema', path: '/manuales', icon: <Book size={20} /> }
             ]
