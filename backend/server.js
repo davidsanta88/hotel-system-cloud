@@ -119,6 +119,7 @@ app.use('/api/checkin-digital', (req, res, next) => {
 }, require('./routes/checkin'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/hotel-config', require('./routes/hotelConfig'));
+app.use('/api/aliados', require('./routes/aliadoRoutes'));
 
 // Permitir descarga de documentos sin pasar por el verifyToken global (se validará opcionalmente en el controlador)
 app.get('/api/documentos-hotel/download/:id', require('./controllers/documentoController').downloadDocumento);
@@ -161,7 +162,6 @@ app.use('/api/search', require('./routes/search'));
 app.use('/api/restaurante', require('./routes/restaurante'));
 app.use('/api/proveedores', require('./routes/proveedor'));
 app.use('/api/documentos-hotel', require('./routes/documento'));
-app.use('/api/aliados', require('./routes/aliadoRoutes'));
 
 // Global Error Handler for JSON responses
 app.use((err, req, res, next) => {
