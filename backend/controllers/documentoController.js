@@ -85,7 +85,8 @@ exports.downloadDocumento = async (req, res) => {
         const response = await axios({
             method: 'get',
             url: url,
-            responseType: 'stream'
+            responseType: 'stream',
+            timeout: 30000 // 30 segundos de timeout
         });
 
         const extension = path.extname(url) || '.pdf';
@@ -101,17 +102,22 @@ exports.downloadDocumento = async (req, res) => {
             console.log(`[DOWNLOAD PROXY] Descarga completada: ${doc.nombre}`);
         });
 
-    } catch (error) {
-        console.error('[DOWNLOAD PROXY] Error crítico:', error.message);
-        if (error.response) {
-            console.error('[DOWNLOAD PROXY] Detalle error:', error.response.status, error.response.data);
-        }
-        res.status(500).json({ message: 'Error interno al procesar la descarga' });
-    }
+        response.data.on('error', (err) => {
+            console.error('[DOWNLOAD PROXY] Error en el stream:', err.message);
+            if (!res.headersSent) {
+                res.status(500).json({ message: 'Error durante la descarga del archivo' });
+            }
+        });
 
     } catch (error) {
         console.error('[DOWNLOAD PROXY] Error crítico:', error.message);
-        res.status(500).json({ message: 'Error interno al procesar la descarga' });
+        if (error.response) {
+            console.error('[DOWNLOAD PROXY] Detalle error:', error.response.status);
+        }
+        // Solo enviar respuesta si no se han enviado headers aún
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Error interno al procesar la descarga' });
+        }
     }
 };
 
