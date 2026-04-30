@@ -72,6 +72,32 @@ exports.uploadDocumento = async (req, res) => {
     }
 };
 
+exports.downloadDocumento = async (req, res) => {
+    try {
+        const doc = await DocumentoHotel.findById(req.params.id);
+        if (!doc) return res.status(404).json({ message: 'Documento no encontrado' });
+
+        const axios = require('axios');
+        const response = await axios({
+            method: 'get',
+            url: doc.url,
+            responseType: 'stream'
+        });
+
+        // Configurar cabeceras para forzar la descarga con el nombre real
+        const extension = path.extname(doc.url) || '.pdf';
+        const fileName = doc.nombre.toLowerCase().endsWith(extension.toLowerCase()) ? doc.nombre : `${doc.nombre}${extension}`;
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', response.headers['content-type'] || 'application/pdf');
+
+        response.data.pipe(res);
+    } catch (error) {
+        console.error('Error en proxy de descarga:', error.message);
+        res.status(500).json({ message: 'Error al procesar la descarga' });
+    }
+};
+
 exports.deleteDocumento = async (req, res) => {
     try {
         const doc = await DocumentoHotel.findById(req.params.id);

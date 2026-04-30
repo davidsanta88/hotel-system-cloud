@@ -116,8 +116,8 @@ const DocumentosHotel = () => {
         }
     };
 
-    const handleDownload = async (url, filename) => {
-        if (!url) return;
+    const handleDownload = async (docId, filename) => {
+        if (!docId) return;
         
         try {
             // Mostrar un pequeño aviso de descarga
@@ -125,29 +125,36 @@ const DocumentosHotel = () => {
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 4000,
                 timerProgressBar: true,
             });
             
             toast.fire({
                 icon: 'info',
-                title: 'Iniciando descarga...'
+                title: 'Procesando descarga segura...'
             });
 
-            const response = await fetch(url);
-            const blob = await response.blob();
+            // Usar el nuevo endpoint de proxy en el backend
+            const response = await api.get(`/documentos-hotel/download/${docId}`, {
+                responseType: 'blob'
+            });
+            
+            const blob = new Blob([response.data], { type: response.headers['content-type'] });
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = filename.toLowerCase().endsWith('.pdf') ? filename : `${filename}.pdf`;
+            
+            // Asegurar que tenga la extensión correcta
+            const safeFileName = filename.toLowerCase().endsWith('.pdf') ? filename : `${filename}.pdf`;
+            
+            link.download = safeFileName;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(downloadUrl);
         } catch (error) {
             console.error('Download error:', error);
-            // Si falla el fetch (por CORS), abrimos en pestaña nueva como fallback
-            window.open(url, '_blank');
+            Swal.fire('Error', 'No se pudo procesar la descarga desde el servidor. Intente de nuevo.', 'error');
         }
     };
 
@@ -208,7 +215,7 @@ const DocumentosHotel = () => {
                                     </div>
                                     <div className="flex gap-1">
                                         <button 
-                                            onClick={() => handleDownload(doc.url, doc.nombre)} 
+                                            onClick={() => handleDownload(doc._id, doc.nombre)} 
                                             className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors"
                                             title="Descargar"
                                         >

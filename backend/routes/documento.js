@@ -11,6 +11,7 @@ const upload = multer({
 });
 
 router.get('/', verifyToken, documentoController.getDocumentos);
+router.get('/download/:id', verifyToken, documentoController.downloadDocumento);
 router.post('/', [verifyToken, isAdmin, upload.single('documento')], documentoController.uploadDocumento);
 router.delete('/:id', [verifyToken, isAdmin], documentoController.deleteDocumento);
 
