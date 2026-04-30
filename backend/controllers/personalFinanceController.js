@@ -4,7 +4,7 @@ const PersonalCategory = require('../models/PersonalCategory');
 // --- Categorías ---
 exports.getPersonalCategories = async (req, res) => {
     try {
-        const categories = await PersonalCategory.find({ usuario_id: req.usuario.id });
+        const categories = await PersonalCategory.find({ usuario_id: req.userId });
         res.json(categories);
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al obtener categorías', error: error.message });
@@ -15,7 +15,7 @@ exports.createPersonalCategory = async (req, res) => {
     try {
         const { nombre, tipo, color } = req.body;
         const newCat = new PersonalCategory({
-            nombre, tipo, color, usuario_id: req.usuario.id
+            nombre, tipo, color, usuario_id: req.userId
         });
         await newCat.save();
         res.status(201).json(newCat);
@@ -31,7 +31,7 @@ exports.deletePersonalCategory = async (req, res) => {
         if (inUse) {
             return res.status(400).json({ mensaje: 'No se puede eliminar una categoría que está en uso' });
         }
-        await PersonalCategory.deleteOne({ _id: id, usuario_id: req.usuario.id });
+        await PersonalCategory.deleteOne({ _id: id, usuario_id: req.userId });
         res.json({ mensaje: 'Categoría eliminada' });
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al eliminar categoría', error: error.message });
@@ -41,7 +41,7 @@ exports.deletePersonalCategory = async (req, res) => {
 // --- Finanzas ---
 exports.getPersonalFinances = async (req, res) => {
     try {
-        const finances = await PersonalFinance.find({ usuario_id: req.usuario.id })
+        const finances = await PersonalFinance.find({ usuario_id: req.userId })
             .populate('categoria_id')
             .sort({ fecha: -1 });
         
@@ -74,7 +74,7 @@ exports.createPersonalFinance = async (req, res) => {
         const newRecord = new PersonalFinance({
             tipo, categoria_id, monto, descripcion, 
             fecha: fecha || new Date(),
-            usuario_id: req.usuario.id
+            usuario_id: req.userId
         });
         await newRecord.save();
         res.status(201).json(newRecord);
@@ -86,7 +86,7 @@ exports.createPersonalFinance = async (req, res) => {
 exports.deletePersonalFinance = async (req, res) => {
     try {
         const { id } = req.params;
-        await PersonalFinance.deleteOne({ _id: id, usuario_id: req.usuario.id });
+        await PersonalFinance.deleteOne({ _id: id, usuario_id: req.userId });
         res.json({ mensaje: 'Registro eliminado' });
     } catch (error) {
         res.status(500).json({ mensaje: 'Error al eliminar', error: error.message });
