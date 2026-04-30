@@ -22,7 +22,7 @@ import {
     Filter,
     Brush
 } from 'lucide-react';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import RegistroModal from '../components/modals/RegistroModal';
 import DetallesRegistroModal from '../components/modals/DetallesRegistroModal';
 import { formatCurrency } from '../utils/format';
@@ -182,7 +182,7 @@ const MapaHabitacionesConsolidado = () => {
     const filteredHabitaciones = useMemo(() => {
         return habitaciones.filter(h => {
             const matchesStatus = filter === 'todas' || 
-                                 (filter === 'entregan_hoy' && h.registroActual?.salida && moment().isSame(moment.utc(h.registroActual.salida), 'day')) ||
+                                 (filter === 'entregan_hoy' && h.registroActual?.salida && moment().tz('America/Bogota').isSame(moment(h.registroActual.salida).tz('America/Bogota'), 'day')) ||
                                  h.estado.toLowerCase() === filter.toLowerCase() || 
                                  (filter === 'por_asear' && h.estadoLimpieza === 'SUCIA');
             const matchesHotel = hotelFilter === 'todos' || h.hotel === hotelFilter;
@@ -214,7 +214,7 @@ const MapaHabitacionesConsolidado = () => {
 
         // Ingresos proyectados hoy (por salidas)
         const ingresosHoy = habitaciones.reduce((acc, h) => {
-            if (h.registroActual?.salida && moment().isSame(moment.utc(h.registroActual.salida), 'day')) {
+            if (h.registroActual?.salida && moment().tz('America/Bogota').isSame(moment(h.registroActual.salida).tz('America/Bogota'), 'day')) {
                 return acc + (h.registroActual.total || 0);
             }
             return acc;
@@ -233,7 +233,7 @@ const MapaHabitacionesConsolidado = () => {
             plazaPerc, colonialPerc,
             ingresosHoy,
             disponibilidadPorTipo,
-            entreganHoy: habitaciones.filter(h => h.registroActual?.salida && moment().isSame(moment.utc(h.registroActual.salida), 'day')).length
+            entreganHoy: habitaciones.filter(h => h.registroActual?.salida && moment().tz('America/Bogota').isSame(moment(h.registroActual.salida).tz('America/Bogota'), 'day')).length
         };
     }, [habitaciones]);
 
@@ -562,7 +562,7 @@ const MapaHabitacionesConsolidado = () => {
                                                             <p className={`text-[9px] font-black ${styles.text} leading-tight truncate uppercase`}>
                                                                 {hab.registroActual.huesped}
                                                             </p>
-                                                            {hab.registroActual?.salida && moment().isSame(moment.utc(hab.registroActual.salida), 'day') && (
+                                                            {hab.registroActual?.salida && moment().tz('America/Bogota').isSame(moment(hab.registroActual.salida).tz('America/Bogota'), 'day') && (
                                                                 <Clock size={10} className="text-orange-500 animate-pulse shrink-0" />
                                                             )}
                                                         </div>
