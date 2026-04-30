@@ -1084,11 +1084,13 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
         const ventas = await Venta.find({ registro: { $in: registroIds } });
 
         const stats = habitaciones.map(hab => {
-            const regsHab = registros.filter(r => r.habitacion.toString() === hab._id.toString());
+            const regsHab = registros.filter(r => r.habitacion && r.habitacion.toString() === hab._id.toString());
             let ingresosHospedaje = 0;
             let ingresosVentas = 0;
+            let nochesOcupadas = 0;
 
             regsHab.forEach(r => {
+                // Cálculo de ingresos en el periodo
                 r.pagos.forEach(p => {
                     if (p.fecha >= startDate && p.fecha <= endDate) ingresosHospedaje += p.monto;
                 });
@@ -1096,6 +1098,12 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
                 ventasReg.forEach(v => {
                     if (v.fecha >= startDate && v.fecha <= endDate) ingresosVentas += v.total;
                 });
+
+                // Cálculo de ocupación en el periodo (noches reales dentro del rango)
+                const start = Math.max(moment(r.fechaEntrada).valueOf(), moment(startDate).valueOf());
+                const end = Math.min(moment(r.fechaSalida || new Date()).valueOf(), moment(endDate).valueOf());
+                const nights = Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+                nochesOcupadas += nights;
             });
 
             return {
@@ -1106,7 +1114,9 @@ exports.getRentabilidadHabitaciones = async (req, res) => {
                 ingresosVentas,
                 total: ingresosHospedaje + ingresosVentas,
                 promedioDia: (ingresosHospedaje + ingresosVentas) / diffDays,
-                numReservas: regsHab.length
+                numReservas: regsHab.length,
+                nochesOcupadas,
+                porcentajeOcupacion: Math.min(100, Math.round((nochesOcupadas / diffDays) * 100))
             };
         });
 
@@ -1197,10 +1207,15 @@ exports.getRentabilidadConsolidada = async (req, res) => {
             return habitaciones.map(hab => {
                 const regsHab = registros.filter(r => r.habitacion && r.habitacion.toString() === hab._id.toString());
                 let total = 0;
+                let nochesOcupadas = 0;
                 regsHab.forEach(r => {
                     r.pagos.forEach(p => { if (p.fecha >= startDate && p.fecha <= endDate) total += p.monto; });
                     const ventasReg = ventas.filter(v => v.registro?.toString() === r._id.toString());
                     ventasReg.forEach(v => { if (v.fecha >= startDate && v.fecha <= endDate) total += v.total; });
+
+                    const start = Math.max(moment(r.fechaEntrada).valueOf(), moment(startDate).valueOf());
+                    const end = Math.min(moment(r.fechaSalida || new Date()).valueOf(), moment(endDate).valueOf());
+                    nochesOcupadas += Math.max(0, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
                 });
                 return {
                     hotel: hotelLabel,
@@ -1210,7 +1225,9 @@ exports.getRentabilidadConsolidada = async (req, res) => {
                     ingresosVentas: ventas.filter(v => regsHab.some(r => r._id.toString() === v.registro?.toString())).reduce((vSum, v) => v.fecha >= startDate && v.fecha <= endDate ? vSum + v.total : vSum, 0),
                     total,
                     promedioDia: total / diffDays,
-                    numReservas: regsHab.length
+                    numReservas: regsHab.length,
+                    nochesOcupadas,
+                    porcentajeOcupacion: Math.min(100, Math.round((nochesOcupadas / diffDays) * 100))
                 };
             });
         };
