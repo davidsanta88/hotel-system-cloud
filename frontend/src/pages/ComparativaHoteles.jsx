@@ -286,6 +286,143 @@ const ComparativaHoteles = () => {
                 </div>
             </div>
 
+            {/* Consolidado General (Restaurado) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* 1. Ingresos Globales */}
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Ingresos Globales</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(totalGlobalIngresos)}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <DollarSign size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 1b. Ventas Tienda Global */}
+                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Ventas Tienda Global</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(totalGlobalTienda)}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <Zap size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Egresos Globales */}
+                <div className="bg-gradient-to-br from-rose-600 to-rose-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-rose-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Egresos Globales</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(totalGlobalEgresos)}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <ArrowDownRight size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Ganancia Global */}
+                <div className={`p-8 rounded-[2.5rem] border shadow-sm ${totalGlobalMargen >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${totalGlobalMargen >= 0 ? 'text-emerald-600/60' : 'text-rose-600/60'}`}>Ganancia Global</p>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${totalGlobalMargen >= 0 ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                            {globalMargenPercent.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <h4 className={`text-3xl font-black ${totalGlobalMargen >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            ${new Intl.NumberFormat().format(totalGlobalMargen)}
+                        </h4>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totalGlobalMargen >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                            {totalGlobalMargen >= 0 ? <TrendingUp size={24} /> : <ArrowDownRight size={24} />}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Promedio Ingreso Diario */}
+                <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Promedio Ingreso Diario</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black">${new Intl.NumberFormat().format(Math.round(globalDailyAvg))}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <Activity size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. Gasto Promedio Diario */}
+                <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Gasto Promedio Diario</p>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-white">${new Intl.NumberFormat().format(Math.round(globalExpensesAvg))}</h4>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            <ArrowDownRight size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* 6. Ganancia Promedio Diario */}
+                <div className={`p-8 rounded-[2.5rem] border shadow-sm ${globalProfitAvg >= 0 ? 'bg-indigo-50 border-indigo-100' : 'bg-rose-50 border-rose-100'}`}>
+                    <div className="flex justify-between items-start mb-2">
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${globalProfitAvg >= 0 ? 'text-indigo-600/60' : 'text-rose-600/60'}`}>Ganancia Promedio Diario</p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <h4 className={`text-3xl font-black ${globalProfitAvg >= 0 ? 'text-indigo-700' : 'text-rose-700'}`}>
+                            ${new Intl.NumberFormat().format(Math.round(globalProfitAvg))}
+                        </h4>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${globalProfitAvg >= 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-rose-100 text-rose-600'}`}>
+                            {globalProfitAvg >= 0 ? <TrendingUp size={24} /> : <ArrowDownRight size={24} />}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Fila 2: Operativo */}
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Libres Totales</p>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">
+                            {globalFreePercent.toFixed(1)}% Disponibles
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-emerald-600">{globalDisponibles}</h4>
+                        <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center">
+                            <Zap size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. Ocupadas Totales</p>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-600">
+                            {globalOccupancyPercent.toFixed(1)}% Ocupación
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-rose-600">{globalOcupadas}</h4>
+                        <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center">
+                            <Users size={24} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab. En Aseo Totales</p>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">
+                            {globalAseoPercent.toFixed(1)}% En Aseo
+                        </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-3xl font-black text-amber-600">{globalAseo}</h4>
+                        <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center">
+                            <Brush size={24} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* --- SECCIÓN INTELIGENTE: PULSO DE LA CADENA --- */}
             <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-10">
