@@ -181,15 +181,61 @@ const MapaHabitacionesConsolidado = () => {
 
     const filteredHabitaciones = useMemo(() => {
         return habitaciones.filter(h => {
-            const matchesStatus = filter === 'todas' || h.estado.toLowerCase() === filter.toLowerCase() || (filter === 'por_asear' && h.estadoLimpieza === 'SUCIA');
+            const matchesStatus = filter === 'todas' || 
+                                 (filter === 'entregan_hoy' && h.registroActual?.salida && moment().isSame(moment.utc(h.registroActual.salida), 'day')) ||
+                                 h.estado.toLowerCase() === filter.toLowerCase() || 
+                                 (filter === 'por_asear' && h.estadoLimpieza === 'SUCIA');
             const matchesHotel = hotelFilter === 'todos' || h.hotel === hotelFilter;
             const matchesSearch = h.numero.toString().includes(searchTerm) || 
                                  h.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                  (h.registroActual?.huesped || '').toLowerCase().includes(searchTerm.toLowerCase());
             
             return matchesStatus && matchesHotel && matchesSearch;
-        }).sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+        }).sort((a, b) => {
+            const numA = parseInt(a.numero.toString().replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.numero.toString().replace(/\D/g, '')) || 0;
+            return numA - numB;
+        });
     }, [habitaciones, filter, hotelFilter, searchTerm]);
+
+    const stats = useMemo(() => {
+        const total = habitaciones.length;
+        const ocupadas = habitaciones.filter(h => h.estado.toLowerCase() === 'ocupada').length;
+        const ocupacionTotal = total > 0 ? ((ocupadas / total) * 100).toFixed(1) : 0;
+        
+        const plaza = habitaciones.filter(h => h.hotel === 'Hotel Plaza');
+        const colonial = habitaciones.filter(h => h.hotel === 'Hotel Colonial');
+        
+        const plazaOcupadas = plaza.filter(h => h.estado.toLowerCase() === 'ocupada').length;
+        const colonialOcupadas = colonial.filter(h => h.estado.toLowerCase() === 'ocupada').length;
+        
+        const plazaPerc = plaza.length > 0 ? (plazaOcupadas / plaza.length) * 100 : 0;
+        const colonialPerc = colonial.length > 0 ? (colonialOcupadas / colonial.length) * 100 : 0;
+
+        // Ingresos proyectados hoy (por salidas)
+        const ingresosHoy = habitaciones.reduce((acc, h) => {
+            if (h.registroActual?.salida && moment().isSame(moment.utc(h.registroActual.salida), 'day')) {
+                return acc + (h.registroActual.total || 0);
+            }
+            return acc;
+        }, 0);
+
+        // Disponibilidad por tipo
+        const disponibilidadPorTipo = {};
+        habitaciones.forEach(h => {
+            if (h.estado.toLowerCase() === 'disponible' && h.estadoLimpieza !== 'SUCIA') {
+                disponibilidadPorTipo[h.tipo] = (disponibilidadPorTipo[h.tipo] || 0) + 1;
+            }
+        });
+
+        return {
+            total, ocupadas, ocupacionTotal,
+            plazaPerc, colonialPerc,
+            ingresosHoy,
+            disponibilidadPorTipo,
+            entreganHoy: habitaciones.filter(h => h.registroActual?.salida && moment().isSame(moment.utc(h.registroActual.salida), 'day')).length
+        };
+    }, [habitaciones]);
 
     const getStatusStyles = (estado, limpieza) => {
         if (limpieza === 'SUCIA') {
@@ -330,17 +376,105 @@ const MapaHabitacionesConsolidado = () => {
                     <div className="px-3 py-1 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-widest mr-2 flex items-center gap-1.5">
                         <Info size={12} /> Estados
                     </div>
-                    {['todas', 'disponible', 'ocupada', 'reservada', 'por_asear'].map(s => (
+                    {['todas', 'disponible', 'ocupada', 'reservada', 'por_asear', 'entregan_hoy'].map(s => (
                         <button
                             key={s}
                             onClick={() => setFilter(s)}
                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${
-                                filter === s ? 'bg-gray-950 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'
+                                filter === s ? 'bg-orange-500 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'
                             }`}
                         >
-                            {s.replace('_', ' ')}
+                            {s === 'entregan_hoy' ? 'Entregan Hoy' : s.replace('_', ' ')}
                         </button>
                     ))}
+                </div>
+            </div>
+
+            {/* Management Dashboard Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Global Occupancy & Comparative */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-4">Ocupación Grupal</p>
+                        <div className="flex items-end gap-2 mb-6">
+                            <span className="text-5xl font-black text-indigo-600 leading-none">{stats.ocupacionTotal}%</span>
+                            <span className="text-xs font-bold text-gray-400 mb-1 uppercase">Capacidad Total</span>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-[10px] font-black uppercase">
+                                <span className="text-gray-600">Hotel Plaza</span>
+                                <span className="text-indigo-600">{stats.plazaPerc.toFixed(1)}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000" style={{ width: `${stats.plazaPerc}%` }}></div>
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-[10px] font-black uppercase">
+                                <span className="text-gray-600">Hotel Colonial</span>
+                                <span className="text-slate-600">{stats.colonialPerc.toFixed(1)}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-slate-500 rounded-full transition-all duration-1000" style={{ width: `${stats.colonialPerc}%` }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Projected Revenue & Turnovers */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-4">Proyección y Operación Hoy</p>
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
+                                    <DollarSign size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ingresos por Salidas</p>
+                                    <p className="text-2xl font-black text-gray-900">${formatCurrency(stats.ingresosHoy)}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
+                                    <LogOut size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Check-outs Programados</p>
+                                    <p className="text-2xl font-black text-orange-600">{stats.entreganHoy} <span className="text-xs text-gray-400">HABITACIONES</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setFilter('entregan_hoy')}
+                        className="w-full py-3 mt-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                    >
+                        Ver Salidas del Día
+                    </button>
+                </div>
+
+                {/* Availability Summary */}
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-4">Disponibilidad por Tipo</p>
+                    <div className="space-y-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
+                        {Object.entries(stats.disponibilidadPorTipo).length > 0 ? (
+                            Object.entries(stats.disponibilidadPorTipo).map(([tipo, count]) => (
+                                <div key={tipo} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100/50">
+                                    <span className="text-[10px] font-black text-slate-700 uppercase">{tipo}</span>
+                                    <span className="px-3 py-1 bg-white text-emerald-600 rounded-xl text-xs font-black shadow-sm border border-emerald-100">
+                                        {count} LIBRES
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-8">
+                                <p className="text-[10px] font-black text-slate-300 uppercase italic">Sin disponibilidad inmediata</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -349,28 +483,28 @@ const MapaHabitacionesConsolidado = () => {
                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4">
                     <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><CheckCircle size={20}/></div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Disponibles</p>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Disponibles Total</p>
                         <p className="text-xl font-black text-gray-900">{habitaciones.filter(h => h.estado.toLowerCase() === 'disponible' && h.estadoLimpieza !== 'SUCIA').length}</p>
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 border-red-50">
                     <div className="p-3 bg-red-50 text-red-600 rounded-2xl"><User size={20}/></div>
                     <div>
-                        <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Ocupadas</p>
-                        <p className="text-xl font-black text-red-900">{habitaciones.filter(h => h.estado.toLowerCase() === 'ocupada').length}</p>
+                        <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Ocupadas Total</p>
+                        <p className="text-xl font-black text-red-900">{stats.ocupadas}</p>
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 border-yellow-50">
                     <div className="p-3 bg-yellow-50 text-yellow-600 rounded-2xl"><Calendar size={20}/></div>
                     <div>
-                        <p className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Reservadas</p>
+                        <p className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Reservadas Total</p>
                         <p className="text-xl font-black text-yellow-700">{habitaciones.filter(h => h.estado.toLowerCase() === 'reservada').length}</p>
                     </div>
                 </div>
                 <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 border-sky-50">
                     <div className="p-3 bg-sky-50 text-sky-600 rounded-2xl"><Brush size={20}/></div>
                     <div>
-                        <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Por Asear</p>
+                        <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Por Asear Total</p>
                         <p className="text-xl font-black text-sky-700">{habitaciones.filter(h => h.estadoLimpieza === 'SUCIA').length}</p>
                     </div>
                 </div>
@@ -424,11 +558,19 @@ const MapaHabitacionesConsolidado = () => {
                                                 
                                                 {hab.registroActual ? (
                                                     <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
-                                                        <p className={`text-[9px] font-black ${styles.text} leading-tight truncate uppercase`}>
-                                                            {hab.registroActual.huesped}
-                                                        </p>
-                                                        <div className="mt-1 pt-1 border-t border-black/5 flex justify-between items-center text-[8px] font-black">
-                                                            <span className="text-rose-600">${new Intl.NumberFormat().format(hab.registroActual?.total || 0)}</span>
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <p className={`text-[9px] font-black ${styles.text} leading-tight truncate uppercase`}>
+                                                                {hab.registroActual.huesped}
+                                                            </p>
+                                                            {hab.registroActual?.salida && moment().isSame(moment.utc(hab.registroActual.salida), 'day') && (
+                                                                <Clock size={10} className="text-orange-500 animate-pulse shrink-0" />
+                                                            )}
+                                                        </div>
+                                                        <div className={`mt-1 pt-1 border-t border-black/5 flex justify-between items-center text-[8px] font-black ${ (hab.registroActual.saldo || 0) > 100000 ? 'text-red-600 animate-pulse' : '' }`}>
+                                                            <span>${new Intl.NumberFormat().format(hab.registroActual?.total || 0)}</span>
+                                                            {(hab.registroActual.saldo || 0) > 0 && (
+                                                                <span className="bg-red-50 px-1 rounded text-[7px]">S: ${new Intl.NumberFormat().format(hab.registroActual.saldo)}</span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ) : (
