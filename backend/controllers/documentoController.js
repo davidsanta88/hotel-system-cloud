@@ -58,7 +58,9 @@ exports.getDocumentos = async (req, res) => {
                 
                 if (uploadIndex !== -1) {
                     const resourceType = urlParts[uploadIndex - 1]; 
-                    const hasVersion = urlParts[uploadIndex + 1] && urlParts[uploadIndex + 1].startsWith('v');
+                    const versionPart = urlParts[uploadIndex + 1];
+                    const hasVersion = versionPart && versionPart.startsWith('v') && !isNaN(versionPart.substring(1));
+                    
                     const publicIdWithFolder = urlParts.slice(uploadIndex + (hasVersion ? 2 : 1)).join('/');
                     
                     const cleanName = doc.nombre.replace(/[^a-zA-Z0-9]/g, '_');
@@ -68,6 +70,7 @@ exports.getDocumentos = async (req, res) => {
                         resource_type: resourceType,
                         secure: true,
                         sign_url: true,
+                        version: hasVersion ? versionPart.substring(1) : undefined,
                         flags: resourceType !== 'raw' ? `attachment:${downloadName}` : undefined
                     });
                 }
