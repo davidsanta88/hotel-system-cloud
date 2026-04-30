@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { Plus, Edit2, Trash2, Search, LayoutGrid, List, ChevronLeft, ChevronRight, Camera, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, LayoutGrid, List, ChevronLeft, ChevronRight, Camera, X, Hotel, Zap, Users, Brush } from 'lucide-react';
 import { formatCurrency, cleanNumericValue, getImageUrl } from '../utils/format';
 import { usePermissions } from '../hooks/usePermissions';
 
