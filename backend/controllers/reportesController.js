@@ -26,7 +26,8 @@ const getColonialConnection = async () => {
 let plazaConn = null;
 const getPlazaConnection = async () => {
     if (plazaConn && plazaConn.readyState === 1) return plazaConn;
-    const PLAZA_URI = process.env.MONGODB_URI || 'mongodb+srv://adminhotel:hotel2026@cluster0.zsiq9ye.mongodb.net/HotelDB?retryWrites=true&w=majority';
+    // En Plaza, MONGODB_URI es el local. Usamos PLAZA_MONGODB_URI como override si existe.
+    const PLAZA_URI = process.env.PLAZA_MONGODB_URI || process.env.MONGODB_URI || 'mongodb+srv://adminhotel:hotel2026@cluster0.zsiq9ye.mongodb.net/HotelDB?retryWrites=true&w=majority';
     plazaConn = await mongoose.createConnection(PLAZA_URI).asPromise();
     return plazaConn;
 };
@@ -765,12 +766,30 @@ exports.getRegistrosConsolidado = async (req, res) => {
             });
         };
 
-        const plazaRegs = await fetchRegistros({ Registro }, 'Hotel Plaza');
+        const currentHotelName = process.env.MONGODB_URI?.toLowerCase()?.includes('colonial') ? 'Hotel Colonial' : 'Hotel Plaza';
         
-        const colonialModels = await getColonialModels();
-        const colonialRegs = await fetchRegistros(colonialModels, 'Hotel Colonial');
+        // 1. Obtener registros del hotel LOCAL
+        const localRegs = await fetchRegistros({ Registro }, currentHotelName);
+        
+        // 2. Obtener registros del hotel REMOTO
+        let remoteRegs = [];
+        try {
+            if (currentHotelName === 'Hotel Plaza') {
+                const colonialModels = await getColonialModels();
+                remoteRegs = await fetchRegistros(colonialModels, 'Hotel Colonial');
+            } else {
+                const plazaModels = await getPlazaModels();
+                remoteRegs = await fetchRegistros(plazaModels, 'Hotel Plaza');
+            }
+        } catch (err) {
+            console.error(`[CONSOLIDADO] Error conectando con el otro hotel:`, err.message);
+        }
 
-        const allRegs = [...plazaRegs, ...colonialRegs].sort((a, b) => new Date(b.fechaEntrada) - new Date(a.fechaEntrada));
+        const allRegs = [...localRegs, ...remoteRegs].sort((a, b) => {
+            const dateA = new Date(a.fechaEntrada || a.fecha_ingreso || 0);
+            const dateB = new Date(b.fechaEntrada || b.fecha_ingreso || 0);
+            return dateB - dateA;
+        });
 
         res.json(allRegs);
     } catch (err) {
