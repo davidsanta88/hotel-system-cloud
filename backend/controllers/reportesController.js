@@ -941,7 +941,6 @@ exports.getIngresosCalendario = async (req, res) => {
         const year = parseInt(anio);
         const month = parseInt(mes);
         
-        // Consultar rango ampliado para cubrir días grises del calendario
         const startOfMonth = moment.tz([year, month - 1, 1], "America/Bogota").startOf('month');
         const endOfMonth = moment.tz([year, month - 1, 1], "America/Bogota").endOf('month');
         
@@ -957,28 +956,104 @@ exports.getIngresosCalendario = async (req, res) => {
 
         const dailyData = {};
 
-        const addToDay = (date, amount) => {
+        const addToDay = (date, amount, source = 'otros') => {
             if (!date) return;
             const dayKey = moment(date).tz("America/Bogota").format('YYYY-MM-DD');
-            if (!dailyData[dayKey]) dailyData[dayKey] = { ingresos: 0, egresos: 0, balance: 0 };
-            if (amount > 0) dailyData[dayKey].ingresos += amount;
-            else dailyData[dayKey].egresos += Math.abs(amount);
+            if (!dailyData[dayKey]) {
+                dailyData[dayKey] = { 
+                    ingresos: 0, 
+                    egresos: 0, 
+                    balance: 0,
+                    fuentes: { hospedaje: 0, ventas: 0, otros: 0 }
+                };
+            }
+            if (amount > 0) {
+                dailyData[dayKey].ingresos += amount;
+                if (source === 'hospedaje') dailyData[dayKey].fuentes.hospedaje += amount;
+                else if (source === 'ventas') dailyData[dayKey].fuentes.ventas += amount;
+                else dailyData[dayKey].fuentes.otros += amount;
+            } else {
+                dailyData[dayKey].egresos += Math.abs(amount);
+            }
             dailyData[dayKey].balance += amount;
         };
 
         registros.forEach(reg => reg.pagos.forEach(p => {
-            if (p.fecha >= startDate && p.fecha <= endDate) addToDay(p.fecha, p.monto);
+            if (p.fecha >= startDate && p.fecha <= endDate) addToDay(p.fecha, p.monto, 'hospedaje');
         }));
         reservas.forEach(res => res.abonos.forEach(a => {
-            if (a.fecha >= startDate && a.fecha <= endDate) addToDay(a.fecha, a.monto);
+            if (a.fecha >= startDate && a.fecha <= endDate) addToDay(a.fecha, a.monto, 'hospedaje');
         }));
-        ventas.forEach(v => addToDay(v.fecha, v.total));
+        ventas.forEach(v => addToDay(v.fecha, v.total, 'ventas'));
         gastos.forEach(g => {
             const esIngreso = g.categoria?.tipo === 'Ingreso';
-            addToDay(g.fecha, esIngreso ? g.monto : -g.monto);
+            addToDay(g.fecha, esIngreso ? g.monto : -g.monto, esIngreso ? 'otros' : null);
         });
 
         res.json(dailyData);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// 1b. Detalle de un día específico para el calendario
+exports.getDetalleDiaCalendario = async (req, res) => {
+    try {
+        const { fecha } = req.query; // YYYY-MM-DD
+        const startDate = moment.tz(fecha, "America/Bogota").startOf('day').toDate();
+        const endDate = moment.tz(fecha, "America/Bogota").endOf('day').toDate();
+
+        const [registros, reservas, ventas, gastos] = await Promise.all([
+            Registro.find({ "pagos.fecha": { $gte: startDate, $lte: endDate } }).populate('habitacion', 'numero'),
+            Reserva.find({ "abonos.fecha": { $gte: startDate, $lte: endDate } }),
+            Venta.find({ fecha: { $gte: startDate, $lte: endDate } }).populate('items.producto', 'nombre'),
+            Gasto.find({ fecha: { $gte: startDate, $lte: endDate } }).populate('categoria')
+        ]);
+
+        const items = [];
+
+        registros.forEach(reg => reg.pagos.forEach(p => {
+            if (p.fecha >= startDate && p.fecha <= endDate) {
+                items.push({
+                    tipo: 'HOSPEDAJE',
+                    monto: p.monto,
+                    descripcion: `Pago Hab ${reg.habitacion?.numero || '-'} - ${reg.nombre_cliente || 'Cliente'}`,
+                    medio: p.medio || 'EFECTIVO'
+                });
+            }
+        }));
+
+        reservas.forEach(res => res.abonos.forEach(a => {
+            if (a.fecha >= startDate && a.fecha <= endDate) {
+                items.push({
+                    tipo: 'RESERVA',
+                    monto: a.monto,
+                    descripcion: `Abono Reserva ${res.codigoReserva || ''} - ${res.nombre_cliente}`,
+                    medio: a.medio_pago || 'EFECTIVO'
+                });
+            }
+        }));
+
+        ventas.forEach(v => {
+            items.push({
+                tipo: 'VENTA',
+                monto: v.total,
+                descripcion: `Venta POS - ${v.items?.length || 0} productos`,
+                medio: v.medioPago || 'EFECTIVO'
+            });
+        });
+
+        gastos.forEach(g => {
+            const esIngreso = g.categoria?.tipo === 'Ingreso';
+            items.push({
+                tipo: esIngreso ? 'INGRESO' : 'GASTO',
+                monto: esIngreso ? g.monto : -g.monto,
+                descripcion: `${g.categoria?.nombre}: ${g.descripcion}`,
+                medio: g.medioPago || 'EFECTIVO'
+            });
+        });
+
+        res.json(items.sort((a, b) => Math.abs(b.monto) - Math.abs(a.monto)));
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
