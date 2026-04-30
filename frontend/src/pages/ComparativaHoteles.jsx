@@ -217,6 +217,75 @@ const ComparativaHoteles = () => {
                 </div>
             </div>
 
+            {/* 0. SECCIÓN DE LIQUIDEZ MAESTRA (NUEVO) */}
+            <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 p-10 rounded-[3rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group">
+                {/* Decoración de fondo premium */}
+                <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl group-hover:scale-110 transition-transform duration-[2000ms]" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400/20 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+                
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-white/20 backdrop-blur-xl rounded-[1.5rem] shadow-inner border border-white/10">
+                                <ShieldCheck size={32} className="text-white drop-shadow-sm" />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-100/80">Liquidez Consolidada</span>
+                                <h3 className="text-xl font-black tracking-tight text-white/90">Total en Caja (+Base) Cadena</h3>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                            <h2 className="text-6xl md:text-7xl font-black tracking-tighter drop-shadow-2xl">
+                                ${new Intl.NumberFormat().format(globalCashTotalConBase)}
+                            </h2>
+                            <div className="flex items-center gap-3 text-indigo-100/60 font-bold">
+                                <div className="flex -space-x-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-indigo-600 flex items-center justify-center text-[8px] font-black">PZ</div>
+                                    <div className="w-6 h-6 rounded-full bg-indigo-400 border-2 border-indigo-600 flex items-center justify-center text-[8px] font-black">CL</div>
+                                </div>
+                                <span className="text-xs uppercase tracking-widest">Suma de todas las cajas y bases</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 max-w-xl bg-white/5 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/10 shadow-inner">
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-end">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1">Distribución Geográfica</span>
+                                    <span className="text-sm font-black">Plaza vs Colonial</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-2xl font-black tracking-tighter">
+                                        {(( ( (data?.plaza?.cash?.efectivo || 0) + (data?.plaza?.cash?.base || 0) + (data?.plaza?.cash?.nequi || 0) + (data?.plaza?.cash?.bancolombia || 0) ) / (globalCashTotalConBase || 1)) * 100).toFixed(0)}%
+                                    </span>
+                                    <span className="text-[10px] font-black text-indigo-200 ml-2 uppercase">Plaza</span>
+                                </div>
+                            </div>
+
+                            <div className="relative h-4 w-full bg-indigo-900/40 rounded-full overflow-hidden border border-white/5">
+                                <div 
+                                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-white to-blue-200 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all duration-1000 ease-out" 
+                                    style={{ width: `${( ( (data?.plaza?.cash?.efectivo || 0) + (data?.plaza?.cash?.base || 0) + (data?.plaza?.cash?.nequi || 0) + (data?.plaza?.cash?.bancolombia || 0) ) / (globalCashTotalConBase || 1)) * 100}%` }} 
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
+                                    <p className="text-[9px] font-black text-indigo-200 uppercase tracking-widest mb-1">Hotel Plaza</p>
+                                    <p className="text-lg font-black">${new Intl.NumberFormat().format( (data?.plaza?.cash?.efectivo || 0) + (data?.plaza?.cash?.base || 0) + (data?.plaza?.cash?.nequi || 0) + (data?.plaza?.cash?.bancolombia || 0) )}</p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5 group-hover:bg-white/10 transition-colors">
+                                    <p className="text-[9px] font-black text-indigo-200 uppercase tracking-widest mb-1">Hotel Colonial</p>
+                                    <p className="text-lg font-black">${new Intl.NumberFormat().format( (data?.colonial?.cash?.efectivo || 0) + (data?.colonial?.cash?.base || 0) + (data?.colonial?.cash?.nequi || 0) + (data?.colonial?.cash?.bancolombia || 0) )}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* --- SECCIÓN INTELIGENTE: PULSO DE LA CADENA --- */}
             <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-10">
