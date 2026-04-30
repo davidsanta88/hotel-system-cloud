@@ -84,7 +84,8 @@ const CajaDiariaConsolidada = () => {
                     egresos: item.egresos, 
                     neto: item.margen,
                     pct: item.ingresos > 0 ? (item.margen / item.ingresos) * 100 : 0,
-                    ocupacion: item.ocupacion || 0
+                    ocupacion: item.ocupacion || 0,
+                    sortKey: item.sortKey
                 },
                 colonial: { ingresos: 0, hospedaje: 0, tienda: 0, otros: 0, egresos: 0, neto: 0, pct: 0, ocupacion: 0 },
                 total: { 
@@ -95,7 +96,8 @@ const CajaDiariaConsolidada = () => {
                     egresos: item.egresos, 
                     neto: item.margen,
                     pct: item.ingresos > 0 ? (item.margen / item.ingresos) * 100 : 0,
-                    ocupacion: item.ocupacion || 0 // Esto es promedio si ambos están
+                    ocupacion: item.ocupacion || 0,
+                    sortKey: item.sortKey
                 }
             });
         });
@@ -116,7 +118,8 @@ const CajaDiariaConsolidada = () => {
                 egresos: item.egresos,
                 neto: item.margen,
                 pct: item.ingresos > 0 ? (item.margen / item.ingresos) * 100 : 0,
-                ocupacion: item.ocupacion || 0
+                ocupacion: item.ocupacion || 0,
+                sortKey: item.sortKey
             };
 
             existing.total.ingresos += item.ingresos;
@@ -130,15 +133,19 @@ const CajaDiariaConsolidada = () => {
             // Promedio de ocupación si ambos hoteles están cargados
             const countHotels = (existing.plaza.ingresos > 0 || existing.plaza.ocupacion > 0 ? 1 : 0) + (existing.colonial.ingresos > 0 || existing.colonial.ocupacion > 0 ? 1 : 0);
             existing.total.ocupacion = (existing.plaza.ocupacion + existing.colonial.ocupacion) / (countHotels || 1);
+            existing.total.sortKey = item.sortKey;
 
             map.set(item.label, existing);
         });
 
         return Array.from(map.values()).sort((a, b) => {
-            const [dA, mA] = a.label.split('/').map(Number);
-            const [dB, mB] = b.label.split('/').map(Number);
-            if (mA !== mB) return mB - mA;
-            return dB - dA;
+            const valA = a.plaza.sortKey || a.label;
+            const valB = b.plaza.sortKey || b.label;
+            
+            // Si es string (fecha YYYY-MM-DD), comparar como string
+            // Si es número (mes), comparar como número
+            if (typeof valA === 'string') return valB.localeCompare(valA);
+            return valB - valA;
         });
     }, [data]);
 

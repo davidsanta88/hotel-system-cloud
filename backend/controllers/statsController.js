@@ -240,19 +240,20 @@ async function getStatsFromDB(models, startDateStr, endDateStr, totalRooms = 1) 
         }
     ]);
 
-    // 4. Ocupación (Cálculo por día)
+    // 4. Ocupación (Cálculo por día/mes)
     let occupancyMap = new Map();
+    
+    const registrosParaOcupacion = await Registro.find({
+        $or: [
+            { fechaEntrada: { $lte: endDate }, fechaSalida: { $gte: startDate } },
+            { estado: 'activo' }
+        ]
+    }).select('fechaEntrada fechaSalida').lean();
+
+    let current = moment.tz(startDate, "America/Bogota").startOf('day');
+    const endRange = moment.tz(endDate, "America/Bogota").endOf('day');
+
     if (!useMonthly) {
-        const registrosParaOcupacion = await Registro.find({
-            $or: [
-                { fechaEntrada: { $lte: endDate }, fechaSalida: { $gte: startDate } },
-                { estado: 'activo' }
-            ]
-        }).select('fechaEntrada fechaSalida').lean();
-
-        let current = moment.tz(startDate, "America/Bogota").startOf('day');
-        const endRange = moment.tz(endDate, "America/Bogota").endOf('day');
-
         while (current.isBefore(endRange)) {
             const dateKey = current.format('YYYY-MM-DD');
             const dS = current.toDate();
@@ -267,6 +268,32 @@ async function getStatsFromDB(models, startDateStr, endDateStr, totalRooms = 1) 
             occupancyMap.set(dateKey, (count / (totalRooms || 1)) * 100);
             current.add(1, 'day');
         }
+    } else {
+        // Modo Mensual: Calcular promedio de ocupación por mes
+        const monthCounts = new Map(); // monthKey -> { sum: 0, count: 0 }
+        
+        while (current.isBefore(endRange)) {
+            const monthKey = current.month() + 1; // 1-12
+            const dS = current.toDate();
+            const dE = moment(current).endOf('day').toDate();
+
+            const count = registrosParaOcupacion.filter(r => {
+                const inD = r.fechaEntrada;
+                const outD = r.fechaSalida || new Date();
+                return inD <= dE && outD >= dS;
+            }).length;
+
+            const existing = monthCounts.get(monthKey) || { sum: 0, days: 0 };
+            existing.sum += (count / (totalRooms || 1)) * 100;
+            existing.days += 1;
+            monthCounts.set(monthKey, existing);
+            
+            current.add(1, 'day');
+        }
+
+        monthCounts.forEach((val, key) => {
+            occupancyMap.set(key, val.sum / val.days);
+        });
     }
 
     // Merge results
@@ -302,21 +329,26 @@ async function getStatsFromDB(models, startDateStr, endDateStr, totalRooms = 1) 
     return sortedKeys.map(k => {
         const data = resultsMap.get(k);
         let label = k;
+        let sortKey = k;
         if (useMonthly) {
             const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             label = months[parseInt(k) - 1];
+            sortKey = parseInt(k);
         } else {
             // Formatear fecha para mostrar (DD/MM)
             try {
                 const [y, m, d] = k.split('-');
                 label = `${d}/${m}`;
+                sortKey = k; // "YYYY-MM-DD" is sortable
             } catch (e) {
                 label = k;
+                sortKey = k;
             }
         }
         
         return {
             label,
+            sortKey,
             fullDate: k,
             ingresos: data.ingresos,
             hospedaje: data.hospedaje,
@@ -324,7 +356,7 @@ async function getStatsFromDB(models, startDateStr, endDateStr, totalRooms = 1) 
             otros: data.otros,
             egresos: data.egresos,
             margen: data.ingresos - data.egresos,
-            ocupacion: occupancyMap.get(k) || 0
+            ocupacion: occupancyMap.get(useMonthly ? sortKey : k) || 0
         };
     });
 }
