@@ -520,11 +520,12 @@ const Registros = () => {
                                 <tr>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Huésped</th>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab.</th>
-                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Fechas</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Registro</th>
+                                    <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estancia</th>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Origen</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Alojamiento</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Abonado</th>
-                                    <th className="px-6 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo</th>
+                                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Alojamiento</th>
+                                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Abonado</th>
+                                    <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo</th>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado</th>
                                     <th className="px-6 py-4 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Acciones</th>
                                 </tr>
@@ -568,15 +569,13 @@ const Registros = () => {
                                     </th>
                                     <th className="px-6 py-2 border-b border-slate-50"></th>
                                     <th className="px-6 py-2 border-b border-slate-50"></th>
-                                    <th className="px-6 py-2 border-b border-slate-50">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Estado..."
-                                            className="w-full text-[10px] bg-slate-50 border-none rounded-lg focus:ring-1 focus:ring-blue-400 py-1.5 px-3 font-bold text-slate-600 placeholder:text-slate-300"
-                                            value={columnFilters.estado}
-                                            onChange={(e) => handleFilterChange('estado', e.target.value)}
-                                        />
-                                    </th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
+                                    <th className="px-6 py-2 border-b border-slate-50"></th>
                                     <th className="px-6 py-2 border-b border-slate-50"></th>
                                 </tr>
                             </thead>
@@ -628,15 +627,31 @@ const Registros = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">#{res.numero_habitacion}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-medium">
-                                                <div className="text-gray-500">
-                                                    {format(new Date(res.fecha_ingreso), 'dd/MM/yyyy')} - 
-                                                    <span className={res.estado?.toLowerCase() === 'finalizado' ? 'text-emerald-600 font-black ml-1' : ''}>
-                                                        {res.estado?.toLowerCase() === 'finalizado' 
-                                                            ? (res.fecha_salida_real ? format(new Date(res.fecha_salida_real), 'dd/MM/yyyy HH:mm') : format(new Date(res.fecha_salida), 'dd/MM/yyyy HH:mm'))
-                                                            : format(new Date(res.fecha_salida), 'dd/MM/yyyy')
-                                                        }
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[11px] font-bold text-slate-700">
+                                                        {format(new Date(res.fechaCreacion || res.fecha_ingreso), 'dd/MM/yyyy')}
                                                     </span>
+                                                    <span className="text-[10px] font-medium text-slate-400">
+                                                        {format(new Date(res.fechaCreacion || res.fecha_ingreso), 'HH:mm')}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-[11px] font-medium">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-1 text-slate-500">
+                                                        <span className="text-[9px] font-black text-slate-300 uppercase">Entrada:</span>
+                                                        <span>{format(new Date(res.fecha_ingreso), 'dd/MM/yyyy')}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-[9px] font-black text-slate-300 uppercase">Salida:</span>
+                                                        <span className={res.estado?.toLowerCase() === 'finalizado' ? 'text-emerald-600 font-black' : 'text-slate-500'}>
+                                                            {res.estado?.toLowerCase() === 'finalizado' 
+                                                                ? (res.fecha_salida_real ? format(new Date(res.fecha_salida_real), 'dd/MM/yyyy HH:mm') : format(new Date(res.fecha_salida), 'dd/MM/yyyy HH:mm'))
+                                                                : format(new Date(res.fecha_salida), 'dd/MM/yyyy')
+                                                            }
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -644,23 +659,23 @@ const Registros = () => {
                                                     {res.cliente?.municipio_nombre || res.cliente?.municipio_origen_id?.nombre || '-'}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="font-bold text-gray-700 text-sm">${formatCurrency(res.total)}</div>
                                                 <div className="text-[9px] text-gray-400 font-bold uppercase">{res.tipo_registro_nombre || 'Formal'}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="font-bold text-emerald-600 text-sm">${formatCurrency(res.valor_pagado)}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                <div className={`font-black text-sm ${saldo > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <div className={`font-black text-sm px-2 py-1 rounded-lg inline-block ${saldo > 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
                                                     ${formatCurrency(saldo)}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 inline-flex text-[10px] leading-5 font-bold rounded-full uppercase
-                                                    ${['activa', 'activo'].includes(res.estado?.toLowerCase()) ? 'bg-green-100 text-green-800' : 
-                                                      res.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                                                      res.estado === 'completada' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                <span className={`px-2.5 py-1 inline-flex text-[9px] leading-none font-black rounded-full uppercase border
+                                                    ${['activa', 'activo'].includes(res.estado?.toLowerCase()) ? 'bg-green-50 text-green-700 border-green-100' : 
+                                                      res.estado === 'pendiente' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                                      res.estado === 'completada' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
                                                     {res.estado}
                                                 </span>
                                             </td>
