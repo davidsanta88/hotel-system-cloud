@@ -89,7 +89,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Rentabilidad Habitaciones', path: '/rentabilidad-habitaciones', icon: <Award size={20} />, code: 'rentabilidad' },
                 { name: 'Cotizaciones', path: '/cotizaciones', icon: <FileText size={20} />, code: 'cotizaciones' },
                 { name: 'Invitación Religiosa', path: '/invitacion-religiosa', icon: <Mail size={20} />, code: 'invitacion' },
-                { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },
             ]
         },
         {
@@ -111,6 +110,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Tipos de Habitación', path: '/tipos-habitaciones', icon: <Bed size={20} />, code: 'tipos_habitaciones' },
                 { name: 'Estados de Hab.', path: '/estados-habitaciones', icon: <Bed size={20} />, code: 'estados_habitaciones' },
                 { name: 'O. Lugares', path: '/municipios', icon: <MapPin size={20} />, code: 'municipios' },
+                { name: 'Medios de Pago', path: '/medios-pago', icon: <CreditCard size={20} />, code: 'medios_pago' },
                 { name: 'Cat. Productos', path: '/categorias-productos', icon: <Package size={20} />, code: 'categorias_productos' },
                 { name: 'Cat. Gastos/Ingresos', path: '/categorias-gastos', icon: <Package size={20} />, code: 'categorias_gastos' },
                 { name: 'Tipos de Registro', path: '/tipos-registro', icon: <ClipboardList size={20} />, code: 'tipos_registro' },
