@@ -281,7 +281,14 @@ const ComparativaHoteles = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between items-end">
                                 <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Hotel Plaza</span>
-                                <span className="text-sm font-black text-blue-600">{((data?.plaza?.rooms?.ocupadas / (data?.plaza?.rooms?.total || 1)) * 100).toFixed(1)}%</span>
+                                <div className="text-right">
+                                    <span className="text-sm font-black text-blue-600">
+                                        {((data?.plaza?.rooms?.ocupadas / (data?.plaza?.rooms?.total || 1)) * 100).toFixed(1)}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 ml-2">
+                                        ({data?.plaza?.rooms?.ocupadas} de {data?.plaza?.rooms?.total})
+                                    </span>
+                                </div>
                             </div>
                             <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-50 p-1 shadow-inner">
                                 <div 
@@ -295,7 +302,14 @@ const ComparativaHoteles = () => {
                         <div className="space-y-3">
                             <div className="flex justify-between items-end">
                                 <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Hotel Colonial</span>
-                                <span className="text-sm font-black text-slate-600">{((data?.colonial?.rooms?.ocupadas / (data?.colonial?.rooms?.total || 1)) * 100).toFixed(1)}%</span>
+                                <div className="text-right">
+                                    <span className="text-sm font-black text-slate-600">
+                                        {((data?.colonial?.rooms?.ocupadas / (data?.colonial?.rooms?.total || 1)) * 100).toFixed(1)}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 ml-2">
+                                        ({data?.colonial?.rooms?.ocupadas} de {data?.colonial?.rooms?.total})
+                                    </span>
+                                </div>
                             </div>
                             <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden border border-slate-50 p-1 shadow-inner">
                                 <div 
