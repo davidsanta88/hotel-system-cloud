@@ -743,11 +743,11 @@ exports.getRegistrosConsolidado = async (req, res) => {
         const fetchRegistros = async (models, hotelLabel) => {
             const { Registro } = models;
             const regs = await Registro.find({
-                fecha_ingreso: { $gte: startDate, $lte: endDate }
+                fechaEntrada: { $gte: startDate, $lte: endDate }
             })
             .populate('habitacion', 'numero')
             .populate('cliente', 'nombre documento telefono municipio_nombre')
-            .sort({ fecha_ingreso: -1 });
+            .sort({ fechaEntrada: -1 });
 
             return regs.map(r => ({
                 ...r.toObject(),
@@ -764,7 +764,7 @@ exports.getRegistrosConsolidado = async (req, res) => {
         const colonialModels = await getColonialModels();
         const colonialRegs = await fetchRegistros(colonialModels, 'Hotel Colonial');
 
-        const allRegs = [...plazaRegs, ...colonialRegs].sort((a, b) => new Date(b.fecha_ingreso) - new Date(a.fecha_ingreso));
+        const allRegs = [...plazaRegs, ...colonialRegs].sort((a, b) => new Date(b.fechaEntrada) - new Date(a.fechaEntrada));
 
         res.json(allRegs);
     } catch (err) {
