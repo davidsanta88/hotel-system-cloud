@@ -39,14 +39,14 @@ exports.getDocumentos = async (req, res) => {
             const docObj = doc.toObject();
             
             // Usar public_id y resource_type almacenados si existen (más robusto)
-            if (doc.public_id && doc.resource_type) {
+            if (doc.public_id) {
                 // Sanitizar nombre para el attachment (quitar extensión y caracteres especiales)
-                let cleanName = doc.nombre.replace(/\.[^/.]+$/, ""); 
-                cleanName = cleanName.replace(/[^a-zA-Z0-9]/g, '_');
+                let cleanName = doc.nombre.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, '_');
+                const resourceType = doc.resource_type || (doc.formato?.toLowerCase() === 'pdf' ? 'image' : 'auto');
 
                 docObj.url = cloudinary.url(doc.public_id, {
-                    resource_type: doc.resource_type,
-                    version: doc.version,
+                    resource_type: resourceType,
+                    version: doc.version && doc.version !== '1' ? doc.version : undefined,
                     secure: true,
                     sign_url: true,
                     flags: `attachment:${cleanName}`
@@ -60,18 +60,16 @@ exports.getDocumentos = async (req, res) => {
                     const resourceType = urlParts[uploadIndex - 1]; 
                     const versionPart = urlParts[uploadIndex + 1];
                     const hasVersion = versionPart && versionPart.startsWith('v') && !isNaN(versionPart.substring(1));
-                    
                     const publicIdWithFolder = urlParts.slice(uploadIndex + (hasVersion ? 2 : 1)).join('/');
                     
                     const cleanName = doc.nombre.replace(/[^a-zA-Z0-9]/g, '_');
-                    const downloadName = cleanName.toLowerCase().endsWith('.pdf') ? cleanName : `${cleanName}.pdf`;
 
                     docObj.url = cloudinary.url(publicIdWithFolder, {
                         resource_type: resourceType,
                         secure: true,
                         sign_url: true,
                         version: hasVersion ? versionPart.substring(1) : undefined,
-                        flags: resourceType !== 'raw' ? `attachment:${downloadName}` : undefined
+                        flags: resourceType !== 'raw' ? `attachment:${cleanName}` : undefined
                     });
                 }
             }
