@@ -9,6 +9,7 @@ const Cliente = require('../models/Cliente');
 const CierreCaja = require('../models/CierreCaja');
 const CategoriaGasto = require('../models/CategoriaGasto');
 const HotelConfig = require('../models/HotelConfig');
+const Mantenimiento = require('../models/Mantenimiento');
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
 
@@ -216,6 +217,80 @@ exports.getResumenGeneral = async (req, res) => {
             fecha: v.fecha
         }));
 
+        // 5. Historial financiero (últimos 7 días)
+        const sieteDiasAtras = moment.tz("America/Bogota").subtract(7, 'days').startOf('day').toDate();
+        
+        const historial_ingresos = await Registro.aggregate([
+            { $unwind: "$pagos" },
+            { $match: { "pagos.fecha": { $gte: sieteDiasAtras, $lte: mañana } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$pagos.fecha", timezone: "-05:00" } },
+                    total: { $sum: "$pagos.monto" }
+                }
+            }
+        ]);
+
+        const historial_ventas = await Venta.aggregate([
+            { $match: { fecha: { $gte: sieteDiasAtras, $lte: mañana } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha", timezone: "-05:00" } },
+                    total: { $sum: "$total" }
+                }
+            }
+        ]);
+
+        const historial_egresos = await Gasto.aggregate([
+            { $match: { fecha: { $gte: sieteDiasAtras, $lte: mañana } } },
+            {
+                $lookup: {
+                    from: 'categoriagastos',
+                    localField: 'categoria',
+                    foreignField: '_id',
+                    as: 'cat'
+                }
+            },
+            { $unwind: "$cat" },
+            { $match: { "cat.tipo": "Gasto" } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$fecha", timezone: "-05:00" } },
+                    total: { $sum: "$monto" }
+                }
+            }
+        ]);
+
+        // Unificar historial por día
+        const chartData = [];
+        for (let i = 6; i >= 0; i--) {
+            const dateStr = moment.tz("America/Bogota").subtract(i, 'days').format('YYYY-MM-DD');
+            const ing = (historial_ingresos.find(h => h._id === dateStr)?.total || 0) + (historial_ventas.find(h => h._id === dateStr)?.total || 0);
+            const egr = historial_egresos.find(h => h._id === dateStr)?.total || 0;
+            chartData.push({ fecha: dateStr, ingresos: ing, egresos: egr });
+        }
+
+        // 6. Top productos vendidos
+        const top_productos = await Venta.aggregate([
+            { $unwind: "$items" },
+            {
+                $group: {
+                    _id: "$items.producto",
+                    nombre: { $first: "$items.productoNombre" },
+                    total: { $sum: "$items.cantidad" }
+                }
+            },
+            { $sort: { total: -1 } },
+            { $limit: 5 }
+        ]);
+
+        // 7. Mantenimientos pendientes y llegadas próximas
+        const mantenimientos_pendientes = await Mantenimiento.countDocuments({ estado: { $ne: 'Completado' } });
+        const llegadas_proximas = await Reserva.find({ 
+            fechaEntrada: { $gte: mañana, $lte: moment.tz("America/Bogota").add(2, 'days').endOf('day').toDate() },
+            estado: { $ne: 'cancelado' }
+        }).limit(5);
+
         res.json({
             hab_disponibles,
             hab_ocupadas,
@@ -227,7 +302,16 @@ exports.getResumenGeneral = async (req, res) => {
             recientes: {
                 registros: mapped_registros,
                 ventas: mapped_ventas
-            }
+            },
+            historial: chartData,
+            top_productos,
+            mantenimientos_pendientes,
+            llegadas_proximas: llegadas_proximas.map(r => ({
+                id: r._id,
+                cliente: r.clienteNombre || 'Cliente',
+                fecha: r.fechaEntrada,
+                noches: r.noches
+            }))
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
