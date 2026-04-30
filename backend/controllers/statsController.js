@@ -54,6 +54,7 @@ exports.getComparativeStats = async (req, res) => {
 
         // Colonial Stats
         const colonialModels = await getColonialModels();
+        const colonialRooms = await getRoomCounts(colonialModels.Habitacion);
         const colonialData = await getStatsFromDB(colonialModels, inicio, fin, colonialRooms.total);
         const colonialCash = await getCashBalance(colonialModels);
 
