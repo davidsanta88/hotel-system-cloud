@@ -77,38 +77,37 @@ exports.downloadDocumento = async (req, res) => {
         const doc = await DocumentoHotel.findById(req.params.id);
         if (!doc) return res.status(404).json({ message: 'Documento no encontrado' });
 
-        const https = require('https');
+        const axios = require('axios');
         const url = doc.url;
         
         console.log(`[DOWNLOAD PROXY] Iniciando descarga para: ${doc.nombre} desde ${url}`);
 
-        // Configurar cabeceras antes de iniciar el flujo
+        const response = await axios({
+            method: 'get',
+            url: url,
+            responseType: 'stream'
+        });
+
         const extension = path.extname(url) || '.pdf';
         const fileName = doc.nombre.toLowerCase().endsWith(extension.toLowerCase()) ? doc.nombre : `${doc.nombre}${extension}`;
-        
-        // Limpiar el nombre de caracteres extraños para la cabecera
         const safeFileName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_');
 
-        https.get(url, (response) => {
-            if (response.statusCode !== 200) {
-                console.error(`[DOWNLOAD PROXY] Error de Cloudinary: Status ${response.statusCode}`);
-                return res.status(500).json({ message: 'El archivo no está disponible en el servidor de origen' });
-            }
-
-            res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
-            res.setHeader('Content-Type', response.headers['content-type'] || 'application/pdf');
-            
-            // Transmitir el flujo directamente al cliente
-            response.pipe(res);
-            
-            response.on('end', () => {
-                console.log(`[DOWNLOAD PROXY] Descarga completada: ${doc.nombre}`);
-            });
-
-        }).on('error', (err) => {
-            console.error('[DOWNLOAD PROXY] Error de conexión:', err.message);
-            res.status(500).json({ message: 'Error de conexión al recuperar el archivo' });
+        res.setHeader('Content-Disposition', `attachment; filename="${safeFileName}"`);
+        res.setHeader('Content-Type', response.headers['content-type'] || 'application/pdf');
+        
+        response.data.pipe(res);
+        
+        response.data.on('end', () => {
+            console.log(`[DOWNLOAD PROXY] Descarga completada: ${doc.nombre}`);
         });
+
+    } catch (error) {
+        console.error('[DOWNLOAD PROXY] Error crítico:', error.message);
+        if (error.response) {
+            console.error('[DOWNLOAD PROXY] Detalle error:', error.response.status, error.response.data);
+        }
+        res.status(500).json({ message: 'Error interno al procesar la descarga' });
+    }
 
     } catch (error) {
         console.error('[DOWNLOAD PROXY] Error crítico:', error.message);
