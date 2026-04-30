@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 
+const verifyToken = (req, res, next) => {
     // Soporte para ambos headers y query param:
     // 1. 'x-auth-token' inyectado por el proxy de Vercel TIENE PRIORIDAD
     // 2. 'authorization' estándar
