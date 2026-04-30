@@ -749,14 +749,20 @@ exports.getRegistrosConsolidado = async (req, res) => {
             .populate('cliente', 'nombre documento telefono municipio_nombre')
             .sort({ fechaEntrada: -1 });
 
-            return regs.map(r => ({
-                ...r.toObject(),
-                id: r._id,
-                hotel: hotelLabel,
-                nombre_cliente: r.cliente?.nombre || r.nombre_cliente || 'Huésped',
-                documento_cliente: r.cliente?.documento || r.documento_cliente || 'N/A',
-                numero_habitacion: r.habitacion?.numero || r.numero_habitacion || 'S/N'
-            }));
+            return regs.map(r => {
+                const raw = r.toObject();
+                return {
+                    ...raw,
+                    id: r._id,
+                    hotel: hotelLabel,
+                    fecha_ingreso: raw.fechaEntrada || raw.fecha_ingreso || raw.fechaCreacion,
+                    fecha_salida: raw.fechaSalida || raw.fecha_salida || raw.fechaEntrada || raw.fechaCreacion,
+                    nombre_cliente: r.cliente?.nombre || r.nombre_cliente || 'Huésped',
+                    documento_cliente: r.cliente?.documento || r.documento_cliente || 'N/A',
+                    numero_habitacion: r.habitacion?.numero || r.numero_habitacion || 'S/N',
+                    valor_pagado: (raw.pagos || []).reduce((acc, p) => acc + (p.monto || 0), 0)
+                };
+            });
         };
 
         const plazaRegs = await fetchRegistros({ Registro }, 'Hotel Plaza');
