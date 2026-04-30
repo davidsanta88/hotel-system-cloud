@@ -16,6 +16,12 @@ const DocumentoHotelSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    public_id: {
+        type: String
+    },
+    resource_type: {
+        type: String
+    },
     fechaSubida: {
         type: Date,
         default: Date.now

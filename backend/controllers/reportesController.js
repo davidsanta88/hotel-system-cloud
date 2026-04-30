@@ -474,28 +474,16 @@ exports.getDetalleIngresos = async (req, res) => {
         }).populate('items.producto', 'nombre').populate('empleado', 'nombre');
 
         ventas.forEach(venta => {
-                    alerts.push({
-                        hotel: hotelLabel,
-                        type: 'TIME',
-                        msg: `Check-out vencido: Hab #${hab.numero}`,
-                        details: {
-                            id: r._id,
-                            habitacion: hab.numero,
-                            fechaSalidaProgramada: r.fechaSalida,
-                            huespedTitular: r.cliente?.nombre || 'Desconocido',
-                            nombreEmpresa: r.cliente?.empresa_id?.nombre || null,
-                            esEmpresa: !!r.cliente?.empresa_id
-                        }
-                    });    ingresos.push({
-                        fecha: venta.fecha,
-                        tipo: 'VENTA',
-                        descripcion: `Venta de productos`,
-                        detalle: venta.items?.map(i => `${i.cantidad}x ${i.producto?.nombre || 'Prod'}`).join(', ') || '-',
-                        usuario: venta.empleado?.nombre || venta.usuarioCreacion,
-                        medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
-                        monto: venta.total,
-                        id_ref: venta._id
-                    });
+            ingresos.push({
+                fecha: venta.fecha,
+                tipo: 'VENTA',
+                descripcion: `Venta de productos`,
+                detalle: venta.items?.map(i => `${i.cantidad}x ${i.producto?.nombre || 'Prod'}`).join(', ') || '-',
+                usuario: venta.empleado?.nombre || venta.usuarioCreacion,
+                medioPago: (venta.medioPago || 'EFECTIVO').toUpperCase(),
+                monto: venta.total,
+                id_ref: venta._id
+            });
         });
 
         // 4. Gastos e Ingresos manuales
@@ -1369,7 +1357,7 @@ exports.getStatsConsolidadas = async (req, res) => {
             .slice(0, 10);
         
         // Fetch clients from both DBs
-        const plazaClients = await plazaModels.Cliente.find({ _id: { $in: topClientIds } }).lean();
+        const plazaClients = await Cliente.find({ _id: { $in: topClientIds } }).lean();
         const colonialClients = await colonialModels.Cliente.find({ _id: { $in: topClientIds } }).lean();
         const allClientsInfo = [...plazaClients, ...colonialClients];
 

@@ -5,7 +5,10 @@ const { verifyToken, isAdmin } = require('../middleware/auth');
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
 
 router.get('/', verifyToken, documentoController.getDocumentos);
 router.post('/', [verifyToken, isAdmin, upload.single('documento')], documentoController.uploadDocumento);
