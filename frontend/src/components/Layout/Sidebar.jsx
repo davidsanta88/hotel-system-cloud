@@ -50,8 +50,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     const hasPermission = (code) => {
         if (!code) return true;
-        // El administrador total se identifica por su rol_id 1 o si el nombre contiene "admin"
         const isSuperAdmin = user?.rol_id === 1 || user?.rol_nombre?.toLowerCase()?.includes('admin') || user?.nombre === 'Administrador' || user?.email === 'admin@hotel.com';
+        
+        // El módulo de finanzas personales es EXCLUSIVO para el SuperAdmin
+        if (code === 'personal_finance') return isSuperAdmin;
+        
         if (isSuperAdmin) return true;
         return user?.permisos?.some(p => p.p === code && p.v);
     };
@@ -105,6 +108,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Rentabilidad Habitaciones', path: '/rentabilidad-habitaciones', icon: <Award size={20} />, code: 'rentabilidad' },
                 { name: 'Reporte de Caja', path: '/reporte-ingresos', icon: <TrendingUp size={20} />, code: 'reporte_ingresos' },
                 { name: 'Reportes y Estadísticas', path: '/reportes', icon: <PieChart size={20} />, code: 'reportes' },
+                { name: 'Finanzas Personales', path: '/finanzas-personales', icon: <Wallet size={20} />, code: 'personal_finance' },
             ]
         },
         {

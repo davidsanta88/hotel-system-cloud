@@ -150,6 +150,7 @@ app.use('/api/empresas', require('./routes/empresas'));
 app.use('/api/estados-habitacion', require('./routes/estadosHabitacion'));
 app.use('/api/inventario', require('./routes/inventario'));
 app.use('/api/reportes', require('./routes/reportes'));
+app.use('/api/personal-finance', require('./routes/personalFinance'));
 app.use('/api/reservas', require('./routes/reservas'));
 app.use('/api/notificaciones', require('./routes/notificaciones'));
 app.use('/api/mantenimiento', require('./routes/mantenimiento'));

@@ -30,6 +30,7 @@ import Mantenimiento from './pages/Mantenimiento';
 import CheckinPublico from './pages/CheckinPublico';
 import CheckinAdmin from './pages/CheckinAdmin';
 import Estadisticas from './pages/Estadisticas';
+import FinanzasPersonales from './pages/FinanzasPersonales';
 import MapaHabitaciones from './pages/MapaHabitaciones';
 import MapaHabitacionesConsolidado from './pages/MapaHabitacionesConsolidado';
 import HotelConfig from './pages/HotelConfig';
@@ -67,6 +68,12 @@ const PrivateRoute = ({ children, roles, code }) => {
   }
 
   if (code) {
+      // El módulo de finanzas personales es EXCLUSIVO para el SuperAdmin
+      if (code === 'personal_finance') {
+          if (!isSuperAdmin) return <Navigate to="/" />;
+          return children;
+      }
+
       // Validar si p.p coincide con el código de pantalla y p.v (Ver) es true
       if (!user.permisos || !user.permisos.some(p => p.p === code && p.v)) {
           return <Navigate to="/" />; // Access denied mapping
@@ -84,6 +91,7 @@ const AppRoutes = () => {
             
             <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="finanzas-personales" element={<PrivateRoute code="personal_finance"><FinanzasPersonales /></PrivateRoute>} />
                 <Route path="mapa-habitaciones" element={<MapaHabitaciones />} />
                 <Route path="mapa-habitaciones-consolidado" element={<PrivateRoute code="mapa_habitaciones_consolidado"><MapaHabitacionesConsolidado /></PrivateRoute>} />
                 <Route path="habitaciones" element={<PrivateRoute code="habitaciones"><Rooms /></PrivateRoute>} />
