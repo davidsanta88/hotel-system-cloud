@@ -22,5 +22,6 @@ router.get('/rentabilidad-habitaciones', verifyToken, checkPermission('reportes'
 router.get('/rentabilidad-habitaciones-consolidado', verifyToken, checkPermission('rentabilidad', 'v'), reportesController.getRentabilidadConsolidada);
 router.get('/mapa-habitaciones-consolidado', verifyToken, checkPermission('mapa_habitaciones_consolidado', 'v'), reportesController.getMapaHabitacionesConsolidado);
 router.get('/stats-consolidado', verifyToken, checkPermission('dashboard', 'v'), reportesController.getStatsConsolidadas);
+router.get('/registros-consolidado', verifyToken, checkPermission('reportes', 'v'), reportesController.getRegistrosConsolidado);
 
 module.exports = router;

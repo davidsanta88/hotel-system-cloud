@@ -734,6 +734,45 @@ exports.getDetalleIngresosConsolidado = async (req, res) => {
     }
 };
 
+exports.getRegistrosConsolidado = async (req, res) => {
+    try {
+        const { inicio, fin } = req.query;
+        let startDate = inicio ? (inicio.includes('T') ? new Date(inicio) : new Date(`${inicio}T00:00:00-05:00`)) : moment.tz("America/Bogota").startOf('day').toDate();
+        let endDate = fin ? (fin.includes('T') ? new Date(fin) : new Date(`${fin}T23:59:59-05:00`)) : moment.tz("America/Bogota").endOf('day').toDate();
+
+        const fetchRegistros = async (models, hotelLabel) => {
+            const { Registro } = models;
+            const regs = await Registro.find({
+                fecha_ingreso: { $gte: startDate, $lte: endDate }
+            })
+            .populate('habitacion', 'numero')
+            .populate('cliente', 'nombre documento telefono municipio_nombre')
+            .sort({ fecha_ingreso: -1 });
+
+            return regs.map(r => ({
+                ...r.toObject(),
+                id: r._id,
+                hotel: hotelLabel,
+                nombre_cliente: r.cliente?.nombre || r.nombre_cliente || 'Huésped',
+                documento_cliente: r.cliente?.documento || r.documento_cliente || 'N/A',
+                numero_habitacion: r.habitacion?.numero || r.numero_habitacion || 'S/N'
+            }));
+        };
+
+        const plazaRegs = await fetchRegistros({ Registro }, 'Hotel Plaza');
+        
+        const colonialModels = await getColonialModels();
+        const colonialRegs = await fetchRegistros(colonialModels, 'Hotel Colonial');
+
+        const allRegs = [...plazaRegs, ...colonialRegs].sort((a, b) => new Date(b.fecha_ingreso) - new Date(a.fecha_ingreso));
+
+        res.json(allRegs);
+    } catch (err) {
+        console.error('[CONSOLIDADO REGISTROS] Error:', err.message);
+        res.status(500).json({ message: err.message });
+    }
+};
+
 exports.getCuadreCaja = async (req, res) => {
     try {
         const { inicio, fin } = req.query;

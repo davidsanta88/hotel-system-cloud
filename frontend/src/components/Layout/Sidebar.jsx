@@ -70,6 +70,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {
             title: 'Huéspedes y Reservas',
             items: [
+                { name: 'Registro de Huéspedes', path: '/registros', icon: <ClipboardList size={20} />, code: 'registros' },
                 { name: 'Clientes', path: '/clientes', icon: <Users size={20} />, code: 'clientes' },
                 { name: 'Cotizaciones', path: '/cotizaciones', icon: <FileText size={20} />, code: 'cotizaciones' },
                 { name: 'Empresas', path: '/empresas', icon: <Building2 size={20} />, code: 'empresas' },
@@ -115,6 +116,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 { name: 'Detalle Diario Consolidado', path: '/caja-diaria-consolidada', icon: <TrendingUp size={20} />, code: 'comparativa' },
                 { name: 'Flujo Caja Consolidado', path: '/calendario-ingresos?mode=consolidated', icon: <Calendar size={20} />, code: 'calendario_ingresos' },
                 { name: 'Mapa Consolidado', path: '/mapa-habitaciones-consolidado', icon: <Hotel size={20} />, code: 'mapa_habitaciones_consolidado' },
+                { name: 'Registros Consolidados', path: '/registros?mode=consolidated', icon: <ClipboardList size={20} />, code: 'reportes' },
                 { name: 'Rentabilidad Consolidada', path: '/rentabilidad-habitaciones?mode=consolidated', icon: <Award size={20} />, code: 'rentabilidad' },
             ]
         },

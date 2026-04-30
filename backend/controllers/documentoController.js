@@ -111,12 +111,28 @@ exports.downloadDocumento = async (req, res) => {
 
     } catch (error) {
         console.error('[DOWNLOAD PROXY] Error crítico:', error.message);
-        if (error.response) {
-            console.error('[DOWNLOAD PROXY] Detalle error:', error.response.status);
+        
+        // Manejo específico para errores de Mongoose (ID malformado)
+        if (error.name === 'CastError') {
+            return res.status(400).json({ 
+                message: 'ID de documento malformado', 
+                error: error.message,
+                receivedId: req.params.id 
+            });
         }
-        // Solo enviar respuesta si no se han enviado headers aún
+
+        if (error.response) {
+            console.error('[DOWNLOAD PROXY] Detalle error de red:', error.response.status);
+            if (!res.headersSent) {
+                return res.status(error.response.status).json({ 
+                    message: 'Error al obtener el archivo desde el servidor remoto',
+                    status: error.response.status
+                });
+            }
+        }
+        
         if (!res.headersSent) {
-            res.status(500).json({ message: 'Error interno al procesar la descarga' });
+            res.status(500).json({ message: 'Error interno al procesar la descarga', error: error.message });
         }
     }
 };

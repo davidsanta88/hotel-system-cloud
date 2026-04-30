@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { format, subMonths, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
+import { format, subMonths, subDays, startOfMonth, startOfDay, endOfDay, isWithinInterval, parseISO } from 'date-fns';
 import { 
     Plus, Search, Edit2, Trash2, Calendar, FileText, FileSpreadsheet, Map, 
     ChevronLeft, ChevronRight, Info, Eye, Printer, CreditCard, MessageCircle, 
-    CheckCircle, XCircle, Wallet, CircleDollarSign, TrendingUp, Receipt
+    CheckCircle, XCircle, Wallet, CircleDollarSign, TrendingUp, Receipt, RefreshCw, Building2
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -20,6 +20,7 @@ import { generateVoucher } from '../utils/voucherGenerator';
 const Registros = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    const isConsolidated = searchParams.get('mode') === 'consolidated';
     const [registros, setRegistros] = useState([]);
     const [habitaciones, setHabitaciones] = useState([]);
     const [clientes, setClientes] = useState([]);
@@ -87,6 +88,37 @@ const Registros = () => {
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [rangePreset, setRangePreset] = useState('30_dias');
+
+    const handlePresetChange = (preset) => {
+        setRangePreset(preset);
+        const hoy = new Date();
+        let start, end = hoy;
+
+        switch (preset) {
+            case 'hoy':
+                start = hoy;
+                break;
+            case '7_dias':
+                start = subDays(hoy, 7);
+                break;
+            case '30_dias':
+                start = subDays(hoy, 30);
+                break;
+            case 'este_mes':
+                start = startOfMonth(hoy);
+                break;
+            case '90_dias':
+                start = subDays(hoy, 90);
+                break;
+            default:
+                return;
+        }
+
+        setFechaInicio(format(start, 'yyyy-MM-dd'));
+        setFechaFin(format(end, 'yyyy-MM-dd'));
+        setCurrentPage(1);
+    };
 
     const handleFilterChange = (column, value) => {
         setColumnFilters(prev => ({ ...prev, [column]: value }));
@@ -95,7 +127,7 @@ const Registros = () => {
 
     // Lógica de Filtrado Combinada (Búsqueda General + Filtros por Columna + Rango de Fechas)
     const filteredRegistros = useMemo(() => {
-        return registros.filter(res => {
+        let result = registros.filter(res => {
             // 1. Rango de Fechas (sobre fecha_ingreso)
             const fIngreso = parseISO(res.fecha_ingreso);
             const start = startOfDay(parseISO(fechaInicio));
@@ -120,6 +152,9 @@ const Registros = () => {
 
             return matchesHuesped && matchesHabitacion && matchesFechas && matchesEstado && matchesOrigen;
         });
+
+        // Ordenar por fecha de registro (fechaCreacion o fecha_ingreso) de mayor a menor
+        return result.sort((a, b) => new Date(b.fechaCreacion || b.fecha_ingreso) - new Date(a.fechaCreacion || a.fecha_ingreso));
     }, [registros, searchTerm, columnFilters, fechaInicio, fechaFin]);
 
     const paginatedRegistros = useMemo(() => {
@@ -225,12 +260,14 @@ const Registros = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [isConsolidated, fechaInicio, fechaFin]);
 
     const fetchData = async () => {
         try {
+            setLoading(true);
+            const params = { inicio: fechaInicio, fin: fechaFin };
             const [resRegistros, resHab, resClientes, resMuni, resMedios, resProd, resTipos] = await Promise.all([
-                api.get('/registros'),
+                isConsolidated ? api.get('/reportes/registros-consolidado', { params }) : api.get('/registros'),
                 api.get('/habitaciones'),
                 api.get('/clientes'),
                 api.get('/municipios'),
@@ -406,16 +443,29 @@ const Registros = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">Registro de Huéspedes</h1>
-                    <p className="text-slate-500 font-medium">Gestione los ingresos y el alojamiento diario</p>
+                    <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+                        {isConsolidated ? 'Registros Consolidados (Multi-Hotel)' : 'Registro de Huéspedes'}
+                    </h1>
+                    <p className="text-slate-500 font-medium">
+                        {isConsolidated ? 'Vista unificada de registros de ambos hoteles' : 'Gestione los ingresos y el alojamiento diario'}
+                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <button 
-                        onClick={() => navigate('/mapa-habitaciones')}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
-                    >
-                        <Map size={18} /> Ir a Mapa de Habitaciones
-                    </button>
+                    {isConsolidated ? (
+                        <button 
+                            onClick={fetchData}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                        >
+                            <RefreshCw size={18} /> Actualizar Datos
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={() => navigate('/mapa-habitaciones')}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-2xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200"
+                        >
+                            <Map size={18} /> Ir a Mapa de Habitaciones
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -466,30 +516,57 @@ const Registros = () => {
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
-                                setCurrentPage(1);
-                            }}
-                        />
+                                setCurrentPage(1);                        />
                     </div>
+ 
+                    <div className="flex flex-wrap items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                        <div className="flex items-center bg-white rounded-xl shadow-sm border border-slate-200 p-0.5 mr-2">
+                            {[
+                                { id: 'hoy', label: 'Hoy' },
+                                { id: '7_dias', label: '7 días' },
+                                { id: '30_dias', label: '30 días' },
+                                { id: 'este_mes', label: 'Este mes' },
+                                { id: '90_dias', label: '90 días' }
+                            ].map(p => (
+                                <button
+                                    key={p.id}
+                                    onClick={() => handlePresetChange(p.id)}
+                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${rangePreset === p.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
 
-                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
                         <div className="flex items-center gap-2 px-3 border-r border-slate-200">
                             <Calendar size={14} className="text-slate-400" />
                             <input 
                                 type="date" 
-                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0"
+                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0 w-24"
                                 value={fechaInicio}
-                                onChange={(e) => setFechaInicio(e.target.value)}
+                                onChange={(e) => {
+                                    setFechaInicio(e.target.value);
+                                    setRangePreset('custom');
+                                }}
                             />
                         </div>
                         <div className="flex items-center gap-2 px-3">
+                            <span className="text-[10px] font-black text-slate-300">→</span>
                             <input 
                                 type="date" 
-                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0"
+                                className="bg-transparent border-none text-[11px] font-black text-slate-600 focus:ring-0 p-0 w-24"
                                 value={fechaFin}
-                                onChange={(e) => setFechaFin(e.target.value)}
+                                onChange={(e) => {
+                                    setFechaFin(e.target.value);
+                                    setRangePreset('custom');
+                                }}
                             />
+                            <button onClick={fetchData} className="ml-1 text-blue-500 hover:text-blue-700 transition-colors">
+                                <RefreshCw size={14} />
+                            </button>
                         </div>
                     </div>
+                </div>    </div>
                 </div>
 
                 <div className="flex items-center gap-2 w-full md:w-auto">
@@ -520,6 +597,7 @@ const Registros = () => {
                                 <tr>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Huésped</th>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Hab.</th>
+                                    {isConsolidated && <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Hotel</th>}
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Registro</th>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Estancia</th>
                                     <th className="px-6 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Origen</th>
@@ -627,6 +705,13 @@ const Registros = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">#{res.numero_habitacion}</td>
+                                            {isConsolidated && (
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase border ${res.hotel?.includes('Plaza') ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                                        <Building2 size={12} /> {res.hotel}
+                                                    </span>
+                                                </td>
+                                            )}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex flex-col">
                                                     <span className="text-[11px] font-bold text-slate-700">
