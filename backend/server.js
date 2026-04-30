@@ -161,6 +161,7 @@ app.use('/api/search', require('./routes/search'));
 app.use('/api/restaurante', require('./routes/restaurante'));
 app.use('/api/proveedores', require('./routes/proveedor'));
 app.use('/api/documentos-hotel', require('./routes/documento'));
+app.use('/api/aliados', require('./routes/aliadoRoutes'));
 
 // Global Error Handler for JSON responses
 app.use((err, req, res, next) => {

@@ -48,6 +48,7 @@ import Restaurante from './pages/Restaurante';
 import CajaDiariaConsolidada from './pages/CajaDiariaConsolidada';
 import Proveedores from './pages/Proveedores';
 import DocumentosHotel from './pages/DocumentosHotel';
+import Aliados from './pages/Aliados';
 import Layout from './components/Layout/Layout';
 
 const PrivateRoute = ({ children, roles, code }) => {
@@ -122,6 +123,7 @@ const AppRoutes = () => {
                 <Route path="caja-diaria-consolidada" element={<PrivateRoute code="comparativa"><CajaDiariaConsolidada /></PrivateRoute>} />
                 <Route path="proveedores" element={<PrivateRoute code="empresas"><Proveedores /></PrivateRoute>} />
                 <Route path="documentos-hotel" element={<PrivateRoute code="configuracion"><DocumentosHotel /></PrivateRoute>} />
+                <Route path="aliados" element={<PrivateRoute code="configuracion"><Aliados /></PrivateRoute>} />
                 <Route path="calendario-ingresos" element={<PrivateRoute code="calendario_ingresos"><CalendarioIngresos /></PrivateRoute>} />
                 <Route path="rentabilidad-habitaciones" element={<PrivateRoute code="rentabilidad"><RentabilidadHabitaciones /></PrivateRoute>} />
                 <Route path="config" element={<PrivateRoute code="configuracion"><HotelConfig /></PrivateRoute>} />

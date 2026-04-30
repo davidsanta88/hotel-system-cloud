@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Mail, MessageSquare, MapPin, Car, Clock, CheckCircle2, AlertCircle, Loader2, Share2 } from 'lucide-react';
+import { Facebook, Instagram, Mail, MessageSquare, MapPin, Car, Clock, CheckCircle2, AlertCircle, Loader2, Share2, Phone, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import Swal from 'sweetalert2';
 
@@ -105,16 +105,23 @@ const Landing = () => {
         correo: 'hotelbalconplaza60@gmail.com',
         sitioWeb: 'www.hotelbalconplaza.com'
     });
+    const [aliados, setAliados] = useState([]);
+    const [loadingAliados, setLoadingAliados] = useState(true);
 
     useEffect(() => {
         const fetchHotelInfo = async () => {
             try {
-                const res = await api.get('/hotel-config');
-                if (res.data) {
-                    setHotelInfo(res.data);
-                }
+                const [infoRes, aliadosRes] = await Promise.all([
+                    api.get('/hotel-config'),
+                    api.get('/aliados?public=true')
+                ]);
+                
+                if (infoRes.data) setHotelInfo(infoRes.data);
+                if (aliadosRes.data) setAliados(aliadosRes.data);
             } catch (err) {
-                console.error("Error al cargar info del hotel:", err);
+                console.error("Error al cargar datos del landing:", err);
+            } finally {
+                setLoadingAliados(false);
             }
         };
         fetchHotelInfo();
@@ -355,11 +362,82 @@ const Landing = () => {
                             />
                         ))}
                     </div>
+                    
+                    {/* Botón para bajar a aliados si existen */}
+                    {aliados.length > 0 && (
+                        <button 
+                            onClick={() => document.getElementById('aliados-section')?.scrollIntoView({ behavior: 'smooth' })}
+                            className="text-white/40 animate-bounce mt-2 hover:text-white transition-colors"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7-7-7" /></svg>
+                        </button>
+                    )}
+
                     <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em] text-center px-4">
                         {hotelInfo.direccion}
                     </p>
                 </div>
             </div>
+
+            {/* ─── Sección de Aliados Estratégicos ─────────────────────────────── */}
+            {aliados.length > 0 && (
+                <section id="aliados-section" className="relative z-20 py-24 bg-[#0a0a0a] border-t border-white/5">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="mb-16 text-center">
+                            <span className="text-accent-500 text-[10px] font-black uppercase tracking-[0.4em] mb-3 block">Experiencias y Convenios</span>
+                            <h2 className="text-3xl lg:text-5xl font-black text-white leading-tight">Nuestros Aliados Estratégicos</h2>
+                            <div className="w-20 h-1 bg-accent-500 mx-auto mt-6 rounded-full" />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {aliados.map((aliado) => (
+                                <div key={aliado._id} className="group relative bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] hover:bg-white/[0.08] hover:border-accent-500/30 transition-all duration-500">
+                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-accent-500/5 blur-3xl rounded-full group-hover:bg-accent-500/10 transition-all" />
+                                    
+                                    <div className="relative z-10 flex flex-col h-full">
+                                        <div className="w-20 h-20 bg-black/40 rounded-2xl p-4 mb-6 border border-white/5 flex items-center justify-center overflow-hidden">
+                                            {aliado.logoUrl ? (
+                                                <img src={aliado.logoUrl} alt={aliado.nombre} className="w-full h-full object-contain" />
+                                            ) : (
+                                                <span className="text-white/20 text-xs font-black italic">LOGO</span>
+                                            )}
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <div className="text-[10px] font-black text-accent-500 uppercase tracking-widest mb-1">{aliado.tipo}</div>
+                                            <h3 className="text-xl font-bold text-white group-hover:text-accent-400 transition-colors">{aliado.nombre}</h3>
+                                        </div>
+
+                                        <p className="text-white/60 text-sm mb-8 leading-relaxed line-clamp-3">
+                                            {aliado.descripcion || 'Aliado estratégico para brindar la mejor experiencia a nuestros huéspedes.'}
+                                        </p>
+
+                                        <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
+                                            <div className="flex gap-3">
+                                                {aliado.telefono && (
+                                                    <a href={`tel:${aliado.telefono}`} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:bg-accent-500 hover:text-black transition-all">
+                                                        <Phone className="w-4 h-4" />
+                                                    </a>
+                                                )}
+                                                {aliado.sitioWeb && (
+                                                    <a href={aliado.sitioWeb} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:bg-accent-500 hover:text-black transition-all">
+                                                        <ExternalLink className="w-4 h-4" />
+                                                    </a>
+                                                )}
+                                            </div>
+                                            {aliado.sitioWeb && (
+                                                <a href={aliado.sitioWeb} target="_blank" rel="noreferrer" className="text-[10px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
+                                                    Visitar <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
 
             {/* Modal de Reserva */}

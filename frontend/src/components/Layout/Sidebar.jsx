@@ -125,6 +125,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             items: [
                 { name: 'Cat. Gastos/Ingresos', path: '/categorias-gastos', icon: <Package size={20} />, code: 'categorias_gastos' },
                 { name: 'Cat. Productos', path: '/categorias-productos', icon: <Package size={20} />, code: 'categorias_productos' },
+                { name: 'Aliados Estratégicos', path: '/aliados', icon: <Users size={20} />, code: 'configuracion' },
                 { name: 'Documentos Hotel', path: '/documentos-hotel', icon: <FileCheck size={20} />, code: 'configuracion' },
                 { name: 'Estados de Habitación', path: '/estados-habitaciones', icon: <Bed size={20} />, code: 'estados_habitaciones' },
                 { name: 'Información Hotel', path: '/config', icon: <Building2 size={20} />, code: 'configuracion' },
