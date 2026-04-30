@@ -10,9 +10,9 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-router.get('/', verifyToken, documentoController.getDocumentos);
-router.get('/download/:id', verifyToken, documentoController.downloadDocumento);
-router.post('/', [verifyToken, isAdmin, upload.single('documento')], documentoController.uploadDocumento);
-router.delete('/:id', [verifyToken, isAdmin], documentoController.deleteDocumento);
+router.get('/', documentoController.getDocumentos);
+router.get('/download/:id', documentoController.downloadDocumento);
+router.post('/', [isAdmin, upload.single('documento')], documentoController.uploadDocumento);
+router.delete('/:id', [isAdmin], documentoController.deleteDocumento);
 
 module.exports = router;

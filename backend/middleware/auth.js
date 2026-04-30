@@ -4,7 +4,9 @@ const verifyToken = (req, res, next) => {
     // Soporte para ambos headers: 'x-auth-token' inyectado por el proxy de Vercel TIENE PRIORIDAD
     // sobre 'authorization', el cual en la nube contiene la contraseña de SmarterASP.
     let token = req.headers['x-auth-token'] || req.headers['authorization'];
+    
     if (!token) {
+        console.log(`[AUTH] No token found for ${req.method} ${req.url}`);
         return res.status(403).json({ message: 'No token provided' });
     }
 
@@ -14,11 +16,12 @@ const verifyToken = (req, res, next) => {
 
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            console.error(`[AUTH] JWT verify error for ${req.method} ${req.url}:`, err.message);
+            return res.status(401).json({ message: 'Unauthorized', error: err.message });
         }
         req.userId = decoded.id;
         req.userRole = decoded.rol_id;
-        req.userRoleName = decoded.rol_nombre; // Añadido nombre del rol al request
+        req.userRoleName = decoded.rol_nombre;
         req.userName = decoded.nombre;
         next();
     });
